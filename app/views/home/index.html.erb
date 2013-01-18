@@ -1,0 +1,7 @@
+<% if @current_user %>
+here is some cool stuff<br /><br />
+<%= @me.to_s %><br /><br />
+<%= @my_likes.to_s %><br />
+<% else %>
+welcome to my app please sign in
+<% end %>
