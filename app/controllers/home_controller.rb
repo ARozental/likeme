@@ -7,10 +7,16 @@ class HomeController < ApplicationController
     #@pobj = @pgraph.get_object("me")
     
     
-    @current_user = current_user
-    @user_graph = Koala::Facebook::API.new(current_user.oauth_token)
-    @me = @user_graph.get_object("me")
-    @my_likes = @user_graph.get_connections("me", "likes")
-    
+    if current_user 
+      @current_user = current_user
+      begin
+        @user_graph = Koala::Facebook::API.new(current_user.oauth_token)
+        @me = @user_graph.get_object("me")
+        @my_likes = @user_graph.get_connections("me", "likes")
+        @my_books = @user_graph.get_connections("me", "books")
+      rescue
+        redirect_to "/auth/facebook"
+      end
+    end
   end
 end

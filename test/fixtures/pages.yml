@@ -1,0 +1,11 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+one:
+  pid: 1
+  name: MyString
+  category: MyString
+
+two:
+  pid: 1
+  name: MyString
+  category: MyString
