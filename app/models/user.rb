@@ -4,6 +4,25 @@ class User < ActiveRecord::Base
   has_many :user_page_relationships
   has_many :pages , :through => :user_page_relationships
   
+  
+  @@all_page_types = ["likes","music","books","movies","television","games","athletes","activities","interests"] #add: Sports teams, Favourite sports and Inspirational People
+  @@weights =      #let users adjust it later
+  {
+    "likes" => 4,
+    "music" => 1,
+    "books" => 1,
+    "movies" => 1,
+    "television" => 1,
+    "games" => 0,                       
+    "athletes" => 0,                       
+    "activities" => 0,                       
+    "interests" => 0,                       
+                      
+  }
+
+  
+  
+  
   def self.from_omniauth(auth)
     where(auth.slice(:provider, :uid)).first_or_initialize.tap do |user|
       user.provider = auth.provider
@@ -33,12 +52,10 @@ class User < ActiveRecord::Base
     end                  
   end
   
-  def insert_friend_info(my_graph,db_friend)
-      insert_friend_pages(my_graph,db_friend,"music") 
-      insert_friend_pages(my_graph,db_friend,"books")
-      insert_friend_pages(my_graph,db_friend,"movies")
-      insert_friend_pages(my_graph,db_friend,"television")
-      insert_friend_pages(my_graph,db_friend,"likes")
+  def insert_friend_info(my_graph,db_friend)    
+    @@all_page_types.each do |type|
+      insert_friend_pages(my_graph,db_friend,type) 
+    end
   end
   
   def insert_my_info_to_db(my_graph)
@@ -69,7 +86,7 @@ class User < ActiveRecord::Base
   end
   handle_asynchronously :insert_my_info_to_db
   
-  def find_best_match
+  def match_by_most_shared_pages
     my_pages_pid = self.pages.map(&:pid)
     users = User.all
     users_and_their_good_pages = Hash.new
@@ -84,40 +101,37 @@ class User < ActiveRecord::Base
     return sorted_users_and_their_good_pages.reverse
   end
   
-  def find_best_match2#(filter) #todo: complete this   #should return an array of users and scores  
-    my_page_relationships = self.user_page_relationships
-    my_music = self.user_page_relationships.where {relationship_type = "music"}
-    my_books = self.user_page_relationships.where {relationship_type = "books"}
-    my_movies = self.user_page_relationships.where {relationship_type = "movies"}
-    my_television = self.user_page_relationships.where {relationship_type = "television"}
-    my_likes = self.user_page_relationships.where {relationship_type = "likes"}
-    
-    user = User.all #where filter    
+  def find_matches#(filter)  #main matching algorithm      
+    users = User.all #.where(filter)
+    user_type_scores = Hash.new
+    users_scores = Hash.new
+    users.each do |user|
+      @@all_page_types.each do |type|
+        user_type_scores[type] = my_type_score_with(user,type)*@@weights[type].to_f unless (@@weights[type] == 0)
+      end
+      user_total_score = user_type_scores.values.inject{ |sum, el| sum + el }.to_f / user_type_scores.values.size
+      users_scores[user.uid] = user_total_score
+      user_type_scores = Hash.new
+
+    end
+    users_scores = users_scores.sort_by { |uid, score| score }
+    return users_scores.reverse
   end
   
-  def my_type_score_with(user,type) #todo: see if it works #4 db calls that can be traded for readability
-    
+  def my_type_score_with(user,type) #todo: 4 db calls that can be reduced to 2 in exchange for readability
     my_favorites_pid = self.user_page_relationships.where(:relationship_type => type).map(&:page_id)
-    my_likes_pid = self.user_page_relationships.where('relationship_type <> ?', type).map(&:page_id)
+    user_likes_pid = user.user_page_relationships.where(:relationship_type => "likes").map(&:page_id)
+    
     user_favorites_pid = user.user_page_relationships.where(:relationship_type => type).map(&:page_id)   
-    user_likes_pid = user.user_page_relationships.where('relationship_type <> ?', type).map(&:page_id)
+    my_likes_pid = self.user_page_relationships.where(:relationship_type => "likes").map(&:page_id)
     
-    #where('board_id <> ?', current_board.id) 
-    #joins = ClientAddressJoin.where(:client_id => current_client.id)
+    my_score = ((my_favorites_pid & user_likes_pid).count.to_f)/(my_favorites_pid.count + 1)
+    user_score = ((user_favorites_pid & my_likes_pid).count.to_f)/(user_favorites_pid.count + 1)
     
-    return nil if (my_favorites_pid.count == 0)
-    my_favorites_score = ((my_favorites_pid & user_favorites_pid).count)/(my_favorites_pid.count)
-    my_likes_score = ((my_favorites_pid & user_likes_pid).count)/(my_favorites_pid.count)
-    my_total_score = (my_likes_score + my_favorites_score)/2.0 #todo: make it better
-    
-    return my_total_score if (user_favorites_pid.count == 0)
-    user_favorites_score = ((user_favorites_pid & my_favorites_pid).count)/(user_favorites_pid.count)
-    user_likes_score = ((user_favorites_pid & my_likes_pid).count)/(user_favorites_pid.count)
-    user_total_score = (user_favorites_score + user_likes_score)/2.0 #todo: make it better
-
-    total_score = Math.sqrt(my_total_score*user_total_score)
-    return total_score
+    return (my_score+user_score)/2.0  
   end
+
+  
   
   
 end

@@ -1,0 +1,25 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>User:</b>
+  <%= @user_page_relationship.user.uid %>
+</p>
+
+<p>
+  <b>Page:</b>
+  <%= @user_page_relationship.page.pid %>
+</p>
+
+<p>
+  <b>Fb created time:</b>
+  <%= @user_page_relationship.fb_created_time %>
+</p>
+
+<p>
+  <b>Relationship type:</b>
+  <%= @user_page_relationship.relationship_type %>
+</p>
+
+
+<%= link_to 'Edit', edit_user_page_relationship_path(@user_page_relationship) %> |
+<%= link_to 'Back', user_page_relationships_path %>

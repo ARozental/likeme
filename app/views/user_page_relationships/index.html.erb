@@ -1,0 +1,29 @@
+<h1>Listing user_page_relationships</h1>
+
+<table>
+  <tr>
+    <th>User</th>
+    <th>Page</th>
+    <th>Fb created time</th>
+    <th>Relationship type</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @user_page_relationships.each do |user_page_relationship| %>
+  <tr>
+    <td><%= user_page_relationship.user.name %></td>
+    <td><%= user_page_relationship.page.name %></td>
+    <td><%= user_page_relationship.fb_created_time %></td>
+    <td><%= user_page_relationship.relationship_type %></td>
+    <td><%= link_to 'Show', user_page_relationship %></td>
+    <td><%= link_to 'Edit', edit_user_page_relationship_path(user_page_relationship) %></td>
+    <td><%= link_to 'Destroy', user_page_relationship, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New User page relationship', new_user_page_relationship_path %>

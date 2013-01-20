@@ -14,6 +14,8 @@ class HomeController < ApplicationController
         @me = @user_graph.get_object("me")
         @my_likes = @user_graph.get_connections("me", "likes")
         @my_books = @user_graph.get_connections("me", "books")
+        #@other_user = @user_graph.get_object("681317849")
+        @other_user = User.find_by_uid("654736616")
       rescue
         redirect_to "/auth/facebook"
       end

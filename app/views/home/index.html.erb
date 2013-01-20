@@ -8,15 +8,11 @@
 		</tr>
 		<tr>
 			<td>
-				<!-- <%= @user_graph.get_connections("584663600", "likes").first %><br /> 
-				<%= @user_graph.get_connections("403087", "likes") %><br />
-				<%= @user_graph.get_connections("584663600", "friends") %>
-				<% matches = @current_user.find_best_match %>
-				<% 2.times do |n| %> 
+				<% matches = @current_user.find_matches %>
+				<% 11.times do |n| %> 
 				<br /><%= matches[n][0] %>
 				<img src="https://graph.facebook.com/<%= matches[n][0] %>/picture?type=normal" alt="profile picture">
-				<% end %>-->
-				<%= @current_user.my_type_score_with(@current_user, "likes") %>
+				<% end %>
 			</td>					
 		</tr>		
 	</table>
