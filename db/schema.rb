@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130119120208) do
+ActiveRecord::Schema.define(:version => 20130126093024) do
 
   create_table "delayed_jobs", :force => true do |t|
     t.integer  "priority",   :default => 0
@@ -30,12 +30,15 @@ ActiveRecord::Schema.define(:version => 20130119120208) do
   add_index "delayed_jobs", ["priority", "run_at"], :name => "delayed_jobs_priority"
 
   create_table "pages", :force => true do |t|
-    t.integer  "pid"
+    t.integer  "pid",        :null => false
     t.string   "name"
     t.string   "category"
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
   end
+
+  add_index "pages", ["category"], :name => "index_pages_on_category"
+  add_index "pages", ["pid"], :name => "index_pages_on_pid"
 
   create_table "user_page_relationships", :force => true do |t|
     t.integer  "user_id"
@@ -46,17 +49,31 @@ ActiveRecord::Schema.define(:version => 20130119120208) do
     t.datetime "updated_at",        :null => false
   end
 
+  add_index "user_page_relationships", ["fb_created_time"], :name => "index_user_page_relationships_on_fb_created_time"
+  add_index "user_page_relationships", ["page_id"], :name => "index_user_page_relationships_on_page_id"
+  add_index "user_page_relationships", ["relationship_type"], :name => "index_user_page_relationships_on_relationship_type"
+  add_index "user_page_relationships", ["user_id"], :name => "index_user_page_relationships_on_user_id"
+
   create_table "users", :force => true do |t|
     t.string   "provider"
-    t.string   "uid"
+    t.integer  "uid",                                    :null => false
     t.string   "name"
     t.string   "oauth_token"
     t.datetime "oauth_expires_at"
-    t.datetime "created_at",                          :null => false
-    t.datetime "updated_at",                          :null => false
-    t.boolean  "active",           :default => false
+    t.datetime "created_at",                             :null => false
+    t.datetime "updated_at",                             :null => false
+    t.boolean  "active",              :default => false
     t.string   "email"
     t.datetime "last_fb_update"
+    t.string   "location"
+    t.string   "birthday"
+    t.string   "hometown"
+    t.string   "quotes"
+    t.string   "relationship_status"
+    t.string   "significant_other"
   end
+
+  add_index "users", ["birthday"], :name => "index_users_on_birthday"
+  add_index "users", ["uid"], :name => "index_users_on_uid"
 
 end

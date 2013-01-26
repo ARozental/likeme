@@ -7,12 +7,14 @@
 			</td>					
 		</tr>
 		<tr>
-			<td>
-				<% matches = @current_user.find_matches %>
-				<% 11.times do |n| %> 
-				<br /><%= matches[n][0] %>
-				<img src="https://graph.facebook.com/<%= matches[n][0] %>/picture?type=normal" alt="profile picture">
+			<td><%= @matches%>
+				<% 5.times do |n| %>
+ 					<div id = "prophile_box">
+ 						
+ 						<!-- picture_link(@matches[n][0],"80")--> 						
+ 					</div><br />
 				<% end %>
+				<%= nil %>
 			</td>					
 		</tr>		
 	</table>

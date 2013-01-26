@@ -71,6 +71,7 @@ GEM
     mime-types (1.19)
     multi_json (1.5.0)
     multipart-post (1.1.5)
+    mysql2 (0.3.11)
     oauth2 (0.8.0)
       faraday (~> 0.8)
       httpauth (~> 0.1)
@@ -142,6 +143,7 @@ DEPENDENCIES
   delayed_job_active_record
   jquery-rails
   koala
+  mysql2
   omniauth-facebook (= 1.4.0)
   rails (= 3.2.8)
   sass-rails (~> 3.2.3)

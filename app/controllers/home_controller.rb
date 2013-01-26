@@ -6,19 +6,23 @@ class HomeController < ApplicationController
     #@pobj = @pgraph.get_connections("me", "books")  
     #@pobj = @pgraph.get_object("me")
     
-    
-    if current_user 
-      @current_user = current_user
       begin
+       
+           @current_user = current_user  
+        @matches = @current_user.find_matches
         @user_graph = Koala::Facebook::API.new(current_user.oauth_token)
         @me = @user_graph.get_object("me")
         @my_likes = @user_graph.get_connections("me", "likes")
         @my_books = @user_graph.get_connections("me", "books")
-        #@other_user = @user_graph.get_object("681317849")
-        @other_user = User.find_by_uid("654736616")
+        @other_user = @user_graph.get_object("681317849")
+        @other_user = @user_graph.get_object("403087")
+        @other_user_likes = @user_graph.get_connections("403087", "likes")
+        #@matches = insert_friend_pages_new(@user_graph,User.first,"likes")
+
       rescue
-        redirect_to "/auth/facebook"
+        #session[:user_id] = nil 
+        #redirect_to "/auth/facebook" #loop it session exist but current user isn't
       end
-    end
+    
   end
 end

@@ -2,7 +2,7 @@ class UserPageRelationshipsController < ApplicationController
   # GET /user_page_relationships
   # GET /user_page_relationships.json
   def index
-    @user_page_relationships = UserPageRelationship.where(:user_id => 2).all #todo change it back to all
+    @user_page_relationships = UserPageRelationship.all #todo change it back to all
 
     respond_to do |format|
       format.html # index.html.erb
