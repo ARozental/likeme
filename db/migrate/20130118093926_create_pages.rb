@@ -2,7 +2,8 @@ class CreatePages < ActiveRecord::Migration
   def change
     create_table :pages do |t|
       #t.integer :id, :limit => 8
-      t.integer :pid#, :limit => 8
+      t.column :pid, 'BIGINT UNSIGNED'
+      t.integer :pid, :limit => 8
       t.string :name
       t.string :category
 

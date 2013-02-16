@@ -5,7 +5,11 @@ class Page < ActiveRecord::Base
   has_many :user_page_relationships
   has_many :users , :through => :user_page_relationships
   accepts_nested_attributes_for :user_page_relationships
-  set_primary_key :id
+  #set_primary_key :id
+  def new_record(boolean) 
+    @new_record = boolean
+  end
+
 
   
 end
