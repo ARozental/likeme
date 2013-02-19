@@ -33,6 +33,23 @@ end
   #before_save :make_id
   #before_validation :make_id
   #validates_uniqueness_of :id
+  
+=begin
+  def time_fb_connection(my_graph)
+    start_time = Time.now
+    my_friends = my_graph.get_connections("me", "friends")
+    my_friends.each do |fb_friend|
+      @@all_page_types.each do |type|
+        friend_likes = my_graph.get_connections(fb_friend["id"], type)
+      end      
+    end
+    end_time = Time.now
+    return end_time-start_time
+  end
+=end
+    
+  
+  
 =begin 
   def self.from_omniauth(auth)
     user = User.where(auth.slice(:provider, :uid)).first_or_initialize

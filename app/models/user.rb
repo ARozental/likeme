@@ -22,50 +22,19 @@ class User < ActiveRecord::Base
                       
   }
 
-=begin
-  def time_fb_connection(my_graph)
-    start_time = Time.now
-    my_friends = my_graph.get_connections("me", "friends")
-    my_friends.each do |fb_friend|
-      @@all_page_types.each do |type|
-        friend_likes = my_graph.get_connections(fb_friend["id"], type)
-      end      
-    end
-    end_time = Time.now
-    return end_time-start_time
-  end
-=end
-  
-  def time_fb_connection(my_graph) #change name to info->db
-    my_friends = my_graph.get_connections("me", "friends")
+
+  def insert_batches_info(my_graph,my_friends) #change name to info->db
+    #my_friends = my_graph.get_connections("me", "friends")
     my_id = self.id.to_s
     id_array = [my_id]
     my_friends.each do |friend|
       id_array.push(friend["id"])
     end
     grouped_id_array = id_array.each_slice(50/(@@weights.count)).to_a #so we will have no more than 50 requests in a batch
-    #return id_array
-=begin     
-    users_info = []
-   
-    grouped_id_array.each do |array| #array is a group of 6 user_ids
-      batch_results = my_graph.batch do |batch_api|#array of arraies of hashes
-        array.each do |id|
-          @@all_page_types.each do |type|
-            batch_api.get_connections(id, type)
-          end          
-        end   
-      end
-      pursed_batch = batch_results.each_slice(@@weights.count).to_a #every element is an array with all info on a user
-      pursed_batch.each do |info|
-        users_info.push(info)
-      end             
-    end
-=end
 
-    return retrive_and_save_batch(my_graph,grouped_id_array[0])
-    #data_hash = Hash[id_array.zip users_info]
-    #return data_hash
+    grouped_id_array.each do |group|
+      retrive_and_save_batch(my_graph,group)
+    end
   end
   
   def retrive_and_save_batch(graph,users_id_array)
@@ -86,22 +55,21 @@ class User < ActiveRecord::Base
     batch_likes=data_hash.values.flatten
     batch_pages = []
     batch_likes.each do |like|      
-      batch_pages.push(like.tap{|x| x.delete("created_time")})
+      batch_pages.push(like.tap{|x| x.delete("created_time")}) unless batch_pages==nil
     end
     
     batch_pages = batch_pages.uniq
-    batch_pages.delete_if{ |page|all_pages_id.include?(page[:id].to_i) } #faster but won't notice if the page name changes
+    batch_pages = batch_pages.delete_if{ |page|all_pages_id.include?(page["id"].to_i) } unless batch_pages==nil #faster but won't notice if the page name changes
     batch_pages.each do |page|
       page["pid"] = page["id"]
-    end        
-    Page.create(page_array)
-    
-    
+    end 
+     
+    Page.create(batch_pages)     
     
     # save user_page_relationships
     data_hash.each do |user_id,category|
-      db_friend = User.find_or_initialize_by_id(user_id) #id or uid
-      db_friend.user_page_relationships = [] #########
+      db_friend = User.find(user_id) #should only do find 
+      db_friend.user_page_relationships = [] 
       data_hash[user_id] = Hash[@@all_page_types.zip category]     
     end
         
@@ -114,9 +82,8 @@ class User < ActiveRecord::Base
       end           
     end
     UserPageRelationship.create(user_page_relationship_array)
-    return data_hash
   end
-  
+  handle_asynchronously :retrive_and_save_batch
   
 
   
@@ -135,7 +102,7 @@ class User < ActiveRecord::Base
 
 
 
-  def insert_friend_pages(my_graph,db_friend,type) #todo books and movies, not only likes
+  def insert_friend_pages(my_graph,db_friend,type)
     friend_likes = my_graph.get_connections(db_friend.uid, type)
     friend_id = db_friend.id
     page_array = []
@@ -153,13 +120,14 @@ class User < ActiveRecord::Base
     #page_array.each{ |page| page.new_record(false) if all_pages_id.include?(page["id"])}#slower
     #page_array.each(&:save)#slower
      
-    page_array.delete_if{ |page|all_pages_id.include?(page[:id].to_i) } #faster but won't notice if the page name changes        
+    page_array.delete_if{ |page|all_pages_id.include?(page[:id].to_i) } unless page_array==nil #faster but won't notice if the page name changes        
     Page.create(page_array)
     
     #raise user_page_relationship_array.to_s
     #db_friend.user_page_relationships = user_page_relationship_array# forgets the user_id???
     db_friend.user_page_relationships = []
     #user_page_relationship_array.each(&:save)
+    #todo execute disable keys
     UserPageRelationship.create(user_page_relationship_array)
   end
 
@@ -187,7 +155,7 @@ class User < ActiveRecord::Base
       return db_friend      
   end
   
-  def insert_my_info_to_db(my_graph)
+  def insert_my_info_to_db_old(my_graph)
     #my user to db
     fb_me = my_graph.get_object("me")
     db_me = insert_friend_to_db(fb_me)
@@ -201,8 +169,25 @@ class User < ActiveRecord::Base
     end
   end
   #handle_asynchronously :insert_my_info_to_db
+  
+  def insert_my_info_to_db(my_graph)
+    
+    #doesn't seem to affect time
+    #ActiveRecord::Base.connection.execute("ALTER TABLE `user_page_relationships` DISABLE KEYS;")
 
-
+   
+    #my user to db
+    fb_me = my_graph.get_object("me")
+    db_me = insert_friend_to_db(fb_me)
+    #insert_friend_info(my_graph,db_me)
+    my_friends = my_graph.get_connections("me", "friends")
+    my_friends.each do |fb_friend|
+      db_friend = insert_friend_to_db(fb_friend)
+    end
+    insert_batches_info(my_graph,my_friends)
+    
+  end
+  #handle_asynchronously :insert_my_info_to_db
 
   
   def match_by_most_shared_pages

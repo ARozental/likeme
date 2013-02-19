@@ -11,8 +11,8 @@ class HomeController < ApplicationController
         @current_user = current_user  
         @matches = @current_user.find_matches
 
-        @user_graph = Koala::Facebook::API.new(current_user.oauth_token)
-        @time_fb_com = @current_user.time_fb_connection(@user_graph) 
+        #@user_graph = Koala::Facebook::API.new(current_user.oauth_token)
+        #@something = @current_user.time_fb_connection(@user_graph) 
         #@me = @user_graph.get_object("me")
         #@my_likes = @user_graph.get_connections("me", "likes")
         #@my_books = @user_graph.get_connections("me", "books")
