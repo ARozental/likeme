@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130122131551) do
+ActiveRecord::Schema.define(:version => 20130220141055) do
 
   create_table "delayed_jobs", :force => true do |t|
     t.integer  "priority",   :default => 0
@@ -28,6 +28,14 @@ ActiveRecord::Schema.define(:version => 20130122131551) do
   end
 
   add_index "delayed_jobs", ["priority", "run_at"], :name => "delayed_jobs_priority"
+
+  create_table "friendships", :id => false, :force => true do |t|
+    t.integer "user_id",   :limit => 8, :null => false
+    t.integer "friend_id", :limit => 8, :null => false
+  end
+
+  add_index "friendships", ["friend_id"], :name => "friendships_friend_id_fk"
+  add_index "friendships", ["user_id"], :name => "friendships_user_id_fk"
 
   create_table "pages", :force => true do |t|
     t.integer  "pid",        :limit => 8
@@ -50,9 +58,9 @@ ActiveRecord::Schema.define(:version => 20130122131551) do
   end
 
   add_index "user_page_relationships", ["fb_created_time"], :name => "index_user_page_relationships_on_fb_created_time"
-  add_index "user_page_relationships", ["page_id"], :name => "index_user_page_relationships_on_page_id"
+  add_index "user_page_relationships", ["page_id"], :name => "user_page_relationships_page_id_fk"
   add_index "user_page_relationships", ["relationship_type"], :name => "index_user_page_relationships_on_relationship_type"
-  add_index "user_page_relationships", ["user_id"], :name => "index_user_page_relationships_on_user_id"
+  add_index "user_page_relationships", ["user_id"], :name => "user_page_relationships_user_id_fk"
 
   create_table "users", :force => true do |t|
     t.string   "provider"
@@ -75,5 +83,11 @@ ActiveRecord::Schema.define(:version => 20130122131551) do
 
   add_index "users", ["birthday"], :name => "index_users_on_birthday"
   add_index "users", ["uid"], :name => "index_users_on_uid"
+
+  add_foreign_key "friendships", "users", :name => "friendships_friend_id_fk", :column => "friend_id"
+  add_foreign_key "friendships", "users", :name => "friendships_user_id_fk"
+
+  add_foreign_key "user_page_relationships", "pages", :name => "user_page_relationships_page_id_fk"
+  add_foreign_key "user_page_relationships", "users", :name => "user_page_relationships_user_id_fk"
 
 end

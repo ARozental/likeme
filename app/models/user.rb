@@ -5,6 +5,9 @@ class User < ActiveRecord::Base
   serialize :location
   serialize :hometown
   serialize :significant_other
+  has_and_belongs_to_many :friends, class_name: "User", 
+                                     join_table: "friendships",
+                                     association_foreign_key: "friend_id"
   has_many :user_page_relationships
   has_many :pages , :through => :user_page_relationships
 
@@ -72,16 +75,19 @@ class User < ActiveRecord::Base
     # save user_page_relationships
     data_hash.each do |user_id,category|
       db_friend = User.find(user_id) #should only do find 
-      db_friend.user_page_relationships = [] 
+      #db_friend.user_page_relationships = [] #does: UPDATE `user_page_relationships` SET `user_id` = NULL WHERE `user_page_relationships`.`user_id` = 584663600 AND `user_page_relationships`.`id` IN (1, 2, 3)
+      ActiveRecord::Base.connection.execute('DELETE FROM `user_page_relationships` WHERE `user_page_relationships`.`user_id` = 403087')
       data_hash[user_id] = Hash[@@all_page_types.zip category]     
     end
         
     user_page_relationship_array = []
     data_hash.each do |user_id,category|
       category.each do |category_name,like_array|
-        like_array.each do |like|
-          user_page_relationship_array << UserPageRelationship.new(:fb_created_time => like["created_time"],:relationship_type => category_name,:user_id => user_id,:page_id => like["id"])
-          #user_page_relationship_array.push({:fb_created_time => like["created_time"],:relationship_type => category_name,:user_id => user_id,:page_id => like["id"]})
+        unless like_array == nil
+          like_array.each do |like|
+            user_page_relationship_array << UserPageRelationship.new(:fb_created_time => like["created_time"],:relationship_type => category_name,:user_id => user_id,:page_id => like["id"])
+            #user_page_relationship_array.push({:fb_created_time => like["created_time"],:relationship_type => category_name,:user_id => user_id,:page_id => like["id"]})
+          end
         end        
       end           
     end
