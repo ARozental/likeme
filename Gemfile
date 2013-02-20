@@ -6,10 +6,12 @@ gem 'koala'
 gem 'delayed_job_active_record'
 gem "daemons"
 gem 'mysql2'
+gem 'activerecord-import'
+
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
 
-gem 'sqlite3' #seriously, get mysql2
+#gem 'sqlite3' #seriously, get mysql2
 
 
 # Gems used only for assets and not required

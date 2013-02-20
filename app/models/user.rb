@@ -55,16 +55,19 @@ class User < ActiveRecord::Base
     batch_likes=data_hash.values.flatten
     batch_pages = []
     batch_likes.each do |like|      
-      batch_pages.push(like.tap{|x| x.delete("created_time")}) unless batch_pages==nil
+      #batch_pages.push(like.tap{|x| x.delete("created_time")}) unless batch_pages==nil
+      #for some reson there is a nil in the like array
+      batch_pages << Page.new(:category=>like["category"], :name=>like["name"], :pid=>like["id"], :id=>like["id"]) unless like==nil
     end
     
     batch_pages = batch_pages.uniq
-    batch_pages = batch_pages.delete_if{ |page|all_pages_id.include?(page["id"].to_i) } unless batch_pages==nil #faster but won't notice if the page name changes
+    batch_pages = batch_pages.delete_if{ |page|all_pages_id.include?(page.id.to_i) } unless batch_pages==nil #faster but won't notice if the page name changes
     batch_pages.each do |page|
       page["pid"] = page["id"]
     end 
      
-    Page.create(batch_pages)     
+    #Page.create(batch_pages)
+    Page.import batch_pages #is it faster?
     
     # save user_page_relationships
     data_hash.each do |user_id,category|
@@ -77,13 +80,15 @@ class User < ActiveRecord::Base
     data_hash.each do |user_id,category|
       category.each do |category_name,like_array|
         like_array.each do |like|
-          user_page_relationship_array.push({:fb_created_time => like["created_time"],:relationship_type => category_name,:user_id => user_id,:page_id => like["id"]})
+          user_page_relationship_array << UserPageRelationship.new(:fb_created_time => like["created_time"],:relationship_type => category_name,:user_id => user_id,:page_id => like["id"])
+          #user_page_relationship_array.push({:fb_created_time => like["created_time"],:relationship_type => category_name,:user_id => user_id,:page_id => like["id"]})
         end        
       end           
     end
-    UserPageRelationship.create(user_page_relationship_array)
+    #UserPageRelationship.create(user_page_relationship_array)
+    UserPageRelationship.import user_page_relationship_array
   end
-  handle_asynchronously :retrive_and_save_batch
+  #handle_asynchronously :retrive_and_save_batch
   
 
   
@@ -244,6 +249,7 @@ class User < ActiveRecord::Base
     users_scores = Hash.new
     users.each do |user|
       user_pages = user.user_page_relationships.group_by(&:relationship_type)
+      #raise user_pages.to_s
       if user_pages.blank?
         user_type_scores = [0.0]
       else
@@ -258,11 +264,16 @@ class User < ActiveRecord::Base
       
       user_type_scores.compact!
       user_total_score = user_type_scores.inject{ |sum, el| sum + el }.to_f / user_type_scores.size
-      users_scores[user.uid] = user_total_score
-      #user_type_scores = Hash.new
+      user_chosen_likes = []
+      begin
+      user_chosen_likes = user_pages["likes"].sample(6).map(&:page_id)
+      rescue
+      end
+      users_scores[user.uid] = [user_total_score,user_chosen_likes]
 
     end
-    users_scores = users_scores.sort_by { |uid, score| score }
+    users_scores = users_scores.sort_by { |uid, score| score[0] }
+    #raise users_scores.to_s
     return users_scores.reverse
   end 
   
