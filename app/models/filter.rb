@@ -1,11 +1,12 @@
 class Filter
-  attr_accessor :gender #friends, max_age, min_age...
+  attr_accessor :gender, :max_age, :min_age #friends,
   
   
-  def get_conditions
+  def get_max_age
     conditions = ""
-    conditions += ":gender => #{self.gender}"
+    conditions += ":gender => #{self.gender}" unless self.gender==nil
     
-    #conditions += "   DONE"
+    return conditions
   end
+  
 end

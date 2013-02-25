@@ -1,6 +1,6 @@
 class User < ActiveRecord::Base
   include UsersHelper
-  attr_accessible :active, :name, :uid, :last_fb_update, :location, :birthday, :id
+  attr_accessible :active, :name, :uid, :last_fb_update, :location, :birthday, :id, :gender, :age
   attr_accessible :hometown, :quotes, :relationship_status, :significant_other
   serialize :location
   serialize :hometown
@@ -24,7 +24,23 @@ class User < ActiveRecord::Base
     "interests" => 0,                       
                       
   }
-
+  
+  def date_to_age(birthday)
+    #stupid americans            
+    begin
+      birthday=birthday.split("/")
+      month=birthday[0]
+      day=birthday[1]
+      birthday[0]=day
+      birthday[1]=month
+      birthday=birthday.join("/") 
+      dob = Time.parse(birthday)
+      now = Time.now.utc.to_date
+      now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)           
+    rescue
+      return nil #because user didn't say his birthday or birth year to facebook
+    end    
+  end
 
   def insert_batches_info(my_graph,my_friends) #change name to info->db
     #my_friends = my_graph.get_connections("me", "friends")
@@ -161,25 +177,15 @@ class User < ActiveRecord::Base
          :hometown => fb_friend["hometown"],
          :quotes => fb_friend["quotes"],
          :relationship_status => fb_friend["relationship_status"],
-         :significant_other => fb_friend["significant_other"]
+         :significant_other => fb_friend["significant_other"],
+         :gender => fb_friend["gender"],
+         :age => date_to_age(fb_friend["birthday"])
       })
+      #raise fb_friend.to_s unless fb_friend["name"]=="Alon Rozental"
       return db_friend      
   end
   
-  def insert_my_info_to_db_old(my_graph)
-    #my user to db
-    fb_me = my_graph.get_object("me")
-    db_me = insert_friend_to_db(fb_me)
-    insert_friend_info(my_graph,db_me)
-    
-    #my friends to db
-    my_friends = my_graph.get_connections("me", "friends")
-    my_friends.each do |fb_friend|
-      db_friend = insert_friend_to_db(fb_friend)
-      insert_friend_info(my_graph,db_friend) #unless db_friend.last_fb_update was shortly #work on worker
-    end
-  end
-  #handle_asynchronously :insert_my_info_to_db
+
   
   def insert_my_info_to_db(my_graph)
     
@@ -191,7 +197,25 @@ class User < ActiveRecord::Base
     fb_me = my_graph.get_object("me")
     db_me = insert_friend_to_db(fb_me)
     #insert_friend_info(my_graph,db_me)
-    my_friends = my_graph.get_connections("me", "friends")
+    my_friends_id = my_graph.get_connections("me", "friends")
+    my_friends_id_array = []
+    my_friends_id.each do |fb_friend|
+      my_friends_id_array.push(fb_friend["id"])
+    end
+    grouped_id_array = my_friends_id_array.each_slice(50).to_a
+    #raise grouped_id_array.to_s
+    my_friends = []
+    grouped_id_array.each do |id_array|
+      batch_results = my_graph.batch do |batch_api|#array of arraies of hashes
+        id_array.each do |id|
+          batch_api.get_object(id)         
+        end   
+      end
+      my_friends.push(batch_results)
+    end
+    my_friends=my_friends.flatten
+    
+    
     my_friends.each do |fb_friend|
       db_friend = insert_friend_to_db(fb_friend)
     end
@@ -201,37 +225,9 @@ class User < ActiveRecord::Base
   #handle_asynchronously :insert_my_info_to_db
 
   
-  def match_by_most_shared_pages
-    my_pages_pid = self.pages.map(&:pid)
-    users = User.all
-    users_and_their_good_pages = Hash.new
-    users.each do |u|
-      user_pages_pid = u.pages.map(&:pid)
-      user_shared_pages = user_pages_pid & my_pages_pid
-      users_and_their_good_pages[u.uid] = user_shared_pages
-    end
-    
-    sorted_users_and_their_good_pages = users_and_their_good_pages.sort_by { |uid, user_shared_pages| user_shared_pages.count }
-    
-    return sorted_users_and_their_good_pages.reverse
-  end
-  
-  def find_matches_old#(filter)  #main matching algorithm, returns sorted hash of {uid => score}      
-    users = User.all#.sample(7) #.where(filter)
-    user_type_scores = Hash.new
-    users_scores = Hash.new
-    users.each do |user|
-      @@all_page_types.each do |type|
-        user_type_scores[type] = my_type_score_with(user,type)*@@weights[type].to_f unless (@@weights[type] == 0)
-      end
-      user_total_score = user_type_scores.values.inject{ |sum, el| sum + el }.to_f / user_type_scores.values.size
-      users_scores[user.uid] = user_total_score
-      user_type_scores = Hash.new
 
-    end
-    users_scores = users_scores.sort_by { |uid, score| score }
-    return users_scores.reverse
-  end
+  
+
   
   def my_type_score_with(user,type) #todo: 4 db calls that can be reduced to 2 in exchange for readability
     my_favorites_pid = self.user_page_relationships.where(:relationship_type => type).map(&:page_id)
@@ -246,8 +242,13 @@ class User < ActiveRecord::Base
     return (my_score+user_score)/2.0  
   end
 
-  def find_matches#(filter)  #main matching algorithm, returns sorted hash of {uid => score}
-    users = User.includes(:user_page_relationships)#.where(:id => "509235222") #.where(filter)sample(5)
+  def find_matches(filter)  #main matching algorithm, returns sorted hash of {uid => score}
+    users = User.includes(:user_page_relationships) #.where(filter)sample(5) filter.get_conditions
+    users = users.where(:gender => filter.gender) unless filter.gender==nil
+    users = users.where("age <= ?", filter.max_age) unless filter.max_age==nil
+    users = users.where("age >= ?", filter.min_age) unless filter.min_age==nil
+    #where("price < ?", price)
+    
     my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
     @@all_page_types.each {|t|  my_pages[t] ||= []  } 
    

@@ -21,7 +21,6 @@ end
 
 ############################# here is some old code #############################
 
-
 #fb_like looks like this:
 #{"category"=>"Book", "name"=>"1984", "id"=>"111757942177556", "created_time"=>"2013-02-02T01:14:50+0000"}
 
@@ -33,6 +32,55 @@ end
   #before_save :make_id
   #before_validation :make_id
   #validates_uniqueness_of :id
+
+  def insert_my_info_to_db_old(my_graph)
+    #my user to db
+    fb_me = my_graph.get_object("me")
+    db_me = insert_friend_to_db(fb_me)
+    insert_friend_info(my_graph,db_me)
+    
+    #my friends to db
+    my_friends = my_graph.get_connections("me", "friends")
+    my_friends.each do |fb_friend|
+      db_friend = insert_friend_to_db(fb_friend)
+      insert_friend_info(my_graph,db_friend) #unless db_friend.last_fb_update was shortly #work on worker
+    end
+  end
+  #handle_asynchronously :insert_my_info_to_db
+
+
+  def find_matches_old#(filter)  #main matching algorithm, returns sorted hash of {uid => score}      
+    users = User.all#.sample(7) #.where(filter)
+    user_type_scores = Hash.new
+    users_scores = Hash.new
+    users.each do |user|
+      @@all_page_types.each do |type|
+        user_type_scores[type] = my_type_score_with(user,type)*@@weights[type].to_f unless (@@weights[type] == 0)
+      end
+      user_total_score = user_type_scores.values.inject{ |sum, el| sum + el }.to_f / user_type_scores.values.size
+      users_scores[user.uid] = user_total_score
+      user_type_scores = Hash.new
+
+    end
+    users_scores = users_scores.sort_by { |uid, score| score }
+    return users_scores.reverse
+  end
+
+
+  def match_by_most_shared_pages
+    my_pages_pid = self.pages.map(&:pid)
+    users = User.all
+    users_and_their_good_pages = Hash.new
+    users.each do |u|
+      user_pages_pid = u.pages.map(&:pid)
+      user_shared_pages = user_pages_pid & my_pages_pid
+      users_and_their_good_pages[u.uid] = user_shared_pages
+    end
+    
+    sorted_users_and_their_good_pages = users_and_their_good_pages.sort_by { |uid, user_shared_pages| user_shared_pages.count }
+    
+    return sorted_users_and_their_good_pages.reverse
+  end
   
 =begin
   def time_fb_connection(my_graph)

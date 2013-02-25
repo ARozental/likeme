@@ -6,11 +6,14 @@ class HomeController < ApplicationController
     #@pobj = @pgraph.get_connections("me", "books")  
     #@pobj = @pgraph.get_object("me")
       
-      begin
+      #begin #wehave problems then the session ends
        
-        @current_user = current_user  
-        @matches = @current_user.find_matches
-
+        @current_user = current_user
+        f=Filter.new
+        f.gender="female"
+        f.max_age="24"  
+        f.min_age="20"
+        @matches = @current_user.find_matches(f)
         #@user_graph = Koala::Facebook::API.new(current_user.oauth_token)
         #@something = @current_user.time_fb_connection(@user_graph) 
         #@me = @user_graph.get_object("me")
@@ -20,10 +23,13 @@ class HomeController < ApplicationController
         #@other_user = @user_graph.get_object("403087")
         #@other_user_likes = @user_graph.get_connections("403087", "likes")
 
-      rescue
+      #rescue
         #session[:user_id] = nil
         #session = nil #does it fix the loop? 
         #redirect_to "/auth/facebook" #loop it session exist but current user doesn't
-      end    
+     # end    
+  end
+  def login
+    
   end
 end
