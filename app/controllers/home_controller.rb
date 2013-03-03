@@ -7,13 +7,17 @@ class HomeController < ApplicationController
     #@pobj = @pgraph.get_object("me")
       
       #begin #wehave problems then the session ends
-       
         @current_user = current_user
-        f=Filter.new
-        f.gender="female"
-        f.max_age="24"  
-        f.min_age="20"
-        @matches = @current_user.find_matches(f)
+        
+        
+        @filter||=Filter.new
+        @filter.gender=params[:gender]
+        @filter.gender=nil if @filter.gender=="on"
+        @filter.min_age=params[:min_age]
+        @filter.max_age=params[:max_age]
+        
+        #raise @filter.gender.to_s
+        @matches = @current_user.find_matches(@filter)
         #@user_graph = Koala::Facebook::API.new(current_user.oauth_token)
         #@something = @current_user.time_fb_connection(@user_graph) 
         #@me = @user_graph.get_object("me")
@@ -27,7 +31,7 @@ class HomeController < ApplicationController
         #session[:user_id] = nil
         #session = nil #does it fix the loop? 
         #redirect_to "/auth/facebook" #loop it session exist but current user doesn't
-     # end    
+      #end    
   end
   def login
     

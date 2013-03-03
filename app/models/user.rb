@@ -25,7 +25,7 @@ class User < ActiveRecord::Base
                       
   }
   
-  def date_to_age(birthday)
+  def date_to_age(birthday) #not a methood so we can do it before save and use update attributes
     #stupid americans            
     begin
       birthday=birthday.split("/")
@@ -189,19 +189,22 @@ class User < ActiveRecord::Base
   
   def insert_my_info_to_db(my_graph)
     
-    #doesn't seem to affect time
-    #ActiveRecord::Base.connection.execute("ALTER TABLE `user_page_relationships` DISABLE KEYS;")
-
    
     #my user to db
     fb_me = my_graph.get_object("me")
     db_me = insert_friend_to_db(fb_me)
     #insert_friend_info(my_graph,db_me)
+
     my_friends_id = my_graph.get_connections("me", "friends")
     my_friends_id_array = []
+    friendships_array = []#todo work now
     my_friends_id.each do |fb_friend|
       my_friends_id_array.push(fb_friend["id"])
+      friendships_array<<"a"#todo work now
     end
+    
+    
+    
     grouped_id_array = my_friends_id_array.each_slice(50).to_a
     #raise grouped_id_array.to_s
     my_friends = []
@@ -245,7 +248,7 @@ class User < ActiveRecord::Base
   def find_matches(filter)  #main matching algorithm, returns sorted hash of {uid => score}
     users = User.includes(:user_page_relationships) #.where(filter)sample(5) filter.get_conditions
     users = users.where(:gender => filter.gender) unless filter.gender==nil
-    users = users.where("age <= ?", filter.max_age) unless filter.max_age==nil
+    users = users.where("age <= ?", filter.max_age) unless filter.max_age==nil #todo: is it always valid when no age available? 
     users = users.where("age >= ?", filter.min_age) unless filter.min_age==nil
     #where("price < ?", price)
     

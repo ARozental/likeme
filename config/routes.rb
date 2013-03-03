@@ -6,7 +6,9 @@ Likeme::Application.routes.draw do
   match 'auth/:provider/callback', to: 'sessions#create'
   match 'auth/failure', to: redirect('/')
   match 'signout', to: 'sessions#destroy', as: 'signout'
-  
+  #get 'client_address_joins/upload', :via => :post
+  #match 'client_address_joins/upload' => 'client_address_joins#upload', :via => :post
+
   
   
   # The priority is based upon order of creation:

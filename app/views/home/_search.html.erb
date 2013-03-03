@@ -1,0 +1,21 @@
+<%= form_tag(:action => :index) do %>
+	<div class="field">
+		<%= label_tag(:min_age,"min age:") %> <!-- default value-->
+		<%= text_field_tag(:min_age, @filter.min_age) %>
+	</div>
+	<div class="field">
+		<%= label_tag(:max_age,"max age:") %>
+		<%= text_field_tag(:max_age, @filter.max_age) %>
+	</div>
+	<div class="field">
+		<%= radio_button_tag(:gender, "female") %>
+		<%= label_tag(:gender, "female") %>
+		<%= radio_button_tag(:gender, "male") %>
+		<%= label_tag(:gender, "male") %>
+		<%= radio_button_tag(:gender, nil) %>
+		<%= label_tag(:gender, "any") %>
+	</div>
+	<div class="actions">
+		<%= submit_tag("search") %>
+	</div>
+<% end %>
