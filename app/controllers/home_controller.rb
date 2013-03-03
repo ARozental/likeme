@@ -12,12 +12,15 @@ class HomeController < ApplicationController
         
         @filter||=Filter.new
         @filter.gender=params[:gender]
-        @filter.gender=nil if @filter.gender=="on"
+        
         @filter.min_age=params[:min_age]
         @filter.max_age=params[:max_age]
-        
         #raise @filter.gender.to_s
+        @filter.gender=nil if params[:gender]=="any" #move to find matches
         @matches = @current_user.find_matches(@filter)
+        @filter.gender=params[:gender]
+        #raise @filter.gender.to_s
+        
         #@user_graph = Koala::Facebook::API.new(current_user.oauth_token)
         #@something = @current_user.time_fb_connection(@user_graph) 
         #@me = @user_graph.get_object("me")
