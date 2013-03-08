@@ -5,7 +5,7 @@ gem 'omniauth-facebook', '1.4.0'
 gem 'koala'
 gem 'delayed_job_active_record'
 gem "daemons"
-gem 'mysql2'
+
 gem 'activerecord-import'
 gem 'foreigner'
 group :production do
@@ -17,6 +17,7 @@ end
 
 group :development, :test do
   gem 'sqlite3'
+  gem 'mysql2'
 end
  
 
