@@ -6,10 +6,15 @@ class HomeController < ApplicationController
     #@pobj = @pgraph.get_connections("me", "books")  
     #@pobj = @pgraph.get_object("me")
       
-      #begin #wehave problems then the session ends
+      begin #we have problems then the session ends
         @current_user = current_user
+      rescue
+        session[:user_id] = nil
+        session = nil #does it fix the loop? 
+        redirect_to "/auth/facebook" #loop it session exist but current user doesn't
+      end     
         
-        
+      #begin
         @filter||=Filter.new
         @filter.gender=params[:gender]
         
@@ -17,10 +22,11 @@ class HomeController < ApplicationController
         @filter.max_age=params[:max_age]
         #raise @filter.gender.to_s
         @filter.gender=nil if params[:gender]=="any" #move to find matches
-        @matches = @current_user.find_matches(@filter)
+        @matches = @current_user.find_matches(@filter) unless @current_user==nil
         @filter.gender=params[:gender]
         #raise @filter.gender.to_s
-        
+      #rescue
+      #end
         #@user_graph = Koala::Facebook::API.new(current_user.oauth_token)
         #@something = @current_user.time_fb_connection(@user_graph) 
         #@me = @user_graph.get_object("me")
@@ -30,11 +36,7 @@ class HomeController < ApplicationController
         #@other_user = @user_graph.get_object("403087")
         #@other_user_likes = @user_graph.get_connections("403087", "likes")
 
-      #rescue
-        #session[:user_id] = nil
-        #session = nil #does it fix the loop? 
-        #redirect_to "/auth/facebook" #loop it session exist but current user doesn't
-      #end    
+  
   end
   def login
     

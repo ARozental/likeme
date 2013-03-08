@@ -33,6 +33,20 @@ end
   #before_validation :make_id
   #validates_uniqueness_of :id
 
+  
+  def my_type_score_with(user,type) #todo: 4 db calls that can be reduced to 2 in exchange for readability
+    my_favorites_pid = self.user_page_relationships.where(:relationship_type => type).map(&:page_id)
+    user_likes_pid = user.user_page_relationships.where(:relationship_type => "likes").map(&:page_id)
+    
+    user_favorites_pid = user.user_page_relationships.where(:relationship_type => type).map(&:page_id)   
+    my_likes_pid = self.user_page_relationships.where(:relationship_type => "likes").map(&:page_id)
+    
+    my_score = ((my_favorites_pid & user_likes_pid).count.to_f)/(my_favorites_pid.count + 1)
+    user_score = ((user_favorites_pid & my_likes_pid).count.to_f)/(user_favorites_pid.count + 1)
+    
+    return (my_score+user_score)/2.0  
+  end
+  
   def insert_my_info_to_db_old(my_graph)
     #my user to db
     fb_me = my_graph.get_object("me")
@@ -210,4 +224,84 @@ end
     return existing_pages_id
     #raise existing_pages.to_s
   end
-=end  
+=end 
+
+
+
+
+=begin
+  
+  def find_matches_incomplete_raw_sql(filter)  #main matching algorithm, returns sorted hash of {uid => score}
+    users = User.where({}) #.where(filter)sample(5) 
+    users = users.where(:gender => filter.gender) unless filter.gender==nil
+    users = users.where("age <= ?", filter.max_age) unless filter.max_age==nil #todo: is it always valid when no age available? 
+    users = users.where("age >= ?", filter.min_age) unless filter.min_age==nil
+    users = users.all
+    my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
+    @@all_page_types.each {|t|  my_pages[t] ||= []  } 
+    
+    users_id = users.map(&:id) #array of user id's
+    likes_id = ActiveRecord::Base.connection.execute("SELECT `user_page_relationships`.*  FROM `user_page_relationships` WHERE `user_page_relationships`.`user_id` IN (#{users_id.to_s[1..-2]})")    
+    
+    raise likes_id.to_a.to_s
+    user_type_scores = Hash.new
+    users_scores = Hash.new
+    
+    #@result.map(&:ingredient_id)
+    #users_id.to_s[1..-2]
+    #the .each is when the db is actually querried, takes about 0.1 seconds per person
+    #nevertheless the db query says it was done in 0.3 seconds for everyone (instead of ~ 20 seconds)
+    #maybe preparing the query is the thing that takes all the time...
+    #@@t = Time.now
+    #ActiveRecord::Base.connection.execute("SELECT `user_page_relationships`.* FROM `user_page_relationships` WHERE `user_page_relationships`.`user_id` IN (403087, 4812944, 7814088, 7951570, 500758940, 509006501, 509235222, 509298645, 523324821, 531468362, 531748935, 534017701, 534942713, 537060876, 540004381, 541213350, 543930569, 555591679, 557554734, 557719165, 561968411, 568421699, 568772885, 570792851, 571161358, 571563453, 576723673, 580911797, 584287703, 584564993, 584663600, 588985921, 599771872, 611879300, 614157428, 614227748, 617074707, 617129409, 618258205, 624689387, 625787186, 628416504, 629569657, 634430395, 640236622, 641290282, 641906096, 642989928, 645624017, 649154511, 651956881, 652977224, 654736616, 663263604, 664444456, 670809202, 672281583, 672712500, 674098492, 679192308, 679932935, 681317849, 683720743, 684456826, 684483524, 688591863, 690782893, 692543926, 698928679, 699927021, 700251910, 701907883, 704779466, 706709402, 706953507, 708916298, 716338621, 718198175, 718599261, 720780340, 721879451, 722216637, 726202564, 728014683, 728264937, 728773216, 729318980, 730669263, 732088883, 733006140, 733036288, 735143424, 742552901, 742654607, 743168191, 743282086, 745368651, 750447972, 756987511, 757953555, 759841109, 764511177, 767923815, 771658648, 774963146, 779473531, 785294809, 798299094, 805074507, 807829678, 820563738, 822514518, 898920631, 904170122, 1009050478, 1020838859, 1027824259, 1029177407, 1037472934, 1049643909, 1050876972, 1051714764, 1055849757, 1062280398, 1068846474, 1070257630, 1074963269, 1078580550, 1121611112, 1125919485, 1147650208, 1157990697, 1172158073, 1177177649, 1216591815, 1220498362, 1227427601, 1248032322, 1257168412, 1275158521, 1312509306, 1337234639, 1353862945, 1391790937, 1429105586, 1448400429, 1491370061, 1495533321, 1499568723, 1540935619, 1551171041, 1557200592, 1567731573, 1615043263, 1634673238, 1641458923, 100000007029692, 100000134438771, 100000267359031, 100000418861151, 100000455541737, 100000521728172, 100000601440273, 100000962837133, 100001137434872, 100001157526295, 100001387090980, 100001439566738, 100001584939590, 100001976796576, 100002146507225, 100002204450918, 100002529593444)")    
+    #raise (Time.now-@@t).to_s
+    
+    users.each do |user| 
+      user_pages = user.user_page_relationships.group_by(&:relationship_type)
+      #raise user_pages.to_s
+      if user_pages.blank?
+        user_type_scores = [0.0]
+      else
+        user_type_scores = user_pages.map do |type, page_array| #error if no likes
+          next if (@@weights[type] == 0)        
+          my_score = ((my_pages[type].map(&:page_id) & user_pages['likes'].map(&:page_id)).count.to_f)/(my_pages[type].count + 1)
+          user_score = ((user_pages[type].map(&:page_id) & my_pages['likes'].map(&:page_id)).count.to_f)/(user_pages[type].count + 1)
+          score = ((my_score+user_score) / 2.0) * @@weights[type].to_f
+          score  
+        end
+      end
+      
+      user_type_scores.compact!
+      user_total_score = user_type_scores.inject{ |sum, el| sum + el }.to_f / user_type_scores.size
+      user_chosen_likes = []
+      begin
+      user_chosen_likes = user_pages["likes"].sample(6).map(&:page_id)
+      rescue
+      end
+      users_scores[user.uid] = [user_total_score,user_chosen_likes]
+
+    end
+    users_scores = users_scores.sort_by { |uid, score| score[0] }
+    return users_scores.reverse
+  end 
+=end
+
+
+=begin
+    #my user to db
+    fb_me = my_graph.get_object("me")
+    db_me = insert_friend_to_db(fb_me)
+    #insert_friend_info(my_graph,db_me)
+
+    my_friends_id = my_graph.get_connections("me", "friends") #an array of hashes {"name" => "dan", "id" => "111"}
+    
+    my_id = self.id.to_s 
+    my_friends_id_array = []
+        my_friends_id.each do |fb_friend|
+      my_friends_id_array.push("(" + my_id + "," + fb_friend["id"] + ")")
+    end
+    my_friends_id_string=my_friends_id_array.to_s.gsub!("\"", "")
+    #do it better with db constraints and no deletion:
+    ActiveRecord::Base.connection.execute("DELETE FROM friendships WHERE user_id = #{my_id}")
+    ActiveRecord::Base.connection.execute("INSERT INTO friendships (user_id, friend_id) VALUES #{my_friends_id_string[1..-2]}")
+=end    

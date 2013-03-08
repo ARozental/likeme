@@ -85,8 +85,7 @@ class User < ActiveRecord::Base
       page["pid"] = page["id"]
     end 
      
-    #Page.create(batch_pages)
-    Page.import batch_pages #is it faster?
+    Page.import batch_pages #it is faster
     
     # save user_page_relationships
     data_hash.each do |user_id,category|
@@ -101,7 +100,7 @@ class User < ActiveRecord::Base
       category.each do |category_name,like_array|
         unless like_array == nil
           like_array.each do |like|
-            user_page_relationship_array << UserPageRelationship.new(:fb_created_time => like["created_time"],:relationship_type => category_name,:user_id => user_id,:page_id => like["id"])
+            user_page_relationship_array << UserPageRelationship.new(:relationship_type => category_name,:user_id => user_id,:page_id => like["id"])
             #user_page_relationship_array.push({:fb_created_time => like["created_time"],:relationship_type => category_name,:user_id => user_id,:page_id => like["id"]})
           end
         end        
@@ -140,7 +139,7 @@ class User < ActiveRecord::Base
       #page_array.push(Page.new(:id => like["id"],:pid => like["id"],:name => like["name"],:category => like["category"]))
       #user_page_relationship_array.push(UserPageRelationship.new(:fb_created_time => like["created_time"],:relationship_type => type,:user_id => friend_id,:page_id => like["id"]))
       page_array.push({:id => like["id"],:pid => like["id"],:name => like["name"],:category => like["category"]})
-      user_page_relationship_array.push({:fb_created_time => like["created_time"],:relationship_type => type,:user_id => friend_id,:page_id => like["id"]})
+      user_page_relationship_array.push({:relationship_type => type,:user_id => friend_id,:page_id => like["id"]})
 
     end
     all_pages_id = Page.all.map(&:id) #move
@@ -196,17 +195,14 @@ class User < ActiveRecord::Base
     #insert_friend_info(my_graph,db_me)
 
     my_friends_id = my_graph.get_connections("me", "friends")
+    
+    
+    
     my_friends_id_array = []
-    friendships_array = []#todo work now
     my_friends_id.each do |fb_friend|
       my_friends_id_array.push(fb_friend["id"])
-      friendships_array<<"a"#todo work now
-    end
-    
-    
-    
+    end    
     grouped_id_array = my_friends_id_array.each_slice(50).to_a
-    #raise grouped_id_array.to_s
     my_friends = []
     grouped_id_array.each do |id_array|
       batch_results = my_graph.batch do |batch_api|#array of arraies of hashes
@@ -224,42 +220,38 @@ class User < ActiveRecord::Base
     end
     insert_batches_info(my_graph,my_friends)
     
+    #frienships
+    my_id = self.id.to_s 
+    my_friends_id_array = []
+        my_friends_id.each do |fb_friend|
+      my_friends_id_array.push("(" + my_id + "," + fb_friend["id"] + ")")
+    end
+    my_friends_id_string=my_friends_id_array.to_s.gsub!("\"", "")
+    #do it better with db constraints and no deletion:
+    ActiveRecord::Base.connection.execute("DELETE FROM friendships WHERE user_id = #{my_id}")
+    ActiveRecord::Base.connection.execute("INSERT INTO friendships (user_id, friend_id) VALUES #{my_friends_id_string[1..-2]}")
+    
+    
   end
   #handle_asynchronously :insert_my_info_to_db
 
   
 
-  
-
-  
-  def my_type_score_with(user,type) #todo: 4 db calls that can be reduced to 2 in exchange for readability
-    my_favorites_pid = self.user_page_relationships.where(:relationship_type => type).map(&:page_id)
-    user_likes_pid = user.user_page_relationships.where(:relationship_type => "likes").map(&:page_id)
-    
-    user_favorites_pid = user.user_page_relationships.where(:relationship_type => type).map(&:page_id)   
-    my_likes_pid = self.user_page_relationships.where(:relationship_type => "likes").map(&:page_id)
-    
-    my_score = ((my_favorites_pid & user_likes_pid).count.to_f)/(my_favorites_pid.count + 1)
-    user_score = ((user_favorites_pid & my_likes_pid).count.to_f)/(user_favorites_pid.count + 1)
-    
-    return (my_score+user_score)/2.0  
-  end
-
   def find_matches(filter)  #main matching algorithm, returns sorted hash of {uid => score}
-    users = User.includes(:user_page_relationships) #.where(filter)sample(5) filter.get_conditions
-    users = users.where(:gender => filter.gender) unless filter.gender==nil
-    users = users.where("age <= ?", filter.max_age) unless filter.max_age==nil #todo: is it always valid when no age available? 
-    users = users.where("age >= ?", filter.min_age) unless filter.min_age==nil
-    #where("price < ?", price)
+    users = User.includes(:user_page_relationships) 
+    users = users.where(:gender => filter.gender) unless filter.gender.blank?
+    users = users.where("age <= ?", filter.max_age) unless filter.max_age.blank? #todo: find out if it is always valid when no age available? 
+    users = users.where("age >= ?", filter.min_age) unless filter.min_age.blank?
+    #users = users.sample(n) to make it run faster
     
     my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
     @@all_page_types.each {|t|  my_pages[t] ||= []  } 
    
     user_type_scores = Hash.new
     users_scores = Hash.new
-    users.each do |user|
+    
+    users.each do |user| 
       user_pages = user.user_page_relationships.group_by(&:relationship_type)
-      #raise user_pages.to_s
       if user_pages.blank?
         user_type_scores = [0.0]
       else
@@ -283,9 +275,6 @@ class User < ActiveRecord::Base
 
     end
     users_scores = users_scores.sort_by { |uid, score| score[0] }
-    #raise users_scores.to_s
     return users_scores.reverse
-  end 
-  
-  
+  end    
 end

@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-
+#ruby '1.9.3', engine: 'jruby', engine_version: '1.7.2' for graph in future
 gem 'rails', '3.2.8'
 gem 'omniauth-facebook', '1.4.0'
 gem 'koala'
@@ -8,11 +8,17 @@ gem "daemons"
 gem 'mysql2'
 gem 'activerecord-import'
 gem 'foreigner'
+group :production do
+  gem 'pg', '0.12.2'
+end
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
 
-gem 'sqlite3' #seriously, get mysql2
+group :development, :test do
+  gem 'sqlite3'
+end
+ 
 
 
 # Gems used only for assets and not required

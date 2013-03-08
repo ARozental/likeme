@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130225130542) do
+ActiveRecord::Schema.define(:version => 20130306144639) do
 
   create_table "delayed_jobs", :force => true do |t|
     t.integer  "priority",   :default => 0
@@ -49,15 +49,11 @@ ActiveRecord::Schema.define(:version => 20130225130542) do
   add_index "pages", ["pid"], :name => "index_pages_on_pid"
 
   create_table "user_page_relationships", :force => true do |t|
-    t.integer  "user_id",           :limit => 8, :null => false
-    t.integer  "page_id",           :limit => 8, :null => false
-    t.string   "relationship_type"
-    t.datetime "fb_created_time"
-    t.datetime "created_at",                     :null => false
-    t.datetime "updated_at",                     :null => false
+    t.integer "user_id",           :limit => 8, :null => false
+    t.integer "page_id",           :limit => 8, :null => false
+    t.string  "relationship_type"
   end
 
-  add_index "user_page_relationships", ["fb_created_time"], :name => "index_user_page_relationships_on_fb_created_time"
   add_index "user_page_relationships", ["page_id"], :name => "user_page_relationships_page_id_fk"
   add_index "user_page_relationships", ["relationship_type"], :name => "index_user_page_relationships_on_relationship_type"
   add_index "user_page_relationships", ["user_id"], :name => "user_page_relationships_user_id_fk"
