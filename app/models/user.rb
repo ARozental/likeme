@@ -170,7 +170,7 @@ class User < ActiveRecord::Base
   #handle_asynchronously :insert_friend_info
   
   def insert_friend_to_db(fb_friend)
-    db_friend = User.find_or_initialize_by_id(fb_friend["id"].to_i)
+    db_friend = User.find_or_initialize_by_id(fb_friend["id"])
       db_friend.update_attributes({
          :id => fb_friend["id"],
          :name => fb_friend["name"],
@@ -216,9 +216,13 @@ class User < ActiveRecord::Base
       my_friends.push(batch_results)
     end
     my_friends=my_friends.flatten
-    
+    #raise my_friends.to_s
     my_friends.each do |fb_friend| #todo: make it faster
-      db_friend = insert_friend_to_db(fb_friend)
+      begin
+        db_friend = insert_friend_to_db(fb_friend)
+      rescue
+        raise fb_friend.to_s
+      end
     end
     insert_batches_info(my_graph,my_friends)
     
