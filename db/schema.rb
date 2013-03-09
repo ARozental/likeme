@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130306144639) do
+ActiveRecord::Schema.define(:version => 20130309102551) do
 
   create_table "delayed_jobs", :force => true do |t|
     t.integer  "priority",   :default => 0
@@ -35,15 +35,13 @@ ActiveRecord::Schema.define(:version => 20130306144639) do
   end
 
   create_table "pages", :force => true do |t|
-    t.integer  "pid",        :limit => 8
     t.string   "name"
     t.string   "category"
-    t.datetime "created_at",              :null => false
-    t.datetime "updated_at",              :null => false
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
   end
 
   add_index "pages", ["category"], :name => "index_pages_on_category"
-  add_index "pages", ["pid"], :name => "index_pages_on_pid"
 
   create_table "user_page_relationships", :force => true do |t|
     t.integer "user_id",           :limit => 8, :null => false
@@ -55,13 +53,12 @@ ActiveRecord::Schema.define(:version => 20130306144639) do
 
   create_table "users", :force => true do |t|
     t.string   "provider"
-    t.integer  "uid",                 :limit => 8
     t.string   "name"
     t.string   "oauth_token"
     t.datetime "oauth_expires_at"
-    t.datetime "created_at",                                          :null => false
-    t.datetime "updated_at",                                          :null => false
-    t.boolean  "active",                           :default => false
+    t.datetime "created_at",                             :null => false
+    t.datetime "updated_at",                             :null => false
+    t.boolean  "active",              :default => false
     t.string   "email"
     t.datetime "last_fb_update"
     t.string   "location"
@@ -75,7 +72,6 @@ ActiveRecord::Schema.define(:version => 20130306144639) do
   end
 
   add_index "users", ["birthday"], :name => "index_users_on_birthday"
-  add_index "users", ["uid"], :name => "index_users_on_uid"
 
   add_foreign_key "friendships", "users", :name => "friendships_friend_id_fk", :column => "friend_id"
   add_foreign_key "friendships", "users", :name => "friendships_user_id_fk"

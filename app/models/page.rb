@@ -1,5 +1,5 @@
 class Page < ActiveRecord::Base
-  attr_accessible :category, :name, :pid, :user_page_relationships_attributes, :id
+  attr_accessible :category, :name, :user_page_relationships_attributes, :id
   
   #validates_uniqueness_of :id
   has_many :user_page_relationships

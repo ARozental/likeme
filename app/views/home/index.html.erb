@@ -1,7 +1,7 @@
 <% if @current_user %>
 	<%= render 'search' %>
 	
-	<img src="https://graph.facebook.com/<%= @current_user['uid'] %>/picture?type=normal" alt="profile picture">
+	<img src="https://graph.facebook.com/<%= @current_user['id'] %>/picture?type=normal" alt="profile picture">
 	Welcome, <strong><%= @current_user['name'] %></strong>
 	<% unless @matches.blank? %>
 		<table cellspacing="0px" cellpadding="0px" >		

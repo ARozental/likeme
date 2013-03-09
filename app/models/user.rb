@@ -1,6 +1,6 @@
 class User < ActiveRecord::Base
   include UsersHelper
-  attr_accessible :active, :name, :uid, :last_fb_update, :location, :birthday, :id, :gender, :age
+  attr_accessible :active, :name, :id, :last_fb_update, :location, :birthday, :id, :gender, :age
   attr_accessible :hometown, :quotes, :relationship_status, :significant_other
   serialize :location
   serialize :hometown
@@ -26,7 +26,7 @@ class User < ActiveRecord::Base
   }
   
   def date_to_age(birthday) #not a methood so we can do it before save and use update attributes
-    #stupid americans            
+    #dumb americans            
     begin
       birthday=birthday.split("/")
       month=birthday[0]
@@ -79,13 +79,13 @@ class User < ActiveRecord::Base
     batch_likes.each do |like|      
       #batch_pages.push(like.tap{|x| x.delete("created_time")}) unless batch_pages==nil
       #for some reson there is a nil in the like array
-      batch_pages << Page.new(:category=>like["category"], :name=>like["name"], :pid=>like["id"], :id=>like["id"]) unless like==nil
+      batch_pages << Page.new(:category=>like["category"], :name=>like["name"], :id=>like["id"], :id=>like["id"]) unless like==nil
     end
     
     batch_pages = batch_pages.uniq
     batch_pages = batch_pages.delete_if{ |page|all_pages_id.include?(page.id.to_i) } unless batch_pages==nil #faster but won't notice if the page name changes
     batch_pages.each do |page|
-      page["pid"] = page["id"]
+      page["id"] = page["id"]
     end 
      
     Page.import batch_pages #it is faster
@@ -117,11 +117,12 @@ class User < ActiveRecord::Base
 
   
   def self.from_omniauth(auth)
-    #where(auth.slice(:provider, :uid)).first_or_initialize.tap do |user|
-    where(:id => auth.uid).first_or_initialize.tap do |user|
+    #where(auth.slice(:provider, :id)).first_or_initialize.tap do |user|
+    where(:id => auth.extra["raw_info"]["id"]).first_or_initialize.tap do |user|
+      #raise auth.extra["raw_info"]["id"].to_s
       user.provider = auth.provider
-      user.uid = auth.uid 
-      user.id = auth.uid#I added this line
+      #user.id = auth.id 
+      user.id = auth.extra["raw_info"]["id"]
       user.name = auth.info.name
       user.oauth_token = auth.credentials.token
       user.oauth_expires_at = Time.at(auth.credentials.expires_at)
@@ -132,16 +133,16 @@ class User < ActiveRecord::Base
 
 
   def insert_friend_pages(my_graph,db_friend,type)
-    friend_likes = my_graph.get_connections(db_friend.uid, type)
+    friend_likes = my_graph.get_connections(db_friend.id, type)
     friend_id = db_friend.id
     page_array = []
     user_page_relationship_array = []
 
 
     friend_likes.each do |like|
-      #page_array.push(Page.new(:id => like["id"],:pid => like["id"],:name => like["name"],:category => like["category"]))
+      #page_array.push(Page.new(:id => like["id"],:id => like["id"],:name => like["name"],:category => like["category"]))
       #user_page_relationship_array.push(UserPageRelationship.new(:fb_created_time => like["created_time"],:relationship_type => type,:user_id => friend_id,:page_id => like["id"]))
-      page_array.push({:id => like["id"],:pid => like["id"],:name => like["name"],:category => like["category"]})
+      page_array.push({:id => like["id"],:id => like["id"],:name => like["name"],:category => like["category"]})
       user_page_relationship_array.push({:relationship_type => type,:user_id => friend_id,:page_id => like["id"]})
 
     end
@@ -169,10 +170,10 @@ class User < ActiveRecord::Base
   #handle_asynchronously :insert_friend_info
   
   def insert_friend_to_db(fb_friend)
-    db_friend = User.find_or_initialize_by_uid(fb_friend["id"])
+    db_friend = User.find_or_initialize_by_id(fb_friend["id"])
       db_friend.update_attributes({
          :id => fb_friend["id"],
-         :uid => fb_friend["id"],
+         :id => fb_friend["id"],
          :name => fb_friend["name"],
          :location => fb_friend["location"],
          :birthday => fb_friend["birthday"],
@@ -239,7 +240,7 @@ class User < ActiveRecord::Base
 
   
 
-  def find_matches(filter)  #main matching algorithm, returns sorted hash of {uid => score}
+  def find_matches(filter)  #main matching algorithm, returns sorted hash of {id => score}
     users = User.includes(:user_page_relationships) 
     users = users.where(:gender => filter.gender) unless filter.gender.blank?
     users = users.where("age <= ?", filter.max_age) unless filter.max_age.blank? #todo: if you didn't give your age to facebook it is set to zero
@@ -258,9 +259,17 @@ class User < ActiveRecord::Base
         user_type_scores = [0.0]
       else
         user_type_scores = user_pages.map do |type, page_array| #error if no likes
-          next if (@@weights[type] == 0)        
-          my_score = ((my_pages[type].map(&:page_id) & user_pages['likes'].map(&:page_id)).count.to_f)/(my_pages[type].count + 1)
-          user_score = ((user_pages[type].map(&:page_id) & my_pages['likes'].map(&:page_id)).count.to_f)/(user_pages[type].count + 1)
+          next if (@@weights[type] == 0 )
+          begin        
+            my_score = ((my_pages[type].map(&:page_id) & user_pages['likes'].map(&:page_id)).count.to_f)/(my_pages[type].count + 1)
+          rescue
+            my_score = 0
+          end
+          begin
+            user_score = ((user_pages[type].map(&:page_id) & my_pages['likes'].map(&:page_id)).count.to_f)/(user_pages[type].count + 1)
+          rescue
+            my_score = 0
+          end
           score = ((my_score+user_score) / 2.0) * @@weights[type].to_f
           score  
         end
@@ -273,10 +282,10 @@ class User < ActiveRecord::Base
       user_chosen_likes = user_pages["likes"].sample(6).map(&:page_id)
       rescue
       end
-      users_scores[user.uid] = [user_total_score,user_chosen_likes]
+      users_scores[user.id] = [user_total_score,user_chosen_likes]
 
     end
-    users_scores = users_scores.sort_by { |uid, score| score[0] }
+    users_scores = users_scores.sort_by { |id, score| score[0] }
     return users_scores.reverse
   end    
 end
