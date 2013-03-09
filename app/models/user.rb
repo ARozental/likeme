@@ -173,7 +173,6 @@ class User < ActiveRecord::Base
     db_friend = User.find_or_initialize_by_id(fb_friend["id"])
       db_friend.update_attributes({
          :id => fb_friend["id"],
-         :id => fb_friend["id"],
          :name => fb_friend["name"],
          :location => fb_friend["location"],
          :birthday => fb_friend["birthday"],
