@@ -118,7 +118,7 @@ class User < ActiveRecord::Base
   
   def self.from_omniauth(auth)
     #where(auth.slice(:provider, :id)).first_or_initialize.tap do |user|
-    where(:id => auth.extra["raw_info"]["id"]).first_or_initialize.tap do |user|
+    where(:id => auth.extra["raw_info"]["id"].to_i).first_or_initialize.tap do |user|
       #raise auth.extra["raw_info"]["id"].to_s
       user.provider = auth.provider
       #user.id = auth.id 
@@ -170,7 +170,7 @@ class User < ActiveRecord::Base
   #handle_asynchronously :insert_friend_info
   
   def insert_friend_to_db(fb_friend)
-    db_friend = User.find_or_initialize_by_id(fb_friend["id"])
+    db_friend = User.find_or_initialize_by_id(fb_friend["id"].to_i)
       db_friend.update_attributes({
          :id => fb_friend["id"],
          :name => fb_friend["name"],
