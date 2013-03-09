@@ -52,7 +52,11 @@ class User < ActiveRecord::Base
     grouped_id_array = id_array.each_slice(50/(@@weights.count)).to_a #so we will have no more than 50 requests in a batch
 
     grouped_id_array.each do |group|
+      begin
       retrive_and_save_batch(my_graph,group)
+      rescue
+        #todo: delete in dev
+      end
     end
   end
   
@@ -221,7 +225,7 @@ class User < ActiveRecord::Base
       begin
         db_friend = insert_friend_to_db(fb_friend)
       rescue
-        raise fb_friend.to_s
+        #todo: delete in dev
       end
     end
     insert_batches_info(my_graph,my_friends)
