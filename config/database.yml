@@ -3,13 +3,23 @@
 #
 #   Ensure the SQLite 3 gem is defined in your Gemfile
 #   gem 'sqlite3'
+
+#development: 
+ # adapter: mysql2
+  #encoding: utf8
+  #collation: utf8_unicode_ci
+  #database: likeme_development
+  #username: root
+  #password: "46254625"
+
 development:
-  adapter: mysql2
+  adapter: postgresql
   encoding: utf8
-  collation: utf8_unicode_ci
-  database: likeme_development
-  username: root
-  password: "46254625"
+  Port: 5432
+  database: likeme_pg
+  username: alon
+  password: 
+
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".

@@ -68,6 +68,9 @@ class User < ActiveRecord::Base
     pursed_batch = batch_results.each_slice(@@weights.count).to_a #every element is an array with all info on a user
     data_hash = Hash[users_id_array.zip pursed_batch] #hash of 6 users, user_id=>array of arraies the contain likes, books, movies...
     
+    #raise graph.get_connections("509006501", "likes").to_s   can't get data on some people...
+    #raise data_hash.to_s if data_hash.keys.first.to_s=="509006501"
+    
     # save the new pages
     all_pages_id = Page.all.map(&:id) #move to save db entries   
     
@@ -90,8 +93,9 @@ class User < ActiveRecord::Base
     # save user_page_relationships
     data_hash.each do |user_id,category|
       db_friend = User.find(user_id) #should only do find 
-      #db_friend.user_page_relationships = [] #does: UPDATE `user_page_relationships` SET `user_id` = NULL WHERE `user_page_relationships`.`user_id` = 584663600 AND `user_page_relationships`.`id` IN (1, 2, 3)
-      ActiveRecord::Base.connection.execute('DELETE FROM `user_page_relationships` WHERE `user_page_relationships`.`user_id` = 403087')
+      
+      #todo: use update instead of delete and insert (with 2 column pk)
+      ActiveRecord::Base.connection.execute("DELETE FROM user_page_relationships WHERE user_id = #{user_id}")
       data_hash[user_id] = Hash[@@all_page_types.zip category]     
     end
         
@@ -106,7 +110,6 @@ class User < ActiveRecord::Base
         end        
       end           
     end
-    #UserPageRelationship.create(user_page_relationship_array)
     UserPageRelationship.import user_page_relationship_array
   end
   #handle_asynchronously :retrive_and_save_batch
@@ -163,7 +166,7 @@ class User < ActiveRecord::Base
       insert_friend_pages(my_graph,db_friend,type) 
     end
   end
-  handle_asynchronously :insert_friend_info
+  #handle_asynchronously :insert_friend_info
   
   def insert_friend_to_db(fb_friend)
     db_friend = User.find_or_initialize_by_uid(fb_friend["id"])
@@ -214,8 +217,7 @@ class User < ActiveRecord::Base
     end
     my_friends=my_friends.flatten
     
-    
-    my_friends.each do |fb_friend|
+    my_friends.each do |fb_friend| #todo: make it faster
       db_friend = insert_friend_to_db(fb_friend)
     end
     insert_batches_info(my_graph,my_friends)
@@ -240,7 +242,7 @@ class User < ActiveRecord::Base
   def find_matches(filter)  #main matching algorithm, returns sorted hash of {uid => score}
     users = User.includes(:user_page_relationships) 
     users = users.where(:gender => filter.gender) unless filter.gender.blank?
-    users = users.where("age <= ?", filter.max_age) unless filter.max_age.blank? #todo: find out if it is always valid when no age available? 
+    users = users.where("age <= ?", filter.max_age) unless filter.max_age.blank? #todo: if you didn't give your age to facebook it is set to zero
     users = users.where("age >= ?", filter.min_age) unless filter.min_age.blank?
     #users = users.sample(n) to make it run faster
     

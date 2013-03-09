@@ -34,9 +34,6 @@ ActiveRecord::Schema.define(:version => 20130306144639) do
     t.integer "friend_id", :limit => 8, :null => false
   end
 
-  add_index "friendships", ["friend_id"], :name => "friendships_friend_id_fk"
-  add_index "friendships", ["user_id"], :name => "friendships_user_id_fk"
-
   create_table "pages", :force => true do |t|
     t.integer  "pid",        :limit => 8
     t.string   "name"
@@ -54,9 +51,7 @@ ActiveRecord::Schema.define(:version => 20130306144639) do
     t.string  "relationship_type"
   end
 
-  add_index "user_page_relationships", ["page_id"], :name => "user_page_relationships_page_id_fk"
   add_index "user_page_relationships", ["relationship_type"], :name => "index_user_page_relationships_on_relationship_type"
-  add_index "user_page_relationships", ["user_id"], :name => "user_page_relationships_user_id_fk"
 
   create_table "users", :force => true do |t|
     t.string   "provider"
@@ -72,7 +67,7 @@ ActiveRecord::Schema.define(:version => 20130306144639) do
     t.string   "location"
     t.string   "birthday"
     t.string   "hometown"
-    t.string   "quotes"
+    t.text     "quotes"
     t.string   "relationship_status"
     t.string   "significant_other"
     t.string   "gender"

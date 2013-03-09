@@ -3,8 +3,8 @@ class CreateUsers < ActiveRecord::Migration
     create_table :users do |t| #do I need ", :id => false" here?
       #t.integer :id, :limit => 8
       t.string :provider
-      t.column :uid, 'BIGINT UNSIGNED'
-      t.string :uid, :limit => 8
+      t.column :uid, 'BIGINT'#'NUMERIC(20)'
+      t.integer :uid, :limit => 8 
       t.string :name
       t.string :oauth_token
       t.datetime :oauth_expires_at
