@@ -1,7 +1,6 @@
 Likeme::Application.configure do
   # Settings specified here will take precedence over those in config/application.rb
 config.action_controller.consider_all_requests_local = true
-config.action_view.debug_rjs                         = true
 config.action_controller.perform_caching             = false
 
   # Code is not reloaded between requests
