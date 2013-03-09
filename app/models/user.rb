@@ -47,7 +47,7 @@ class User < ActiveRecord::Base
     my_id = self.id.to_s
     id_array = [my_id]
     my_friends.each do |friend|
-      id_array.push(friend["id"])
+      id_array.push(friend["id"]) unless friend==nil #shouldn't be nil but sometimes it is
     end
     grouped_id_array = id_array.each_slice(50/(@@weights.count)).to_a #so we will have no more than 50 requests in a batch
 
