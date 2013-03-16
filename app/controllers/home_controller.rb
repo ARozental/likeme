@@ -5,7 +5,8 @@ class HomeController < ApplicationController
     #@pgraph = Koala::Facebook::API.new("AAAFHkL4f2AwBAHdnB19h4jsjkdaZC3e5J1WeXCkrA5opEcy9slZBebY7ZAZCJVIB8I9hpMPkWIZBGCK09auVU7cnFT8zh03mHj8XPpI99ogZDZD")
     #@pobj = @pgraph.get_connections("me", "books")  
     #@pobj = @pgraph.get_object("me")
-      
+      #req = Net::HTTP.get(URI.parse('http://localhost:3000/home/insert'))
+
       begin #we have problems then the session ends
         @current_user = current_user
       rescue
@@ -38,7 +39,8 @@ class HomeController < ApplicationController
 
   
   end
-  def login
-    
+  def insert
+    @current_user = current_user
+    @graph = Koala::Facebook::API.new(current_user.oauth_token)
   end
 end

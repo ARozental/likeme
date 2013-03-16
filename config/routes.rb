@@ -2,6 +2,10 @@ Likeme::Application.routes.draw do
   
   resources :users
   resources :user_page_relationships
+  #get 'home/insert', :via => :get
+  get 'home/insert', :via => :post
+  match 'home/insert' => 'home#insert', :via => :post
+
   
   match 'auth/:provider/callback', to: 'sessions#create'
   match 'auth/failure', to: redirect('/')

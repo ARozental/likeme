@@ -1,10 +1,10 @@
 <% if @current_user %>
 	<%= render 'search' %>
 	
-	<img src="https://graph.facebook.com/<%= @current_user['id'] %>/picture?type=normal" alt="profile picture">
-	Welcome, <strong><%= @current_user['name'] %></strong>
+	<img id="mypic" src="https://graph.facebook.com/<%= @current_user['id'] %>/picture?type=normal" alt="profile picture">
+	<div id="Welcome"> Welcome, <strong><%= @current_user['name'] %></strong></div>
 	<% unless @matches.blank? %>
-		<table cellspacing="0px" cellpadding="0px" >		
+		<table id="matches" cellspacing="0px" cellpadding="0px" >		
 			<% [@matches.count, 5].min.times do |n| %>
 			<!-- <div id = "prophile_box">-->
 			<tr bgcolor="grey">

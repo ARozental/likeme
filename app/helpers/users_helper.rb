@@ -2,14 +2,29 @@ module UsersHelper
   def blaaa
     return 6
   end
+
+
+
+  def date_to_age(birthday) #not a methood so we can do it before save and use update attributes
+    #dumb americans            
+    begin
+      birthday=birthday.split("/")
+      month=birthday[0]
+      day=birthday[1]
+      birthday[0]=day
+      birthday[1]=month
+      birthday=birthday.join("/") 
+      dob = Time.parse(birthday)
+      now = Time.now.utc.to_date
+      now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)           
+    rescue
+      return nil #because user didn't say his birthday or birth year to facebook
+    end    
+  end
+
+
+
 end
-
-
-
-
-
-
-
 
 
 

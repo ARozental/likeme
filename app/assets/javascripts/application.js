@@ -13,3 +13,28 @@
 //= require jquery
 //= require jquery_ujs
 //= require_tree .
+/*$(document).ready(function(){
+	var a = 1;
+  $("#Welcome").click(function(){
+  	
+  	if (a == 1)
+  	{
+  		$.post("http://localhost:3000/home/insert", function() {
+  			alert("success");
+			})
+		.error(function() { 
+  		 alert("error"); 
+		})
+  		$("#Welcome").text("2");
+  		a = 2;
+  	}
+  	else
+  	{ 		
+  		$("#Welcome").text("1");
+  		a = 1;
+  	}   
+  });
+});
+$(document).ready(function() {
+  //$('#mypic').hide()
+});*/
