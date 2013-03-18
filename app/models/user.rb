@@ -38,25 +38,24 @@ class User < ActiveRecord::Base
       now = Time.now.utc.to_date
       now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)           
     rescue
-      return nil #because user didn't say his birthday or birth year to facebook
+      return nil #because user didn't tell his birthday or birth year to facebook
     end    
   end
 
   def insert_batches_info(my_graph,my_friends) #change name to info->db
     #my_friends = my_graph.get_connections("me", "friends")
     my_id = self.id.to_s
-    id_array = [my_id]
+    id_array = [] 
     my_friends.each do |friend|
-      id_array.push(friend["id"]) unless friend==nil #shouldn't be nil but sometimes it is
+      id_array.push(friend["id"]) unless friend==nil
     end
     grouped_id_array = id_array.each_slice(50/(@@weights.count)).to_a #so we will have no more than 50 requests in a batch
-
     grouped_id_array.each do |group|
-      begin
-      retrive_and_save_batch(my_graph,group)
-      rescue
-        #todo: delete in dev
-      end
+      #begin
+        retrive_and_save_batch(my_graph,group)
+      #rescue
+      #  raise group.to_s #delete this
+      #end
     end
   end
   
@@ -71,27 +70,29 @@ class User < ActiveRecord::Base
 
     pursed_batch = batch_results.each_slice(@@weights.count).to_a #every element is an array with all info on a user
     data_hash = Hash[users_id_array.zip pursed_batch] #hash of 6 users, user_id=>array of arraies the contain likes, books, movies...
-    
     #raise graph.get_connections("509006501", "likes").to_s   can't get data on some people...
     #raise data_hash.to_s if data_hash.keys.first.to_s=="509006501"
+    #raise pursed_batch.to_s
     
     # save the new pages
     all_pages_id = Page.all.map(&:id) #move to save db entries   
-    
+      #raise data_hash.to_s
     batch_likes=data_hash.values.flatten
+      #raise batch_likes.to_s
     batch_pages = []
     batch_likes.each do |like|      
       #batch_pages.push(like.tap{|x| x.delete("created_time")}) unless batch_pages==nil
       #for some reson there is a nil in the like array
-      batch_pages << Page.new(:category=>like["category"], :name=>like["name"], :id=>like["id"], :id=>like["id"]) unless like==nil
+      batch_pages << Page.new(:category=>like["category"], :name=>like["name"], :id=>like["id"]) unless like==nil
     end
+    #raise batch_pages.to_s
     
     batch_pages = batch_pages.uniq
     batch_pages = batch_pages.delete_if{ |page|all_pages_id.include?(page.id.to_i) } unless batch_pages==nil #faster but won't notice if the page name changes
     batch_pages.each do |page|
       page["id"] = page["id"]
     end 
-     
+    
     Page.import batch_pages #it is faster
     
     # save user_page_relationships
@@ -159,7 +160,8 @@ class User < ActiveRecord::Base
     
     #raise user_page_relationship_array.to_s
     #db_friend.user_page_relationships = user_page_relationship_array# forgets the user_id???
-    db_friend.user_page_relationships = []
+    ActiveRecord::Base.connection.execute("DELETE FROM user_page_relationships WHERE user_id = #{db_friend.id}")
+    #db_friend.user_page_relationships = []
     #user_page_relationship_array.each(&:save)
     #todo execute disable keys
     UserPageRelationship.create(user_page_relationship_array)
@@ -191,15 +193,49 @@ class User < ActiveRecord::Base
       return db_friend      
   end
   
+  def insert_self_data_and_likes(my_graph)
+    fb_me = my_graph.get_object("me")
+    db_me = insert_friend_to_db(fb_me)
+    
+    my_id = db_me.id
+    user_page_relationship_array = []
+    page_array = []
+    
+    batch_results = my_graph.batch do |batch_api|#todo finish
+      @@all_page_types.each do |category|
+        batch_api.get_connections(my_id, category)          
+      end
+    end   
+    
+    t = Time.now
+    category_counter = 0
+    @@all_page_types.each do |category|
+      my_likes = batch_results[category_counter]      
+      my_likes.each do |like|
+        user_page_relationship_array << UserPageRelationship.new(:relationship_type => category,:user_id => my_id,:page_id => like["id"]) #unless like.blank?
+        page_array << Page.new(:category => like["category"], :name => like["name"], :id => like["id"]) #unless like.blank?      
+      end
+      category_counter = category_counter+1
+    end
 
+    #remove existing pages and duplications from page array
+    existing_pages_id = Page.where(:id => page_array.map(&:id)).map(&:id)
+    page_array = page_array.reject { |page|  existing_pages_id.include?(page["id"])}
+    page_hash = Hash.new
+    page_array.each do |page|
+      page_hash[page["id"]] = page
+    end
+    page_array = page_hash.values    
+
+ 
+    Page.import page_array unless page_array.blank?
+    ActiveRecord::Base.connection.execute("DELETE FROM user_page_relationships WHERE user_id = #{my_id}")
+    UserPageRelationship.import user_page_relationship_array unless user_page_relationship_array.blank?
+
+  end
   
   def insert_my_info_to_db(my_graph)
     
-   
-    #my user to db
-    fb_me = my_graph.get_object("me")
-    db_me = insert_friend_to_db(fb_me)
-    #insert_friend_info(my_graph,db_me)
 
     my_friends_id = my_graph.get_connections("me", "friends")
     
@@ -219,14 +255,9 @@ class User < ActiveRecord::Base
       end
       my_friends.push(batch_results)
     end
-    my_friends=my_friends.flatten
-    #raise my_friends.to_s
-    my_friends.each do |fb_friend| #todo: make it faster
-      begin
+    my_friends = my_friends.flatten.compact    
+    my_friends.each do |fb_friend| #todo: make it faster      
         db_friend = insert_friend_to_db(fb_friend)
-      rescue
-        #todo: delete in dev
-      end
     end
     insert_batches_info(my_graph,my_friends)
     
