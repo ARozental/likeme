@@ -207,7 +207,6 @@ class User < ActiveRecord::Base
       end
     end   
     
-    t = Time.now
     category_counter = 0
     @@all_page_types.each do |category|
       my_likes = batch_results[category_counter]      
@@ -255,12 +254,35 @@ class User < ActiveRecord::Base
       end
       my_friends.push(batch_results)
     end
-    my_friends = my_friends.flatten.compact    
-    my_friends.each do |fb_friend| #todo: make it faster      
-        db_friend = insert_friend_to_db(fb_friend)
-    end
-    insert_batches_info(my_graph,my_friends)
+    my_friends = my_friends.flatten.compact
     
+        
+    #my_friends.each do |fb_friend| #todo: make it faster      
+    #    db_friend = insert_friend_to_db(fb_friend)
+    #end
+    #insert_batches_info(my_graph,my_friends)
+    friends_array = []
+    my_friends.each do |fb_friend|
+      friends_array << User.new(
+      :id => fb_friend["id"],
+      :name => fb_friend["name"],
+      :location => fb_friend["location"],
+      :birthday => fb_friend["birthday"],
+      :hometown => fb_friend["hometown"],
+      :quotes => fb_friend["quotes"],
+      :relationship_status => fb_friend["relationship_status"],
+      :significant_other => fb_friend["significant_other"],
+      :gender => fb_friend["gender"],
+      :age => date_to_age(fb_friend["birthday"]))        
+    end
+    
+    existing_friends_id = User.where(:id => my_friends_id_array).map(&:id)
+    friends_array = friends_array.reject { |friend|  existing_friends_id.include?(friend["id"])}
+    User.import friends_array unless friends_array.blank?
+    
+    #insert friends info
+    insert_batches_info(my_graph,my_friends)
+  
     #frienships
     my_id = self.id.to_s 
     my_friends_id_array = []
