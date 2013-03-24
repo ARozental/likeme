@@ -16,15 +16,21 @@ class HomeController < ApplicationController
       end     
         
       #begin
+      #raise params.to_s
         @filter||=Filter.new
-        @filter.gender=params[:gender]
-        
-        @filter.min_age=params[:min_age]
-        @filter.max_age=params[:max_age]
+        #@filter.gender=params[:gender]
+        @filter.set_params(params)
+        #raise params.to_s
         #raise @filter.gender.to_s
-        @filter.gender=nil if params[:gender]=="any" #move to find matches
+        #raise @filter.gender.to_s
+        #@filter.min_age=params[:min_age]
+        #@filter.max_age=params[:max_age]
+        #raise @filter.gender.to_s
+        #@filter.relationship_status=nil if params[:relationship_status]=="any" #move to find matches
+        #@filter.gender=nil if params[:gender]=="any" #move to find matches
         @matches = @current_user.find_matches(@filter) unless @current_user==nil
-        @filter.gender=params[:gender]
+        #@filter.gender=params[:gender]
+        #@filter.relationship_status=params[:relationship_status]
         #raise @filter.gender.to_s
       #rescue
       #end
@@ -38,9 +44,5 @@ class HomeController < ApplicationController
         #@other_user_likes = @user_graph.get_connections("403087", "likes")
 
   
-  end
-  def insert
-    @current_user = current_user
-    @graph = Koala::Facebook::API.new(current_user.oauth_token)
   end
 end

@@ -1,0 +1,28 @@
+/*
+ * This is a manifest file that'll automatically include all the stylesheets available in this directory
+ * and any sub-directories. You're free to add application-wide styles to this file and they'll appear at
+ * the top of the compiled file, but it's generally better to create a new file per style scope.
+ *= require_self
+ *= require_tree .
+*/
+.face_td{
+	width: 120px;
+	height: 120px;
+	max-height: 120px;
+	max-width: 120px;
+	background-repeat: no-repeat;
+	background-position: center center;
+	overflow: hidden;
+	padding: 0px;
+	position: relative;
+}
+.like_td{
+	width: 40px;
+	height: 40px;
+	max-height: 40px;
+	max-width: 40px;
+	background-repeat: no-repeat;
+	background-position: center center;
+	overflow: hidden;
+	padding: 0px;
+}

@@ -18,7 +18,7 @@ module UsersHelper
       now = Time.now.utc.to_date
       now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)           
     rescue
-      return nil #because user didn't say his birthday or birth year to facebook
+      return nil #because user didn't tell his birthday or birth year to facebook
     end    
   end
 
@@ -110,6 +110,37 @@ end
     
     return sorted_users_and_their_good_pages.reverse
   end
+
+
+=begin
+  def insert_friend_pages(my_graph,db_friend,type)
+    friend_likes = my_graph.get_connections(db_friend.id, type)
+    friend_id = db_friend.id
+    page_array = []
+    user_page_relationship_array = []
+
+
+    friend_likes.each do |like|
+      #page_array.push(Page.new(:id => like["id"],:id => like["id"],:name => like["name"],:category => like["category"]))
+      #user_page_relationship_array.push(UserPageRelationship.new(:fb_created_time => like["created_time"],:relationship_type => type,:user_id => friend_id,:page_id => like["id"]))
+      page_array.push({:id => like["id"],:id => like["id"],:name => like["name"],:category => like["category"]})
+      user_page_relationship_array.push({:relationship_type => type,:user_id => friend_id,:page_id => like["id"]})
+
+    end
+    
+    all_pages_id = Page.where(:id => page_array.map(&:id)).map(&:id)
+    #all_pages_id = Page.all.map(&:id) #move
+     
+    page_array.delete_if{ |page|all_pages_id.include?(page[:id].to_i) } unless page_array==nil #faster but won't notice if the page name changes        
+    Page.create(page_array)
+    
+    #db_friend.user_page_relationships = user_page_relationship_array# forgets the user_id???
+    ActiveRecord::Base.connection.execute("DELETE FROM user_page_relationships WHERE user_id = #{db_friend.id}")
+    UserPageRelationship.create(user_page_relationship_array)
+  end
+=end
+
+
   
 =begin
   def time_fb_connection(my_graph)
@@ -125,7 +156,14 @@ end
   end
 =end
     
-  
+=begin  
+  def insert_friend_info(my_graph,db_friend)    
+    @@all_page_types.each do |type|
+      insert_friend_pages(my_graph,db_friend,type) 
+    end
+  end
+  #handle_asynchronously :insert_friend_info
+=end    
   
 =begin 
   def self.from_omniauth(auth)

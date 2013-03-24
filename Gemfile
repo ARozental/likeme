@@ -5,7 +5,7 @@ gem 'omniauth-facebook', '1.4.0'
 gem 'koala'
 gem 'delayed_job_active_record'
 gem "daemons"
-
+gem "twitter-bootstrap-rails"
 gem 'activerecord-import'
 gem 'foreigner'
 gem 'pg', '0.12.2'

@@ -1,0 +1,32 @@
+<%= form_tag(:action => :index) do %>
+	<div class="field">
+		<%= label_tag(:min_age,"min age:") %> <!-- only reads 2 digets-->
+		<%= number_field_tag(:min_age, @filter.min_age,:in => 16...99) %>
+	</div>
+	<div class="field">
+		<%= label_tag(:max_age,"max age:") %>
+		<%= number_field_tag(:max_age, @filter.max_age, :in => 16...99) %>
+	</div>
+	<div class="btn-toolbar">
+  		<div class="btn-group">
+				<button class="btn"><%= radio_button_tag(:gender, "female", @filter.gender == "female") %></button>
+				<%= label_tag(:gender, "female") %>
+				<%= radio_button_tag(:gender, "male", @filter.gender == "male") %>
+				<%= label_tag(:gender, "male") %>
+				<%= radio_button_tag(:gender, "any", @filter.gender == "any") %>
+				<%= label_tag(:gender, "any") %>
+		</div>
+	</div>
+	<div class="field">
+		<%= radio_button_tag(:relationship_status, "Single", @filter.relationship_status == "Single") %>
+		<%= label_tag(:relationship_status, "single") %>
+		<%= radio_button_tag(:relationship_status, "Engaged", @filter.relationship_status == "Engaged") %>
+		<%= label_tag(:relationship_status, "engaged") %>
+		<%= radio_button_tag(:relationship_status, "any", @filter.relationship_status == "any") %>
+		<%= label_tag(:relationship_status, "any") %>
+	</div>
+
+	<div class="actions">
+		<%= submit_tag("search") %>
+	</div>
+<% end %>

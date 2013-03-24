@@ -1,20 +1,24 @@
 <%= form_tag(:action => :index) do %>
-	<div class="field">
-		<%= label_tag(:min_age,"min age:") %> <!-- only reads 2 digets-->
-		<%= number_field_tag(:min_age, @filter.min_age,:in => 16...99) %>
-	</div>
-	<div class="field">
-		<%= label_tag(:max_age,"max age:") %>
-		<%= number_field_tag(:max_age, @filter.max_age, :in => 16...99) %>
-	</div>
-	<div class="field">
-		<%= radio_button_tag(:gender, "female") %>
-		<%= label_tag(:gender, "female") %>
-		<%= radio_button_tag(:gender, "male") %>
-		<%= label_tag(:gender, "male") %>
-		<%= radio_button_tag(:gender, "any") %>
-		<%= label_tag(:gender, "any") %>
-	</div>
+	<table>
+		<tr>
+			<td><%= label_tag(:min_age,"min age:") %></td>
+			<td><%= label_tag(:max_age,"max age:") %></td>
+		</tr>
+			<td><%= number_field_tag(:min_age, @filter.min_age,:in => 16...99, :class => "btn btn-info dropdown-toggle") %></td>
+			<td><%= number_field_tag(:max_age, @filter.max_age,:in => 16...99) %></td>
+		</tr>		
+		<tr>		
+			<td><%= label_tag(:gender, "gender:") %></td>
+			<td><%= label_tag(:relationship_status, "relationship status:") %></td>
+		</tr>
+		<tr>		
+			<td><%= select_tag(:gender, options_for_select(['any','female', "male"], @filter.gender)) %></td>
+			<td><%= select_tag(:relationship_status, options_for_select(['any',['single', "Single"],['engaged', "Engaged"]], @filter.relationship_status)) %></td>
+		</tr>
+	</table>
+
+
+
 	<div class="actions">
 		<%= submit_tag("search") %>
 	</div>

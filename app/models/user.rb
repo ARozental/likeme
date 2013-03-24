@@ -25,25 +25,7 @@ class User < ActiveRecord::Base
                       
   }
   
-  def date_to_age(birthday) #not a methood so we can do it before save and use update attributes
-    #dumb americans            
-    begin
-      birthday=birthday.split("/")
-      month=birthday[0]
-      day=birthday[1]
-      birthday[0]=day
-      birthday[1]=month
-      birthday=birthday.join("/") 
-      dob = Time.parse(birthday)
-      now = Time.now.utc.to_date
-      now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)           
-    rescue
-      return nil #because user didn't tell his birthday or birth year to facebook
-    end    
-  end
-
-  def insert_batches_info(my_graph,my_friends) #change name to info->db
-    #my_friends = my_graph.get_connections("me", "friends")
+  def insert_batches_info(my_graph,my_friends) 
     my_id = self.id.to_s
     id_array = [] 
     my_friends.each do |friend|
@@ -75,17 +57,13 @@ class User < ActiveRecord::Base
     #raise pursed_batch.to_s
     
     # save the new pages
-    all_pages_id = Page.all.map(&:id) #move to save db entries   
-      #raise data_hash.to_s
+    all_pages_id = Page.all.map(&:id) #change so I won't take all pages to memory move to save db entries   
     batch_likes=data_hash.values.flatten
-      #raise batch_likes.to_s
     batch_pages = []
     batch_likes.each do |like|      
-      #batch_pages.push(like.tap{|x| x.delete("created_time")}) unless batch_pages==nil
       #for some reson there is a nil in the like array
       batch_pages << Page.new(:category=>like["category"], :name=>like["name"], :id=>like["id"]) unless like==nil
     end
-    #raise batch_pages.to_s
     
     batch_pages = batch_pages.uniq
     batch_pages = batch_pages.delete_if{ |page|all_pages_id.include?(page.id.to_i) } unless batch_pages==nil #faster but won't notice if the page name changes
@@ -93,7 +71,7 @@ class User < ActiveRecord::Base
       page["id"] = page["id"]
     end 
     
-    Page.import batch_pages #it is faster
+    Page.import batch_pages 
     
     # save user_page_relationships
     data_hash.each do |user_id,category|
@@ -137,44 +115,7 @@ class User < ActiveRecord::Base
 
 
 
-  def insert_friend_pages(my_graph,db_friend,type)
-    friend_likes = my_graph.get_connections(db_friend.id, type)
-    friend_id = db_friend.id
-    page_array = []
-    user_page_relationship_array = []
 
-
-    friend_likes.each do |like|
-      #page_array.push(Page.new(:id => like["id"],:id => like["id"],:name => like["name"],:category => like["category"]))
-      #user_page_relationship_array.push(UserPageRelationship.new(:fb_created_time => like["created_time"],:relationship_type => type,:user_id => friend_id,:page_id => like["id"]))
-      page_array.push({:id => like["id"],:id => like["id"],:name => like["name"],:category => like["category"]})
-      user_page_relationship_array.push({:relationship_type => type,:user_id => friend_id,:page_id => like["id"]})
-
-    end
-    all_pages_id = Page.all.map(&:id) #move
-    #page_array.each{ |page| page.new_record(false) if all_pages_id.include?(page["id"])}#slower
-    #page_array.each(&:save)#slower
-     
-    page_array.delete_if{ |page|all_pages_id.include?(page[:id].to_i) } unless page_array==nil #faster but won't notice if the page name changes        
-    Page.create(page_array)
-    
-    #raise user_page_relationship_array.to_s
-    #db_friend.user_page_relationships = user_page_relationship_array# forgets the user_id???
-    ActiveRecord::Base.connection.execute("DELETE FROM user_page_relationships WHERE user_id = #{db_friend.id}")
-    #db_friend.user_page_relationships = []
-    #user_page_relationship_array.each(&:save)
-    #todo execute disable keys
-    UserPageRelationship.create(user_page_relationship_array)
-  end
-
-  
-  def insert_friend_info(my_graph,db_friend)    
-    @@all_page_types.each do |type|
-      insert_friend_pages(my_graph,db_friend,type) 
-    end
-  end
-  #handle_asynchronously :insert_friend_info
-  
   def insert_friend_to_db(fb_friend)
     db_friend = User.find_or_initialize_by_id(fb_friend["id"])
       db_friend.update_attributes({
@@ -305,6 +246,7 @@ class User < ActiveRecord::Base
     users = users.where(:gender => filter.gender) unless filter.gender.blank?
     users = users.where("age <= ?", filter.max_age) unless filter.max_age.blank? #todo: if you didn't give your age to facebook it is set to zero
     users = users.where("age >= ?", filter.min_age) unless filter.min_age.blank?
+    users = users.where(:relationship_status => filter.relationship_status) unless filter.relationship_status.blank?
     #users = users.sample(n) to make it run faster
     
     my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages

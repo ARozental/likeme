@@ -1,21 +1,22 @@
 <% if @current_user %>
 	<%= render 'search' %>
-	
 	<img id="mypic" src="https://graph.facebook.com/<%= @current_user['id'] %>/picture?type=normal" alt="profile picture">
 	<div id="Welcome"> Welcome, <strong><%= @current_user['name'] %></strong></div>
 	<% unless @matches.blank? %>
-		<table id="matches" cellspacing="0px" cellpadding="0px" >		
+		<table id="matches" class="table">		
 			<% [@matches.count, 5].min.times do |n| %>
 			<!-- <div id = "prophile_box">-->
-			<tr bgcolor="grey">
-			<td rowspan="2"><%= picture_link(@matches[n][0],"80")%></td>												
+			<tr>
+			<td class="face_td" rowspan="2" style="padding: 0px; max-height: 120px; background-image:url('http://3.bp.blogspot.com/-HQqlVVQP5FU/UFKX5_ym-WI/AAAAAAAACiU/z-_xF3MUudk/s1600/face.jpg')"><%= picture_link(@matches[n][0],"120")%></td>
+			<td>Name</td>												
 				<% 3.times do |k| %>
-					<td><%= picture_link(@matches[n][1][1][k],"40")%></td>
+					<td class="like_td" style="padding: 0px; max-height: 40px;"><%= picture_link(@matches[n][1][1][k],"40")%></td>
 				<% end %>
 			</tr>
 			<tr>
+				<td>Info</td>
 				<% 3.times do |k| %>
-					<td><%= picture_link(@matches[n][1][1][k+3],"40")%></td>
+					<td class="like_td" style="padding: 0px; max-height: 40px;><%= picture_link(@matches[n][1][1][k+3],"40")%></td>
 				<% end %>
 			</tr>						
 					<!--</div><br />-->
