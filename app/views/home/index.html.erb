@@ -7,16 +7,16 @@
 			<% [@matches.count, 5].min.times do |n| %>
 			<!-- <div id = "prophile_box">-->
 			<tr>
-			<td class="face_td" rowspan="2" style="padding: 0px; max-height: 120px; background-image:url('http://3.bp.blogspot.com/-HQqlVVQP5FU/UFKX5_ym-WI/AAAAAAAACiU/z-_xF3MUudk/s1600/face.jpg')"><%= picture_link(@matches[n][0],"120")%></td>
+			<td class="face_td" rowspan="2" style="padding: 0px; max-height: 120px;"><%= picture_link(@matches[n][0],"120")%></td>
 			<td>Name</td>												
 				<% 3.times do |k| %>
-					<td class="like_td" style="padding: 0px; max-height: 40px;"><%= picture_link(@matches[n][1][1][k],"40")%></td>
+					<td class="like_td" style="padding: 0px; max-height: 40px;"><%= picture_link(@matches[n][1][1][k],"60")%></td>
 				<% end %>
 			</tr>
 			<tr>
 				<td>Info</td>
 				<% 3.times do |k| %>
-					<td class="like_td" style="padding: 0px; max-height: 40px;><%= picture_link(@matches[n][1][1][k+3],"40")%></td>
+					<td class="like_td" style="padding: 0px; max-height: 40px;><%= picture_link(@matches[n][1][1][k+3],"60")%></td>
 				<% end %>
 			</tr>						
 					<!--</div><br />-->
@@ -24,5 +24,5 @@
 		</table>
 	<% end %>
 <% else %>
-welcome to my app please sign in
+<!-- todo: something like welcome to my app please sign in -->
 <% end %>
