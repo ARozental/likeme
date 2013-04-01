@@ -6,11 +6,11 @@ class HomeController < ApplicationController
     #@pobj = @pgraph.get_connections("me", "books")  
     #@pobj = @pgraph.get_object("me")
       #req = Net::HTTP.get(URI.parse('http://localhost:3000/home/insert'))
-
+      
+      redirect_to "/auth/facebook" unless current_user
       begin #we have problems then the session ends
         @current_user = current_user
       rescue
-        session[:user_id] = nil
         session = nil #does it fix the loop? 
         redirect_to "/auth/facebook" #loop it session exist but current user doesn't
       end     

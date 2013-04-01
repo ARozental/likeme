@@ -254,7 +254,6 @@ class User < ActiveRecord::Base
    
     user_type_scores = Hash.new
     users_scores = Hash.new
-    
     users.each do |user| 
       user_pages = user.user_page_relationships.group_by(&:relationship_type)
       if user_pages.blank?
@@ -286,8 +285,19 @@ class User < ActiveRecord::Base
       end
       users_scores[user.id] = [user_total_score,user_chosen_likes]
 
+    end 
+    users = users.to_a.sort_by {|user| users_scores[user["id"]][0]*(-1)}
+    users_and_likes = []
+    users.each do |user|
+      users_and_likes << [user,users_scores[user.id][1]]
     end
-    users_scores = users_scores.sort_by { |id, score| score[0] }
-    return users_scores.reverse
+    #raise users_and_likes.to_s
+    #users_objects = User.where(:id => users_scores.keys).all already have it
+    users_scores = users_scores.sort_by { |id, score| score[0]*(-1) }
+    #users_order = users_scores.collect {|x| x[0]}.to_s
+    #users_objects = User.where(:id => users_scores.keys)
+    #return users_scores
+    #raise users_and_likes.to_s
+    return users_and_likes
   end    
 end

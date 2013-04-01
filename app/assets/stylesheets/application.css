@@ -26,7 +26,9 @@
 	overflow: hidden;
 	padding: 0px;
 }
-
+.text_div{
+	overflow-y:auto;
+}
 .body_color {
 	background: #adffff; /* Old browsers */
 background: -moz-linear-gradient(left,  #adffff 0%, #831eff 20%, #ff02cc 33%, #e502ff 50%, #ff02cc 67%, #831eff 80%, #adffff 100%); /* FF3.6+ */
