@@ -3,7 +3,10 @@
 	<img id="mypic" src="https://graph.facebook.com/<%= @current_user['id'] %>/picture?type=normal" alt="profile picture">
 	<div id="Welcome"> Welcome, <strong><%= @current_user['name'] %></strong></div>
 	<% unless @matches.blank? %>
-		<table id="matches" class="table">		
+		<%= javascript_tag do %>
+  			window.matches = '<%= j @matches.to_json %>';
+		<% end %>
+		<table id="matche_table" class="table" data-matches="<%= @matches.to_json %>">		
 			<% [@matches.count, 5].min.times do |n| %>
 			<!-- <div id = "prophile_box">-->
 			<tr>

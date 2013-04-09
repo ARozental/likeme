@@ -16,9 +16,15 @@ module UsersHelper
       birthday=birthday.join("/") 
       dob = Time.parse(birthday)
       now = Time.now.utc.to_date
-      now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)           
+      age = now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)           
     rescue
-      return nil #because user didn't tell his birthday or birth year to facebook
+      return nil #because user didn't tell his birthday to facebook
+    end
+    begin
+      return nil if (age == 0 || age == -1) #because user didn't tell his birth year
+      return age
+    rescue
+      return nil 
     end    
   end
 
