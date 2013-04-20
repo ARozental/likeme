@@ -32,13 +32,24 @@ class User < ActiveRecord::Base
       id_array.push(friend["id"]) unless friend==nil
     end
     grouped_id_array = id_array.each_slice(50/(@@weights.count)).to_a #so we will have no more than 50 requests in a batch
-    grouped_id_array.each do |group|
-      #begin
-        retrive_and_save_batch(my_graph,group)
-      #rescue
-      #  raise group.to_s #delete this
-      #end
+    
+    ########################################### old single processed way
+    #grouped_id_array.each do |group|
+    #  retrive_and_save_batch(my_graph,group)
+    #end
+    ###########################################
+    chunked_grouped_id_array = grouped_id_array.in_groups(3,false)
+    ActiveRecord::Base.clear_all_connections!
+    chunked_grouped_id_array.each do |chunk|
+      Process.fork do
+        ActiveRecord::Base.establish_connection
+        chunk.each do |group|
+          retrive_and_save_batch(my_graph,group)
+        end
+      end
     end
+    Process.waitall
+    ActiveRecord::Base.establish_connection
   end
   
   def retrive_and_save_batch(graph,users_id_array)
@@ -204,6 +215,7 @@ class User < ActiveRecord::Base
     #insert_batches_info(my_graph,my_friends)
     friends_array = []
     my_friends.each do |fb_friend|
+      #sometimes for some friends not all the info I can see on their profile gets to likeme from facebook... is that a privacy thing?
       friends_array << User.new(
       :id => fb_friend["id"],
       :name => fb_friend["name"],

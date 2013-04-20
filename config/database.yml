@@ -16,6 +16,7 @@ development:
   adapter: postgresql
   encoding: utf8
   Port: 5432
+  pool: 10
   database: likeme_pg
   username: alon
   password: 
@@ -33,5 +34,5 @@ test:
 production:
   adapter: sqlite3
   database: db/production.sqlite3
-  pool: 5
+  pool: 50
   timeout: 5000
