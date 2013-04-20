@@ -9,6 +9,7 @@ gem "twitter-bootstrap-rails"
 gem 'activerecord-import'
 gem 'foreigner'
 gem 'pg', '0.12.2'
+gem 'parallel'
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'#

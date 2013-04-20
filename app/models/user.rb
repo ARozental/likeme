@@ -10,7 +10,8 @@ class User < ActiveRecord::Base
                                      association_foreign_key: "friend_id"
   has_many :user_page_relationships
   has_many :pages , :through => :user_page_relationships
-
+  
+  @@cores = 3
   @@all_page_types = ["likes","music","books","movies","television","games","activities","interests"] #add: Sports teams, Favourite sports and Inspirational People
   @@weights =      #let users adjust it later
   {
@@ -38,7 +39,7 @@ class User < ActiveRecord::Base
     #  retrive_and_save_batch(my_graph,group)
     #end
     ###########################################
-    chunked_grouped_id_array = grouped_id_array.in_groups(3,false)
+    chunked_grouped_id_array = grouped_id_array.in_groups(@@cores,false)
     ActiveRecord::Base.clear_all_connections!
     chunked_grouped_id_array.each do |chunk|
       Process.fork do
@@ -253,20 +254,23 @@ class User < ActiveRecord::Base
 
   
 
-  def find_matches(filter)  #main matching algorithm, returns sorted hash of {id => score}
+def find_matches(filter)  #main matching algorithm, returns sorted hash of {id => score}
     users = User.includes(:user_page_relationships) 
     users = users.where(:gender => filter.gender) unless filter.gender.blank?
     users = users.where("age <= ?", filter.max_age) unless filter.max_age.blank? #todo: if you didn't give your age to facebook it is set to zero
     users = users.where("age >= ?", filter.min_age) unless filter.min_age.blank?
-    users = users.where(:relationship_status => filter.relationship_status) unless filter.relationship_status.blank?
+    users = users.where(:relationship_status => filter.relationship_status) unless filter.relationship_status.blank?    
     #users = users.sample(n) to make it run faster
+    users = users.all
     
     my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
     @@all_page_types.each {|t|  my_pages[t] ||= []  } 
    
     user_type_scores = Hash.new
     users_scores = Hash.new
-    users.each do |user| 
+    
+
+    results = Parallel.map(users, :in_processes=>@@cores) do |user| 
       user_pages = user.user_page_relationships.group_by(&:relationship_type)
       if user_pages.blank?
         user_type_scores = [0.0]
@@ -295,9 +299,12 @@ class User < ActiveRecord::Base
       user_chosen_likes = user_pages["likes"].sample(6).map(&:page_id)
       rescue
       end
-      users_scores[user.id] = [user_total_score,user_chosen_likes]
-
-    end 
+      users_scores[user.id] = [user.id,user_total_score,user_chosen_likes]
+    end
+    results.each do |score_array|
+      users_scores[score_array[0]] = [score_array[1],score_array[2]]
+    end
+     
     users = users.to_a.sort_by {|user| users_scores[user["id"]][0]*(-1)}
     users_and_likes = []
     users.each do |user|
@@ -311,5 +318,5 @@ class User < ActiveRecord::Base
     #return users_scores
     #raise users_and_likes.to_s
     return users_and_likes
-  end    
+  end      
 end

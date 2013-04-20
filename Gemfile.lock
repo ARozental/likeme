@@ -92,6 +92,7 @@ GEM
     omniauth-oauth2 (1.0.3)
       oauth2 (~> 0.8.0)
       omniauth (~> 1.0)
+    parallel (0.6.4)
     pg (0.12.2)
     pg (0.12.2-x86-mingw32)
     polyglot (0.3.3)
@@ -159,6 +160,7 @@ DEPENDENCIES
   koala
   mysql2
   omniauth-facebook (= 1.4.0)
+  parallel
   pg (= 0.12.2)
   rails (= 3.2.8)
   sass-rails (~> 3.2.3)
