@@ -1,6 +1,6 @@
 class User < ActiveRecord::Base
   include UsersHelper
-  attr_accessible :active, :name, :id, :last_fb_update, :location, :birthday, :id, :gender, :age
+  attr_accessible :active, :name, :id, :last_fb_update, :location, :birthday, :gender, :age
   attr_accessible :hometown, :quotes, :relationship_status, :significant_other
   serialize :location
   serialize :hometown
@@ -255,7 +255,7 @@ class User < ActiveRecord::Base
   
 
 def find_matches(filter)  #main matching algorithm, returns sorted hash of {id => score}
-    users = filter.get_scope
+    users = filter.get_scope(self.id)
     users = users.all
     
     my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
