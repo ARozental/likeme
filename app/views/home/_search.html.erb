@@ -1,19 +1,24 @@
+<% width = "width:178px" %> <!-- todo: make it % of table size -->
 <%= form_tag(:action => :index) do %>
-	<table>
+	<table class="filter_table">
 		<tr>
-			<td><%= label_tag(:min_age,"min age:") %></td>
-			<td><%= label_tag(:max_age,"max age:") %></td>
+			<td><%= label_tag(:min_age,"min age:", :style => width) %></td>
+			<td><%= label_tag(:max_age,"max age:", :style => width) %></td>
+			<td><%= label_tag(:search_by,"search by:", :style => width) %></td>
 		</tr>
-			<td><%= number_field_tag(:min_age, @filter.min_age,:in => 16...99, :class => "btn btn-info dropdown-toggle") %></td>
-			<td><%= number_field_tag(:max_age, @filter.max_age,:in => 16...99) %></td>
+			<td><%= number_field_tag(:min_age, @filter.min_age,:in => 16...99, :style => width) %></td> <!-- :class => "btn btn-info dropdown-toggle"-->
+			<td><%= number_field_tag(:max_age, @filter.max_age,:in => 16...99, :style => width) %></td>
+			<td><%= select_tag(:search_by, options_for_select([['all likes', "likes"],'music', "books","movies","television","games","activities","interests"], @filter.search_by), :style => width) %></td>
 		</tr>		
 		<tr>		
-			<td><%= label_tag(:gender, "gender:") %></td>
-			<td><%= label_tag(:relationship_status, "relationship status:") %></td>
+			<td><%= label_tag(:gender, "gender:", :style => width) %></td>
+			<td><%= label_tag(:relationship_status, "relationship status:", :style => width) %></td>
+			<td><%= label_tag(:free_search,"future free search:", :style => width) %></td>
 		</tr>
 		<tr>		
-			<td><%= select_tag(:gender, options_for_select(['any','female', "male"], @filter.gender)) %></td>
-			<td><%= select_tag(:relationship_status, options_for_select(['any',['single', "Single"],['engaged', "Engaged"]], @filter.relationship_status)) %></td>
+			<td><%= select_tag(:gender, options_for_select(['any','female', "male"], @filter.gender), :style => width) %></td>
+			<td><%= select_tag(:relationship_status, options_for_select(['any',['single', "Single"],['single or unspecified', "single or unspecified"],['in a relationship', "In a Relationship"],['engaged', "Engaged"],['married', "Married"]], @filter.relationship_status), :style => width) %></td>
+			<td><%= text_field_tag(:free_search,'' , :style => "width:165px") %></td>		
 		</tr>
 	</table>
 

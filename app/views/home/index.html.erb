@@ -13,13 +13,13 @@
 			<td class="face_td" rowspan="2" style="padding: 0px; max-height: 120px;"><%= picture_link(@matches[n][0].id,"120")%></td>
 			<td><%= name_link(@matches[n][0]) %><%= print_stats(@matches[n][0]) %></td>												
 				<% 3.times do |k| %>
-					<td class="like_td" style="padding: 0px; max-height: 40px;"><%= picture_link(@matches[n][1][k],"60")%></td>
+					<td class="like_td" style="padding: 0px; max-height: 40px;"><%= picture_link(@matches[n][1][k],"60") unless @matches[n][1][k+3].blank? %></td>
 				<% end %>
 			</tr>
 			<tr>
 				<td><div class="text_div" style="height: 60px;"><%= @matches[n][0].quotes %></div></td>
 				<% 3.times do |k| %>
-					<td class="like_td" style="padding: 0px; max-height: 40px;"><%= picture_link(@matches[n][1][k+3],"60")%></td>
+					<td class="like_td" style="padding: 0px; max-height: 40px;"><%= picture_link(@matches[n][1][k+3],"60") unless @matches[n][1][k+3].blank? %></td>
 				<% end %>
 			</tr>						
 					<!--</div><br />-->

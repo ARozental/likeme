@@ -20,9 +20,9 @@ class User < ActiveRecord::Base
     "books" => 1,
     "movies" => 1,
     "television" => 1,
-    "games" => 0,                                             
-    "activities" => 0,                       
-    "interests" => 0,                       
+    "games" => 1,                                             
+    "activities" => 1,                       
+    "interests" => 1,                       
                       
   }
   
@@ -69,7 +69,7 @@ class User < ActiveRecord::Base
     #raise pursed_batch.to_s
     
     # save the new pages
-    all_pages_id = Page.all.map(&:id) #change so I won't take all pages to memory move to save db entries   
+    all_pages_id = Page.all.map(&:id) #todo: change so I won't take all pages to memory move to save db entries   
     batch_likes=data_hash.values.flatten
     batch_pages = []
     batch_likes.each do |like|      
@@ -255,12 +255,7 @@ class User < ActiveRecord::Base
   
 
 def find_matches(filter)  #main matching algorithm, returns sorted hash of {id => score}
-    users = User.includes(:user_page_relationships) 
-    users = users.where(:gender => filter.gender) unless filter.gender.blank?
-    users = users.where("age <= ?", filter.max_age) unless filter.max_age.blank? #todo: if you didn't give your age to facebook it is set to zero
-    users = users.where("age >= ?", filter.min_age) unless filter.min_age.blank?
-    users = users.where(:relationship_status => filter.relationship_status) unless filter.relationship_status.blank?    
-    #users = users.sample(n) to make it run faster
+    users = filter.get_scope
     users = users.all
     
     my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
@@ -296,9 +291,10 @@ def find_matches(filter)  #main matching algorithm, returns sorted hash of {id =
       user_total_score = user_type_scores.inject{ |sum, el| sum + el }.to_f / user_type_scores.size
       user_chosen_likes = []
       begin
-      user_chosen_likes = user_pages["likes"].sample(6).map(&:page_id)
+      user_chosen_likes = user_pages[filter.search_by].sample(6).map(&:page_id) #choose whet type pf likes to show
       rescue
       end
+      user_total_score = (user_total_score/(6-user_chosen_likes.size) - 0.000001*(6-user_chosen_likes.size)) if user_chosen_likes.size<6 #don't want them in the top 5
       users_scores[user.id] = [user.id,user_total_score,user_chosen_likes]
     end
     results.each do |score_array|
