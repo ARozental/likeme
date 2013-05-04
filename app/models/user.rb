@@ -1,6 +1,6 @@
 class User < ActiveRecord::Base
   include UsersHelper
-  attr_accessible :active, :name, :id, :last_fb_update, :location, :birthday, :gender, :age
+  attr_accessible :active, :name, :id, :last_fb_update, :location, :birthday, :gender, :age, :bio
   attr_accessible :hometown, :quotes, :relationship_status, :significant_other
   serialize :location
   serialize :hometown
@@ -25,6 +25,14 @@ class User < ActiveRecord::Base
     "interests" => 1,                       
                       
   }
+  
+  def description
+    return "" if self.bio.blank? && self.quotes.blank?
+    return self.quotes if self.bio.blank? && !(self.quotes.blank?)
+    return self.bio if !(self.bio.blank?) && self.quotes.blank?
+    return self.bio if self.bio.length > self.quotes.length
+    return self.quotes
+  end
   
   def insert_batches_info(my_graph,my_friends) 
     my_id = self.id.to_s
@@ -140,7 +148,8 @@ class User < ActiveRecord::Base
          :relationship_status => fb_friend["relationship_status"],
          :significant_other => fb_friend["significant_other"],
          :gender => fb_friend["gender"],
-         :age => date_to_age(fb_friend["birthday"])
+         :age => date_to_age(fb_friend["birthday"]),
+         :bio => fb_friend["bio"]
       })
       #raise fb_friend.to_s unless fb_friend["name"]=="Alon Rozental"
       return db_friend      
@@ -227,7 +236,8 @@ class User < ActiveRecord::Base
       :relationship_status => fb_friend["relationship_status"],
       :significant_other => fb_friend["significant_other"],
       :gender => fb_friend["gender"],
-      :age => date_to_age(fb_friend["birthday"]))        
+      :age => date_to_age(fb_friend["birthday"]),
+      :bio => fb_friend["bio"])        
     end
     
     existing_friends_id = User.where(:id => my_friends_id_array).map(&:id)
@@ -257,6 +267,7 @@ class User < ActiveRecord::Base
 def find_matches(filter)  #main matching algorithm, returns sorted hash of {id => score}
     users = filter.get_scope(self.id)
     users = users.all
+    #raise users.to_s
     
     my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
     @@all_page_types.each {|t|  my_pages[t] ||= []  } 
@@ -312,7 +323,7 @@ def find_matches(filter)  #main matching algorithm, returns sorted hash of {id =
     #users_order = users_scores.collect {|x| x[0]}.to_s
     #users_objects = User.where(:id => users_scores.keys)
     #return users_scores
-    #raise users_and_likes.to_s
+    #raise users_and_likes.size.to_s
     return users_and_likes
   end      
 end

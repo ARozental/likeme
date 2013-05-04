@@ -11,12 +11,15 @@ class Filter
     self.gender = params[:gender] unless params[:gender]=="any"
     self.relationship_status = params[:relationship_status] unless params[:relationship_status]=="any"
     self.search_by = params[:search_by]
-    self.social_network = params[:social_network]      
+    self.search_by = 'likes' if self.search_by == nil
+    self.social_network = params[:social_network]
+    self.social_network = "don\'t include friends" if self.social_network == nil
+      
     return self
   end
   
-  def get_scope(id)
-    #raise self.friends
+  def get_scope(my_id)
+    #raise self.gender + self.max_age + self.min_age + self.relationship_status + self.search_by
     if self.search_by == 'likes'
       users = User.includes(:user_page_relationships)
     else
@@ -24,10 +27,10 @@ class Filter
     end
     
     
-    users = users.where(['id NOT IN (?)', [id]]) #to exclude self
-    friends_id_array = User.find(id).friends.map(&:id) unless self.social_network == "include everyone"
+    users = users.where(['users.id NOT IN (?)', [my_id]]) #to exclude self
+    friends_id_array = User.find(my_id).friends.map(&:id) unless self.social_network == "include everyone"
     users = users.where(:id => friends_id_array) if self.social_network == "include only friends"    
-    users = users.where(['id NOT IN (?)', friends_id_array]) if self.social_network == "don\'t include friends"
+    users = users.where(['users.id NOT IN (?)', friends_id_array]) if self.social_network == "don\'t include friends"
     
     users = users.where(:gender => self.gender) unless self.gender.blank?
     users = users.where("age <= ?", self.max_age) unless self.max_age.blank? #todo: if you didn't give your age to facebook it is set to zero

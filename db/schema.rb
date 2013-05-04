@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130309102551) do
+ActiveRecord::Schema.define(:version => 20130503193309) do
 
   create_table "delayed_jobs", :force => true do |t|
     t.integer  "priority",   :default => 0
@@ -69,6 +69,7 @@ ActiveRecord::Schema.define(:version => 20130309102551) do
     t.string   "significant_other"
     t.string   "gender"
     t.string   "age"
+    t.string   "bio"
   end
 
   add_index "users", ["birthday"], :name => "index_users_on_birthday"
