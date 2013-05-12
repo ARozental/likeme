@@ -15,7 +15,7 @@ class User < ActiveRecord::Base
   @@all_page_types = ["likes","music","books","movies","television","games","activities","interests"] #add: Sports teams, Favourite sports and Inspirational People
   @@weights =      #let users adjust it later
   {
-    "likes" => 4,
+    "likes" => 2,
     "music" => 1,
     "books" => 1,
     "movies" => 1,
