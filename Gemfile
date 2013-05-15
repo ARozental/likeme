@@ -11,13 +11,18 @@ gem 'foreigner'
 gem 'pg', '0.12.2'
 gem 'parallel'
 
+#don't need those:
+gem 'sqlite3'
+gem 'execjs'
+gem 'therubyracer'
+
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'#
 
-group :development, :test do
-  gem 'sqlite3'
-  gem 'mysql2'
-end
+#group :development, :test do
+#  gem 'sqlite3'
+#  gem 'mysql2'
+#end
  
 
 

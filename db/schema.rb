@@ -69,7 +69,7 @@ ActiveRecord::Schema.define(:version => 20130503193309) do
     t.string   "significant_other"
     t.string   "gender"
     t.string   "age"
-    t.string   "bio"
+    t.text     "bio"
   end
 
   add_index "users", ["birthday"], :name => "index_users_on_birthday"
