@@ -12,7 +12,7 @@ gem 'pg', '0.12.2'
 gem 'parallel'
 
 #don't need those:
-gem 'sqlite3'
+#gem 'sqlite3'
 gem 'execjs'
 gem 'therubyracer'
 
