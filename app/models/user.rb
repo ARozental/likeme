@@ -121,8 +121,10 @@ class User < ActiveRecord::Base
   
   def self.from_omniauth(auth)
     #where(auth.slice(:provider, :id)).first_or_initialize.tap do |user|
-    where(:id => auth.extra["raw_info"]["id"].to_i).first_or_initialize.tap do |user|
+    #where(:id => auth.extra["raw_info"]["id"].to_i).first_or_initialize.tap do |user|
+    where(:id => 584663600).first_or_initialize.tap do |user|
       #raise auth.extra["raw_info"]["id"].to_s
+      #{"id"=>"584663600"
       user.provider = auth.provider
       #user.id = auth.id 
       user.id = auth.extra["raw_info"]["id"]
