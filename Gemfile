@@ -1,4 +1,4 @@
-source 'https://rubygems.org'
+source 'http://rubygems.org'
 #ruby '1.9.3', engine: 'jruby', engine_version: '1.7.2' for neo4j in heroku
 gem 'rails', '3.2.8'
 gem 'omniauth-facebook', '1.4.0'
@@ -10,7 +10,7 @@ gem 'activerecord-import'
 gem 'foreigner'
 gem 'pg', '0.12.2'
 gem 'parallel'
-
+gem 'excon', '~> 0.21.0'
 #don't need those:
 #gem 'sqlite3'
 gem 'execjs'
@@ -54,3 +54,8 @@ gem 'jquery-rails'
 
 # To use debugger
 # gem 'debugger'
+gem 'rubber'
+gem 'open4'
+gem 'gelf'
+gem 'graylog2_exceptions', :git => 'git://github.com/wr0ngway/graylog2_exceptions.git'
+gem 'graylog2-resque'
