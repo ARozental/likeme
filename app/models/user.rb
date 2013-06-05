@@ -50,7 +50,7 @@ class User < ActiveRecord::Base
     chunked_grouped_id_array = grouped_id_array.in_groups(@@cores,false)
     ActiveRecord::Base.clear_all_connections!
     chunked_grouped_id_array.each do |chunk|
-      Process.fork do
+      Process.fork do #todo open less forking (in processes 3)
         ActiveRecord::Base.establish_connection
         chunk.each do |group|
           retrive_and_save_batch(my_graph,group)
@@ -69,7 +69,7 @@ class User < ActiveRecord::Base
         end          
       end   
     end
-
+    logger.info(batch_results[0,2])
     pursed_batch = batch_results.each_slice(@@weights.count).to_a #every element is an array with all info on a user
     data_hash = Hash[users_id_array.zip pursed_batch] #hash of 6 users, user_id=>array of arraies the contain likes, books, movies...
     #raise graph.get_connections("509006501", "likes").to_s   can't get data on some people...
