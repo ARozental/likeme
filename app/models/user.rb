@@ -69,7 +69,6 @@ class User < ActiveRecord::Base
         end          
       end   
     end
-    logger.info(batch_results[0,2])
     pursed_batch = batch_results.each_slice(@@weights.count).to_a #every element is an array with all info on a user
     data_hash = Hash[users_id_array.zip pursed_batch] #hash of 6 users, user_id=>array of arraies the contain likes, books, movies...
     #raise graph.get_connections("509006501", "likes").to_s   can't get data on some people...
