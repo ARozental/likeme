@@ -13,16 +13,17 @@ class User < ActiveRecord::Base
   
   @@cores = 3
   @@all_page_types = ["likes","music","books","movies","television","games","activities","interests"] #add: Sports teams, Favourite sports and Inspirational People
+  @@all_page_aliases = ["l","m","b","v","t","g","a","i"] #add: Sports teams, Favourite sports and Inspirational People
   @@weights =      #let users adjust it later
   {
-    "likes" => 2,
-    "music" => 1,
-    "books" => 1,
-    "movies" => 1,
-    "television" => 1,
-    "games" => 1,                                             
-    "activities" => 1,                       
-    "interests" => 1,                       
+    "l" => 2,
+    "m" => 1,
+    "b" => 1,
+    "v" => 1,
+    "t" => 1,
+    "g" => 1,                                             
+    "a" => 1,                       
+    "i" => 1,                       
                       
   }
   
@@ -43,10 +44,20 @@ class User < ActiveRecord::Base
     grouped_id_array = id_array.each_slice(50/(@@weights.count)).to_a #so we will have no more than 50 requests in a batch
     
     ########################################### old single processed way
-    #grouped_id_array.each do |group|
-    #  retrive_and_save_batch(my_graph,group)
-    #end
+    
+      #grouped_id_array.each do |group|
+      #  retrive_and_save_batch(my_graph,group)
+      #end
+      Parallel.each(grouped_id_array, :in_processes => @@cores) do |group|
+        begin
+          ActiveRecord::Base.connection.reconnect!
+          retrive_and_save_batch(my_graph,group)
+        rescue
+          logger.debug "FFFFFFFFF #{group.to_s}"
+        end
+      end
     ###########################################
+=begin    
     chunked_grouped_id_array = grouped_id_array.in_groups(@@cores,false)
     ActiveRecord::Base.clear_all_connections!
     chunked_grouped_id_array.each do |chunk|
@@ -59,6 +70,7 @@ class User < ActiveRecord::Base
     end
     Process.waitall
     ActiveRecord::Base.establish_connection
+=end
   end
   
   def retrive_and_save_batch(graph,users_id_array)
@@ -70,9 +82,11 @@ class User < ActiveRecord::Base
       end   
     end
     pursed_batch = batch_results.each_slice(@@weights.count).to_a #every element is an array with all info on a user
+    #raise pursed_batch.to_s #todo delete this
     data_hash = Hash[users_id_array.zip pursed_batch] #hash of 6 users, user_id=>array of arraies the contain likes, books, movies...
+    
     #raise graph.get_connections("509006501", "likes").to_s   can't get data on some people...
-    #raise data_hash.to_s if data_hash.keys.first.to_s=="509006501"
+    #raise data_hash.to_s #if data_hash.keys.first.to_s=="509006501"
     #raise pursed_batch.to_s
     
     # save the new pages
@@ -93,14 +107,15 @@ class User < ActiveRecord::Base
     Page.import batch_pages 
     
     # save user_page_relationships
-    data_hash.each do |user_id,category|
-      db_friend = User.find(user_id) #should only do find 
+    data_hash.each do |user_id,category| #category is an array of arrays [[likes],[books],...]
+      #raise category.to_s
+      #db_friend = User.find(user_id) #should only do find 
       
       #todo: use update instead of delete and insert (with 2 column pk)
       ActiveRecord::Base.connection.execute("DELETE FROM user_page_relationships WHERE user_id = #{user_id}")
-      data_hash[user_id] = Hash[@@all_page_types.zip category]     
+      data_hash[user_id] = Hash[@@all_page_aliases.zip category]     
     end
-        
+    #raise data_hash.to_s    
     user_page_relationship_array = []
     data_hash.each do |user_id,category|
       category.each do |category_name,like_array|
@@ -128,6 +143,7 @@ class User < ActiveRecord::Base
       user.name = auth.info.name
       user.oauth_token = auth.credentials.token
       user.oauth_expires_at = Time.at(auth.credentials.expires_at)
+      user.active = true
       user.save!
     end
   end  
@@ -167,12 +183,13 @@ class User < ActiveRecord::Base
         batch_api.get_connections(my_id, category)          
       end
     end   
-    
+    #raise batch_results.to_s
     category_counter = 0
     @@all_page_types.each do |category|
-      my_likes = batch_results[category_counter]      
+      my_likes = batch_results[category_counter]
+      category_char = get_char(category)      
       my_likes.each do |like|
-        user_page_relationship_array << UserPageRelationship.new(:relationship_type => category,:user_id => my_id,:page_id => like["id"]) #unless like.blank?
+        user_page_relationship_array << UserPageRelationship.new(:relationship_type => category_char,:user_id => my_id,:page_id => like["id"]) #unless like.blank?
         page_array << Page.new(:category => like["category"], :name => like["name"], :id => like["id"]) #unless like.blank?      
       end
       category_counter = category_counter+1
@@ -239,13 +256,11 @@ class User < ActiveRecord::Base
       :bio => fb_friend["bio"])        
     end
     
+    #todo do not reject?
     existing_friends_id = User.where(:id => my_friends_id_array).map(&:id)
     friends_array = friends_array.reject { |friend|  existing_friends_id.include?(friend["id"])}
     User.import friends_array unless friends_array.blank?
-    
-    #insert friends info
-    insert_batches_info(my_graph,my_friends)
-  
+      
     #frienships
     my_id = self.id.to_s 
     my_friends_id_array = []
@@ -257,6 +272,8 @@ class User < ActiveRecord::Base
     ActiveRecord::Base.connection.execute("DELETE FROM friendships WHERE user_id = #{my_id}")
     ActiveRecord::Base.connection.execute("INSERT INTO friendships (user_id, friend_id) VALUES #{my_friends_id_string[1..-2]}")
     
+    #insert friends info
+    insert_batches_info(my_graph,my_friends)
     
   end
   #handle_asynchronously :insert_my_info_to_db
@@ -266,10 +283,10 @@ class User < ActiveRecord::Base
 def find_matches(filter)  #main matching algorithm, returns sorted hash of {id => score}
     users = filter.get_scope(self.id)
     users = users.all
-    #raise users.to_s
+    #raise users[0].id.to_s
     
     my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
-    @@all_page_types.each {|t|  my_pages[t] ||= []  } 
+    @@all_page_aliases.each {|t|  my_pages[t] ||= []  } 
    
     user_type_scores = Hash.new
     users_scores = Hash.new
@@ -283,12 +300,12 @@ def find_matches(filter)  #main matching algorithm, returns sorted hash of {id =
         user_type_scores = user_pages.map do |type, page_array| #error if no likes
           next if (@@weights[type] == 0 )
           begin        
-            my_score = ((my_pages[type].map(&:page_id) & user_pages['likes'].map(&:page_id)).count.to_f)/(my_pages[type].count + 1)
+            my_score = ((my_pages[type].map(&:page_id) & user_pages['l'].map(&:page_id)).count.to_f)/(my_pages[type].count + 1)
           rescue
             my_score = 0
           end
           begin
-            user_score = ((user_pages[type].map(&:page_id) & my_pages['likes'].map(&:page_id)).count.to_f)/(user_pages[type].count + 1)
+            user_score = ((user_pages[type].map(&:page_id) & my_pages['l'].map(&:page_id)).count.to_f)/(user_pages[type].count + 1)
           rescue
             my_score = 0
           end
@@ -301,7 +318,7 @@ def find_matches(filter)  #main matching algorithm, returns sorted hash of {id =
       user_total_score = user_type_scores.inject{ |sum, el| sum + el }.to_f / user_type_scores.size
       user_chosen_likes = []
       begin
-      user_chosen_likes = user_pages[filter.search_by].sample(6).map(&:page_id) #choose whet type pf likes to show
+      user_chosen_likes = user_pages[get_char(filter.search_by)].sample(6).map(&:page_id) #choose whet type pf likes to show
       rescue
       end
       user_total_score = (user_total_score/(6-user_chosen_likes.size) - 0.000001*(6-user_chosen_likes.size)) if user_chosen_likes.size<6 #don't want them in the top 5
@@ -323,6 +340,7 @@ def find_matches(filter)  #main matching algorithm, returns sorted hash of {id =
     #users_objects = User.where(:id => users_scores.keys)
     #return users_scores
     #raise users_and_likes.size.to_s
+    #raise users_and_likes.to_s
     return users_and_likes
   end      
 end

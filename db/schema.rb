@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130503193309) do
+ActiveRecord::Schema.define(:version => 20130607114400) do
 
   create_table "delayed_jobs", :force => true do |t|
     t.integer  "priority",   :default => 0
@@ -43,13 +43,18 @@ ActiveRecord::Schema.define(:version => 20130503193309) do
 
   add_index "pages", ["category"], :name => "index_pages_on_category"
 
+  create_table "scores", :force => true do |t|
+    t.integer "user_id",   :limit => 8
+    t.integer "friend_id", :limit => 8
+    t.string  "category",  :limit => 1
+    t.float   "score"
+  end
+
   create_table "user_page_relationships", :force => true do |t|
     t.integer "user_id",           :limit => 8, :null => false
     t.integer "page_id",           :limit => 8, :null => false
-    t.string  "relationship_type"
+    t.string  "relationship_type", :limit => 1
   end
-
-  add_index "user_page_relationships", ["relationship_type"], :name => "index_user_page_relationships_on_relationship_type"
 
   create_table "users", :force => true do |t|
     t.string   "provider"

@@ -13,7 +13,8 @@ class Filter
     self.search_by = params[:search_by]
     self.search_by = 'likes' if self.search_by == nil
     self.social_network = params[:social_network]
-    self.social_network = "don\'t include friends" if self.social_network == nil
+    self.social_network = "include everyone" if self.social_network == nil
+    #self.social_network = "don\'t include friends" if self.social_network == nil
       
     return self
   end
@@ -23,7 +24,7 @@ class Filter
     if self.search_by == 'likes'
       users = User.includes(:user_page_relationships)
     else
-      users = User.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ?",self.search_by)
+      users = User.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ?",get_char(self.search_by))
     end
     
     
@@ -41,6 +42,18 @@ class Filter
     return users
   end
   
+  def get_char(type)
+    #duplication with @@all_page_aliases and user   
+    return 'l' if type == "likes"
+    return 'm' if type == "music"
+    return 'b' if type == "books"
+    return 'v' if type == "movies"
+    return 't' if type == "television"
+    return 'g' if type == "games"
+    return 'a' if type == "activities"
+    return 'i' if type == "interests"
+    return 'x' #shouldn't happen   
+  end
   
   def persisted?
     false

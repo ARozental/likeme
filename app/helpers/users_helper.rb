@@ -1,9 +1,17 @@
 module UsersHelper
-  def blaaa
-    return 6
+
+  def get_char(type)
+    #duplication with @@all_page_aliases and filter   
+    return 'l' if type == "likes"
+    return 'm' if type == "music"
+    return 'b' if type == "books"
+    return 'v' if type == "movies"
+    return 't' if type == "television"
+    return 'g' if type == "games"
+    return 'a' if type == "activities"
+    return 'i' if type == "interests"
+    return 'x' #shouldn't happen   
   end
-
-
 
   def date_to_age(birthday) #not a methood so we can do it before save and use update attributes
     #dumb americans            
@@ -28,7 +36,7 @@ module UsersHelper
     end    
   end
 
-
+  
 
 end
 
