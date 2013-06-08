@@ -13,7 +13,7 @@ class LikeMeConfig
   end
   
   def self.maximal_matches
-    return 1000
+    return 100
   end
 
 end

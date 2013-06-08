@@ -260,9 +260,13 @@ class User < ActiveRecord::Base
   
 
 def find_matches(filter)  #main matching algorithm, returns sorted hash of {id => score}
-  self.calculate_scores
+    self.calculate_scores
     users = filter.get_scope(self.id)
-    users = users.sample(LikeMeConfig::maximal_matches) #to make it run faster #gets the array
+ 
+    #raise "k"
+
+
+
     #raise users.class.to_s
     #users = users.all
     #raise users[0].id.to_s

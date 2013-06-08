@@ -21,14 +21,10 @@ class Filter
   
   def get_scope(my_id)
     #raise self.gender + self.max_age + self.min_age + self.relationship_status + self.search_by
-    if self.search_by == 'likes'
-      users = User.includes(:user_page_relationships)
-    else
-      users = User.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ?",get_char(self.search_by))
-    end
+
     
     
-    users = users.where(['users.id NOT IN (?)', [my_id]]) #to exclude self
+    users = User.where(['users.id NOT IN (?)', [my_id]]) #to exclude self
     friends_id_array = User.find(my_id).friends.map(&:id) unless self.social_network == "include everyone"
     users = users.where(:id => friends_id_array) if self.social_network == "include only friends"    
     users = users.where(['users.id NOT IN (?)', friends_id_array]) if self.social_network == "don\'t include friends"
@@ -38,6 +34,29 @@ class Filter
     users = users.where("age >= ?", self.min_age) unless self.min_age.blank?
     users = users.where(:relationship_status => self.relationship_status) unless (self.relationship_status.blank? || self.relationship_status == 'single or unspecified')    
     users = users.where("relationship_status = 'Single' OR relationship_status IS NULL") if self.relationship_status == 'single or unspecified'
+
+=begin    
+    if self.search_by == 'likes'
+      users = users.includes(:user_page_relationships)
+    else
+      users = users.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ?",get_char(self.search_by))
+    end
+=end
+    
+    if self.search_by == "likes"
+      users = users.sample(LikeMeConfig::maximal_matches)
+    else
+      users = users.sample(LikeMeConfig::maximal_matches*3)
+    end
+    
+    users_id = users.map(&:id)
+    users = User.where(:id => users_id)
+    if self.search_by == 'likes'
+      users = users.includes(:user_page_relationships)
+    else
+      users = users.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ?",get_char(self.search_by))
+    end
+    users = users.all
     
     return users
   end
