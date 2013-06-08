@@ -1,7 +1,7 @@
 class User < ActiveRecord::Base
   include UsersHelper
-  attr_accessible :active, :name, :id, :last_fb_update, :location, :birthday, :gender, :age, :bio
-  attr_accessible :hometown, :quotes, :relationship_status, :significant_other
+  attr_accessible :active, :name, :id, :location, :birthday, :gender, :age, :bio
+  attr_accessible :hometown, :quotes, :relationship_status, :significant_other, :last_fb_update
   serialize :location
   serialize :hometown
   serialize :significant_other
@@ -11,7 +11,7 @@ class User < ActiveRecord::Base
   has_many :user_page_relationships
   has_many :pages , :through => :user_page_relationships
   
-  @@cores = 3
+  #@@cores = 3
   @@all_page_types = ["likes","music","books","movies","television","games","activities","interests"] #add: Sports teams, Favourite sports and Inspirational People
   @@all_page_aliases = ["l","m","b","v","t","g","a","i"] #add: Sports teams, Favourite sports and Inspirational People
   @@weights =      #let users adjust it later
@@ -35,42 +35,27 @@ class User < ActiveRecord::Base
     return self.quotes
   end
   
-  def insert_batches_info(my_graph,my_friends) 
+  def insert_batches_info(my_graph,my_friends)
+    
     my_id = self.id.to_s
     id_array = [] 
     my_friends.each do |friend|
       id_array.push(friend["id"]) unless friend==nil
     end
+    users_last_fb_update = User.where(:id => id_array).map(&:last_fb_update)
     grouped_id_array = id_array.each_slice(50/(@@weights.count)).to_a #so we will have no more than 50 requests in a batch
     
-    ########################################### old single processed way
-    
-      #grouped_id_array.each do |group|
-      #  retrive_and_save_batch(my_graph,group)
-      #end
-      Parallel.each(grouped_id_array, :in_processes => @@cores) do |group|
-        begin
-          ActiveRecord::Base.connection.reconnect!
-          retrive_and_save_batch(my_graph,group)
-        rescue
-          logger.debug "FFFFFFFFF #{group.to_s}"
-        end
-      end
-    ###########################################
-=begin    
-    chunked_grouped_id_array = grouped_id_array.in_groups(@@cores,false)
-    ActiveRecord::Base.clear_all_connections!
-    chunked_grouped_id_array.each do |chunk|
-      Process.fork do #todo open less forking (in processes 3)
-        ActiveRecord::Base.establish_connection
-        chunk.each do |group|
-          retrive_and_save_batch(my_graph,group)
-        end
+    ########################################### old single processed way 
+    #grouped_id_array.each do |group|
+    #  retrive_and_save_batch(my_graph,group)
+    #end
+    Parallel.each(grouped_id_array, :in_processes => LikeMeConfig::insertion_cores) do |group|
+      begin
+        ActiveRecord::Base.connection.reconnect!
+        retrive_and_save_batch(my_graph,group)
+      rescue
       end
     end
-    Process.waitall
-    ActiveRecord::Base.establish_connection
-=end
   end
   
   def retrive_and_save_batch(graph,users_id_array)
@@ -82,12 +67,8 @@ class User < ActiveRecord::Base
       end   
     end
     pursed_batch = batch_results.each_slice(@@weights.count).to_a #every element is an array with all info on a user
-    #raise pursed_batch.to_s #todo delete this
     data_hash = Hash[users_id_array.zip pursed_batch] #hash of 6 users, user_id=>array of arraies the contain likes, books, movies...
-    
     #raise graph.get_connections("509006501", "likes").to_s   can't get data on some people...
-    #raise data_hash.to_s #if data_hash.keys.first.to_s=="509006501"
-    #raise pursed_batch.to_s
     
     # save the new pages
     all_pages_id = Page.all.map(&:id) #todo: change so I won't take all pages to memory move to save db entries   
@@ -234,11 +215,6 @@ class User < ActiveRecord::Base
     end
     my_friends = my_friends.flatten.compact
     
-        
-    #my_friends.each do |fb_friend| #todo: make it faster      
-    #    db_friend = insert_friend_to_db(fb_friend)
-    #end
-    #insert_batches_info(my_graph,my_friends)
     friends_array = []
     my_friends.each do |fb_friend|
       #sometimes for some friends not all the info I can see on their profile gets to likeme from facebook... is that a privacy thing?
@@ -256,7 +232,7 @@ class User < ActiveRecord::Base
       :bio => fb_friend["bio"])        
     end
     
-    #todo do not reject?
+    #todo do not reject+import, use update+insert on all
     existing_friends_id = User.where(:id => my_friends_id_array).map(&:id)
     friends_array = friends_array.reject { |friend|  existing_friends_id.include?(friend["id"])}
     User.import friends_array unless friends_array.blank?
@@ -268,21 +244,27 @@ class User < ActiveRecord::Base
       my_friends_id_array.push("(" + my_id + "," + fb_friend["id"] + ")")
     end
     my_friends_id_string=my_friends_id_array.to_s.gsub!("\"", "")
-    #do it better with db constraints and no deletion:
+    #do it better with db constraints and no deletion? one transaction?
     ActiveRecord::Base.connection.execute("DELETE FROM friendships WHERE user_id = #{my_id}")
     ActiveRecord::Base.connection.execute("INSERT INTO friendships (user_id, friend_id) VALUES #{my_friends_id_string[1..-2]}")
     
     #insert friends info
-    insert_batches_info(my_graph,my_friends)
-    
+    ActiveRecord::Base.connection.reconnect!
+    insert_batches_info(my_graph,my_friends) #losing connection here?
+    ActiveRecord::Base.connection.reconnect!
+    self.last_fb_update = Time.now
+    self.save!
   end
   #handle_asynchronously :insert_my_info_to_db
 
   
 
 def find_matches(filter)  #main matching algorithm, returns sorted hash of {id => score}
+  self.calculate_scores
     users = filter.get_scope(self.id)
-    users = users.all
+    users = users.sample(LikeMeConfig::maximal_matches) #to make it run faster #gets the array
+    #raise users.class.to_s
+    #users = users.all
     #raise users[0].id.to_s
     
     my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
@@ -292,7 +274,7 @@ def find_matches(filter)  #main matching algorithm, returns sorted hash of {id =
     users_scores = Hash.new
     
 
-    results = Parallel.map(users, :in_processes=>@@cores) do |user| 
+    results = Parallel.map(users, :in_processes=>LikeMeConfig::matching_cores) do |user| 
       user_pages = user.user_page_relationships.group_by(&:relationship_type)
       if user_pages.blank?
         user_type_scores = [0.0]
@@ -327,7 +309,7 @@ def find_matches(filter)  #main matching algorithm, returns sorted hash of {id =
     results.each do |score_array|
       users_scores[score_array[0]] = [score_array[1],score_array[2]]
     end
-     
+    #raise users_scores.to_s
     users = users.to_a.sort_by {|user| users_scores[user["id"]][0]*(-1)}
     users_and_likes = []
     users.each do |user|
@@ -336,11 +318,72 @@ def find_matches(filter)  #main matching algorithm, returns sorted hash of {id =
     #raise users_and_likes.to_s
     #users_objects = User.where(:id => users_scores.keys).all already have it
     users_scores = users_scores.sort_by { |id, score| score[0]*(-1) }
+    #raise users_scores.to_s
     #users_order = users_scores.collect {|x| x[0]}.to_s
     #users_objects = User.where(:id => users_scores.keys)
     #return users_scores
     #raise users_and_likes.size.to_s
     #raise users_and_likes.to_s
     return users_and_likes
+  end
+  
+  def calculate_scores # similar to find_matches can write it better...
+    filter = Filter.new
+    filter.search_by = "likes"
+    users = filter.get_scope(self.id)
+    users = users.sample(LikeMeConfig::maximal_matches) #to make it run faster #gets the array
+    my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
+    @@all_page_aliases.each {|t|  my_pages[t] ||= []  } 
+   
+    user_type_scores = Hash.new
+    users_scores = Hash.new
+    
+    results = []
+    users.each do |user| 
+      user_pages = user.user_page_relationships.group_by(&:relationship_type)
+      if user_pages.blank?
+        user_type_scores = [0.0]
+      else
+        user_type_scores = user_pages.map do |type, page_array| #error if no likes
+          next if (@@weights[type] == 0 )
+          begin        
+            my_score = ((my_pages[type].map(&:page_id) & user_pages['l'].map(&:page_id)).count.to_f)/(my_pages[type].count + 1)
+          rescue
+            my_score = 0
+          end
+          begin
+            user_score = ((user_pages[type].map(&:page_id) & my_pages['l'].map(&:page_id)).count.to_f)/(user_pages[type].count + 1)
+          rescue
+            my_score = 0
+          end
+          score = ((my_score+user_score) / 2.0) * @@weights[type].to_f
+          score  
+        end
+      end
+      
+      user_type_scores.compact!
+      user_total_score = user_type_scores.inject{ |sum, el| sum + el }.to_f / user_type_scores.size
+      user_chosen_likes = []
+      begin
+      user_chosen_likes = user_pages[get_char(filter.search_by)].sample(6).map(&:page_id) #choose whet type pf likes to show
+      rescue
+      end
+      user_total_score = (user_total_score/(6-user_chosen_likes.size) - 0.000001*(6-user_chosen_likes.size)) if user_chosen_likes.size<6 #don't want them in the top 5
+      users_scores[user.id] = [user.id,user_total_score]
+      results << [user.id, user_total_score]
+    end
+    results.each do |score_array|
+      users_scores[score_array[0]] = [score_array[1],score_array[2]]
+    end
+    users = users.to_a.sort_by {|user| users_scores[user["id"]][0]*(-1)}
+    users_scores = users_scores.sort_by { |id, score| score[0]*(-1) }
+    
+    score_array = []
+    my_id = self.id
+    users_scores.each do |user_score|
+      score_array << Score.new(:user_id => my_id, :friend_id => user_score[0], :category => "l", :score => user_score[1][0])
+    end
+    Score.import score_array   
+    
   end      
 end

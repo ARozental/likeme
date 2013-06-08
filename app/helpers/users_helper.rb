@@ -371,4 +371,47 @@ end
     #do it better with db constraints and no deletion:
     ActiveRecord::Base.connection.execute("DELETE FROM friendships WHERE user_id = #{my_id}")
     ActiveRecord::Base.connection.execute("INSERT INTO friendships (user_id, friend_id) VALUES #{my_friends_id_string[1..-2]}")
-=end    
+=end
+
+
+=begin 
+  def insert_batches_info(my_graph,my_friends)
+    raise my_friends.to_s 
+    my_id = self.id.to_s
+    id_array = [] 
+    my_friends.each do |friend|
+      id_array.push(friend["id"]) unless friend==nil
+    end
+    grouped_id_array = id_array.each_slice(50/(@@weights.count)).to_a #so we will have no more than 50 requests in a batch
+    
+    ########################################### old single processed way
+    
+      #grouped_id_array.each do |group|
+      #  retrive_and_save_batch(my_graph,group)
+      #end
+      Parallel.each(grouped_id_array, :in_processes => @@cores) do |group|
+        begin
+          ActiveRecord::Base.connection.reconnect!
+          retrive_and_save_batch(my_graph,group)
+        rescue
+        end
+      end
+    ###########################################
+   
+    chunked_grouped_id_array = grouped_id_array.in_groups(@@cores,false)
+    ActiveRecord::Base.clear_all_connections!
+    chunked_grouped_id_array.each do |chunk|
+      Process.fork do #todo open less forking (in processes 3)
+        ActiveRecord::Base.establish_connection
+        chunk.each do |group|
+          retrive_and_save_batch(my_graph,group)
+        end
+      end
+    end
+    Process.waitall
+    ActiveRecord::Base.establish_connection
+
+  end
+=end
+
+    

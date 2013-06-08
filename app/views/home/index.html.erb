@@ -1,7 +1,7 @@
 <% if @current_user %>
 	<%= render 'search' %>
 	<img id="mypic" src="https://graph.facebook.com/<%= @current_user['id'] %>/picture?type=normal" alt="profile picture">
-	<div id="Welcome"> Welcome, <strong><%= @current_user['name'] %></strong></div>
+	<div id="Welcome"> Welcome, <strong><%= @current_user['name'] %>. <p id="notice"><%= notice %></p></strong></div>
 	<% unless @matches.blank? %>
 		<%= javascript_tag do %>
   			window.matches = '<%= j @matches.to_json %>';

@@ -38,7 +38,7 @@ class Filter
     users = users.where("age >= ?", self.min_age) unless self.min_age.blank?
     users = users.where(:relationship_status => self.relationship_status) unless (self.relationship_status.blank? || self.relationship_status == 'single or unspecified')    
     users = users.where("relationship_status = 'Single' OR relationship_status IS NULL") if self.relationship_status == 'single or unspecified'
-    #users = users.sample(n) to make it run faster
+    
     return users
   end
   
