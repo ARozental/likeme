@@ -1,5 +1,5 @@
 # This is a sample Capistrano config file for rubber
-
+require 'capistrano-db-tasks'
 set :rails_env, Rubber.env
 
 on :load do

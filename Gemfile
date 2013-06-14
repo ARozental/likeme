@@ -15,7 +15,7 @@ gem 'excon', '~> 0.21.0'
 #gem 'sqlite3'
 gem 'execjs'
 gem 'therubyracer'
-
+gem "capistrano-db-tasks", require: false
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'#
 

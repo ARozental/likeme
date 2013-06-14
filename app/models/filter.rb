@@ -2,8 +2,29 @@ class Filter
   include ActiveModel::Validations
   include ActiveModel::Conversion
   extend ActiveModel::Naming
-  attr_accessor :gender, :max_age, :min_age, :relationship_status, :search_by, :social_network
+  attr_accessor :gender, :max_age, :min_age, :relationship_status, :search_by, :social_network, :weights
   
+  def set_weights
+    if self.search_by == "likes"
+      self.weights = LikeMeConfig::default_weights
+    else
+      self.weights = {"l" => 0, "m" => 0, "b" => 0, "v" => 0, "t" => 0, "g" => 0, "a" => 0, "i" => 0}
+      self.weights[get_char(self.search_by)] = 1
+    end
+
+  end
+   @@weights = 
+  {
+    "l" => 2,
+    "m" => 1,
+    "b" => 1,
+    "v" => 1,
+    "t" => 1,
+    "g" => 1,                                             
+    "a" => 1,                       
+    "i" => 1,                       
+                      
+  }
   
   def set_params(params)
     self.min_age = params[:min_age]
@@ -15,7 +36,7 @@ class Filter
     self.social_network = params[:social_network]
     self.social_network = "include everyone" if self.social_network == nil
     #self.social_network = "don\'t include friends" if self.social_network == nil
-      
+    self.set_weights  
     return self
   end
   
@@ -35,18 +56,11 @@ class Filter
     users = users.where(:relationship_status => self.relationship_status) unless (self.relationship_status.blank? || self.relationship_status == 'single or unspecified')    
     users = users.where("relationship_status = 'Single' OR relationship_status IS NULL") if self.relationship_status == 'single or unspecified'
 
-=begin    
-    if self.search_by == 'likes'
-      users = users.includes(:user_page_relationships)
-    else
-      users = users.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ?",get_char(self.search_by))
-    end
-=end
     
     if self.search_by == "likes"
       users = users.sample(LikeMeConfig::maximal_matches)
     else
-      users = users.sample(LikeMeConfig::maximal_matches*3)
+      users = users.sample(LikeMeConfig::maximal_matches)
     end
     
     users_id = users.map(&:id)
@@ -54,10 +68,9 @@ class Filter
     if self.search_by == 'likes'
       users = users.includes(:user_page_relationships)
     else
-      users = users.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ?",get_char(self.search_by))
+      users = users.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ? OR user_page_relationships.relationship_type = ?",get_char(self.search_by),'l')
     end
     users = users.all
-    
     return users
   end
   

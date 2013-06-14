@@ -414,4 +414,79 @@ end
   end
 =end
 
+=begin
+def find_matches(filter)  #with random likes
+    self.calculate_scores
+    users = filter.get_scope(self.id)
+ 
+    #raise "k"
+
+
+
+    #raise users.class.to_s
+    #users = users.all
+    #raise users[0].id.to_s
+    
+    my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
+    @@all_page_aliases.each {|t|  my_pages[t] ||= []  } 
+   
+    user_type_scores = Hash.new
+    users_scores = Hash.new
+    
+
+    results = Parallel.map(users, :in_processes=>LikeMeConfig::matching_cores) do |user| 
+      user_pages = user.user_page_relationships.group_by(&:relationship_type)
+      if user_pages.blank?
+        user_type_scores = [0.0]
+      else
+        user_type_scores = user_pages.map do |type, page_array| #error if no likes
+          next if (@@weights[type] == 0 )
+          begin        
+            my_score = ((my_pages[type].map(&:page_id) & user_pages['l'].map(&:page_id)).count.to_f)/(my_pages[type].count + 1)
+          rescue
+            my_score = 0
+          end
+          begin
+            user_score = ((user_pages[type].map(&:page_id) & my_pages['l'].map(&:page_id)).count.to_f)/(user_pages[type].count + 1)
+          rescue
+            my_score = 0
+          end
+          score = ((my_score+user_score) / 2.0) * @@weights[type].to_f
+          score  
+        end
+      end
+      
+      user_type_scores.compact!
+      user_total_score = user_type_scores.inject{ |sum, el| sum + el }.to_f / user_type_scores.size
+      user_chosen_likes = []
+      begin
+      user_chosen_likes = user_pages[get_char(filter.search_by)].sample(6).map(&:page_id) #choose whet type pf likes to show
+      rescue
+      end
+      user_total_score = (user_total_score/(6-user_chosen_likes.size) - 0.000001*(6-user_chosen_likes.size)) if user_chosen_likes.size<6 #don't want them in the top 5
+      users_scores[user.id] = [user.id,user_total_score,user_chosen_likes]
+    end
+    results.each do |score_array|
+      users_scores[score_array[0]] = [score_array[1],score_array[2]]
+    end
+    #raise users_scores.to_s
+    users = users.to_a.sort_by {|user| users_scores[user["id"]][0]*(-1)}
+    users_and_likes = []
+    users.each do |user|
+      users_and_likes << [user,users_scores[user.id][1]]
+    end
+    #raise users_and_likes.to_s
+    #users_objects = User.where(:id => users_scores.keys).all already have it
+    users_scores = users_scores.sort_by { |id, score| score[0]*(-1) }
+    #raise users_scores.to_s
+    #users_order = users_scores.collect {|x| x[0]}.to_s
+    #users_objects = User.where(:id => users_scores.keys)
+    #return users_scores
+    #raise users_and_likes.size.to_s
+    #raise users_and_likes.to_s
+    return users_and_likes
+  end
+=end
+
+
     

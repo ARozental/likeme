@@ -13,7 +13,11 @@ class LikeMeConfig
   end
   
   def self.maximal_matches
-    return 100
+    return 200
+  end
+  
+  def self.default_weights
+    weights = {"l" => 2, "m" => 1, "b" => 1, "v" => 1, "t" => 1, "g" => 1, "a" => 1, "i" => 1}
   end
 
 end
