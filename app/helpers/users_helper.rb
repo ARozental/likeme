@@ -487,6 +487,73 @@ def find_matches(filter)  #with random likes
     return users_and_likes
   end
 =end
+=begin
+  def calculate_scores # similar to find_matches can write it better...
+    filter = Filter.new
+    
+    filter.search_by = "likes"
+    filter.get_sample = false
+    users = filter.get_scope(self.id)
+    #users = users.sample(LikeMeConfig::maximal_matches) #to make it run faster #gets the array
+    my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
+    @@all_page_aliases.each {|t|  my_pages[t] ||= []  } 
+   
+    user_type_scores = Hash.new
+    users_scores = Hash.new
+    
+    results = []
+    users.each do |user| 
+      user_pages = user.user_page_relationships.group_by(&:relationship_type)
+      if user_pages.blank?
+        user_type_scores = [0.0]
+      else
+        user_type_scores = user_pages.map do |type, page_array| #error if no likes
+          next if (@@weights[type] == 0 )
+          begin        
+            my_score = ((my_pages[type].map(&:page_id) & user_pages['l'].map(&:page_id)).count.to_f)/(my_pages[type].count + 1)
+          rescue
+            my_score = 0
+          end
+          begin
+            user_score = ((user_pages[type].map(&:page_id) & my_pages['l'].map(&:page_id)).count.to_f)/(user_pages[type].count + 1)
+          rescue
+            my_score = 0
+          end
+          score = ((my_score+user_score) / 2.0) * @@weights[type].to_f
+          score  
+        end
+      end
+      
+      user_type_scores.compact!
+      user_total_score = user_type_scores.inject{ |sum, el| sum + el }.to_f / user_type_scores.size
+      user_chosen_likes = []
+      begin
+      user_chosen_likes = user_pages[get_char(filter.search_by)].sample(6).map(&:page_id) #choose whet type pf likes to show
+      rescue
+      end
+      user_total_score = (user_total_score/(6-user_chosen_likes.size) - 0.000001*(6-user_chosen_likes.size)) if user_chosen_likes.size<6 #don't want them in the top 5
+      users_scores[user.id] = [user.id,user_total_score]
+      results << [user.id, user_total_score]
+    end
+    results.each do |score_array|
+      users_scores[score_array[0]] = [score_array[1],score_array[2]]
+    end
+    users = users.to_a.sort_by {|user| users_scores[user["id"]][0]*(-1)}
+    users_scores = users_scores.sort_by { |id, score| score[0]*(-1) }
+    
+    score_array = []
+    my_id = self.id
+    users_scores.each do |user_score|
+      score_array << Score.new(:user_id => my_id, :friend_id => user_score[0], :category => "l", :score => user_score[1][0])
+    end
+    
+    ActiveRecord::Base.transaction do
+      ActiveRecord::Base.connection.execute("DELETE FROM scores WHERE user_id = #{self.id}")
+      Score.import score_array   
+    end
 
+    
+  end   
+=end
 
     

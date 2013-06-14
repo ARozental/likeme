@@ -13,7 +13,7 @@ class LikeMeConfig
   end
   
   def self.maximal_matches
-    return 200
+    return 2000
   end
   
   def self.default_weights

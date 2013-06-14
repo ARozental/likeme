@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130607114400) do
+ActiveRecord::Schema.define(:version => 20130614150057) do
 
   create_table "delayed_jobs", :force => true do |t|
     t.integer  "priority",   :default => 0
@@ -49,6 +49,10 @@ ActiveRecord::Schema.define(:version => 20130607114400) do
     t.string  "category",  :limit => 1
     t.float   "score"
   end
+
+  add_index "scores", ["category"], :name => "index_scores_on_category"
+  add_index "scores", ["score"], :name => "index_scores_on_score"
+  add_index "scores", ["user_id"], :name => "index_scores_on_user_id"
 
   create_table "user_page_relationships", :force => true do |t|
     t.integer "user_id",           :limit => 8, :null => false

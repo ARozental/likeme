@@ -258,12 +258,40 @@ class User < ActiveRecord::Base
     self.save!
   end
   #handle_asynchronously :insert_my_info_to_db
-
   
+  def get_excluded_users_id_array(filter)
+    scores = Score.where(:user_id => self.id, :category => get_char(filter.search_by)).order("score")
+    if scores.count > 25
+      users = scores.first(scores.count - 25).map(&:friend_id)
+    else
+      users = []
+    end
+  end
+  
+  def get_likes_to_precalculated_scores(users_id,filter)
+    #I need an hash where every user_id go to [score,likes] 
+    filter.excluded_users = []
+    filter.include_only = users_id
+    users = filter.get_scope(self.id)
+    
+    users_order = users.order("score").first(25)
+    users = User.where(:id => users_order)
+    if self.search_by == 'likes'
+      users = users.includes(:user_page_relationships)
+    else
+      users = users.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ? OR user_page_relationships.relationship_type = ?",get_char(self.search_by),'l')
+    end
+    
+  end  
 
-def find_matches(filter)  #main matching algorithm, returns sorted hash of {id => score}
-    #self.calculate_scores
-    users = filter.get_scope(self.id)    
+  def find_matches(filter)  #main matching algorithm, returns sorted hash of {id => score}
+
+    excluded_users_id_array = get_excluded_users_id_array(filter)
+    filter.excluded_users = excluded_users_id_array
+
+    users = filter.get_scope(self.id) 
+    
+    #this takes all the time   
     my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
     @@all_page_aliases.each {|t|  my_pages[t] ||= []  } 
    
@@ -271,7 +299,7 @@ def find_matches(filter)  #main matching algorithm, returns sorted hash of {id =
     users_scores = Hash.new
     
 
-    results = Parallel.map(users, :in_processes=>LikeMeConfig::matching_cores) do |user|
+    results = Parallel.map(users, :in_processes=>3) do |user|
       #shared_pages_id = [] 
       user_pages = user.user_page_relationships.group_by(&:relationship_type)
       shared_pages_id = []
@@ -325,6 +353,7 @@ def find_matches(filter)  #main matching algorithm, returns sorted hash of {id =
     end
     #raise users_and_likes.to_s
     #users_objects = User.where(:id => users_scores.keys).all already have it
+    #raise users_scores.to_s
     users_scores = users_scores.sort_by { |id, score| score[0]*(-1) }
     #raise users_scores.to_s
     #users_order = users_scores.collect {|x| x[0]}.to_s
@@ -335,40 +364,48 @@ def find_matches(filter)  #main matching algorithm, returns sorted hash of {id =
     return users_and_likes
   end
   
-  def calculate_scores # similar to find_matches can write it better...
+  def calculate_scores(category) # similar to find_matches can write it better...
     filter = Filter.new
-    #filter.search_by = "likes"
+    filter.set_params({})
     users = filter.get_scope(self.id)
-    users = users.sample(LikeMeConfig::maximal_matches) #to make it run faster #gets the array
+    
+    filter.search_by = category
+    filter.get_sample = false
+    #users = filter.get_scope(self.id)
+    #users = users.sample(LikeMeConfig::maximal_matches) #to make it run faster #gets the array
     my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
     @@all_page_aliases.each {|t|  my_pages[t] ||= []  } 
    
-    user_type_scores = Hash.new
+    user_type_scores = []
     users_scores = Hash.new
     
     results = []
     users.each do |user| 
       user_pages = user.user_page_relationships.group_by(&:relationship_type)
+      #raise user_pages.to_s if user.id = 100003977536148 
       if user_pages.blank?
         user_type_scores = [0.0]
+        #raise user_pages.to_s if user.id = 100003977536148
       else
-        user_type_scores = user_pages.map do |type, page_array| #error if no likes
-          next if (@@weights[type] == 0 )
-          begin        
-            my_score = ((my_pages[type].map(&:page_id) & user_pages['l'].map(&:page_id)).count.to_f)/(my_pages[type].count + 1)
-          rescue
-            my_score = 0
-          end
-          begin
-            user_score = ((user_pages[type].map(&:page_id) & my_pages['l'].map(&:page_id)).count.to_f)/(user_pages[type].count + 1)
-          rescue
-            my_score = 0
-          end
-          score = ((my_score+user_score) / 2.0) * @@weights[type].to_f
-          score  
+        user_type_scores = []
+        user_pages.map do |type, page_array| #error if no likes
+          next if (filter.weights[type] == 0 ) #todo change here!
+          #raise filter.weights[type].to_s if user.id = 100003977536148
+          my_pages[type] = [] if my_pages[type].empty? 
+          user_pages['l'] = [] if user_pages['l'].empty? 
+          my_shared_pages_id = my_pages[type].map(&:page_id) & user_pages['l'].map(&:page_id)
+          my_score = (my_shared_pages_id.count.to_f)/(my_pages[type].count.to_f + 1)
+
+          user_pages[type] = [] if user_pages[type].empty? 
+          my_pages['l'] = [] if my_pages['l'].empty? 
+          user_shared_pages_id = user_pages[type].map(&:page_id) & my_pages['l'].map(&:page_id)
+          user_score = (user_shared_pages_id.count.to_f)/(user_pages[type].count.to_f + 1)
+          
+          score = ((my_score+user_score).to_f / 2.0) * filter.weights[type].to_f          
+          user_type_scores.push(score)
         end
       end
-      
+      #raise user_type_scores.to_s if user.id = 100003977536148
       user_type_scores.compact!
       user_total_score = user_type_scores.inject{ |sum, el| sum + el }.to_f / user_type_scores.size
       user_chosen_likes = []
@@ -381,22 +418,23 @@ def find_matches(filter)  #main matching algorithm, returns sorted hash of {id =
       results << [user.id, user_total_score]
     end
     results.each do |score_array|
-      users_scores[score_array[0]] = [score_array[1],score_array[2]]
+      users_scores[score_array[0]] = score_array[1]
     end
-    users = users.to_a.sort_by {|user| users_scores[user["id"]][0]*(-1)}
-    users_scores = users_scores.sort_by { |id, score| score[0]*(-1) }
     
+    #users = users.to_a.sort_by {|user| users_scores[user["id"]][0]*(-1)}
+    users_scores = users_scores.sort_by { |id, score| score*(-1) }
+    #raise users_scores.to_s
     score_array = []
     my_id = self.id
-    users_scores.each do |user_score|
-      score_array << Score.new(:user_id => my_id, :friend_id => user_score[0], :category => "l", :score => user_score[1][0])
+    users_scores.each do |user_and_score|
+      score_array << Score.new(:user_id => my_id, :friend_id => user_and_score[0], :category => get_char(category), :score => user_and_score[1])
     end
-    
+    #raise score_array.to_s
     ActiveRecord::Base.transaction do
-      ActiveRecord::Base.connection.execute("DELETE FROM friendships WHERE user_id = #{self.id}")
+      #todo WTF WTF WTF ActiveRecord::StatementInvalid: PGError: ERROR:  column "b" does not exist
+      #ActiveRecord::Base.connection.execute("DELETE FROM scores WHERE user_id = #{self.id} AND category = #{get_char(category)};")
+      Score.destroy_all(:user_id => self.id, :category => get_char(category))
       Score.import score_array   
     end
-
-    
   end      
 end
