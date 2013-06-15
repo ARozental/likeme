@@ -12,7 +12,7 @@ class LikeMeConfig
     return 60*60*24
   end
   
-  def self.maximal_matches
+  def self.maximal_matches #of non pre calculated people
     return 300
   end
   
@@ -37,7 +37,7 @@ class LikeMeConfig
   end
   
   def self.pre_calculation_network
-    return "include everyone"
+    return "include only friends"
   end
 
 end
