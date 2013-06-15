@@ -264,9 +264,9 @@ class User < ActiveRecord::Base
     #excluded_users_id_array = get_excluded_users_id_array(filter)
     #filter.excluded_users = Score.where(:user_id => self.id, :category => get_char(filter.search_by)).map(&:friend_id)
     #filter.included_users = Score.where(:user_id => self.id, :category => get_char(filter.search_by)).order("score").last(LikeMeConfig::number_of_precalculated_users).map(&:friend_id)
-    filter.set_users(self.id)
+    #filter.set_users(self.id)
     users = filter.get_scope(self.id) 
-    
+    #raise users.all.to_s
        
     my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
     @@all_page_aliases.each {|t|  my_pages[t] ||= []  } 

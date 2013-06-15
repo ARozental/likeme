@@ -42,19 +42,21 @@ class Filter
   
   def get_scope(my_id)
     self.set_weights
-    self.set_users(my_id) 
+     
     exclude = self.excluded_users.push(my_id)    
     users = User.where('users.id NOT IN (?)', exclude) #to exclude self
     friends_id_array = User.find(my_id).friends.map(&:id) unless self.social_network == "include everyone"
     users = users.where(:id => friends_id_array) if self.social_network == "include only friends"    
     users = users.where(['users.id NOT IN (?)', friends_id_array]) if self.social_network == "don\'t include friends"
     
+    #users = remove_non_valid_users(users)
+    
     users = users.where(:gender => self.gender) unless self.gender.blank?
     users = users.where("age <= ?", self.max_age) unless self.max_age.blank? #todo: if you didn't give your age to facebook it is set to zero
     users = users.where("age >= ?", self.min_age) unless self.min_age.blank?
     users = users.where(:relationship_status => self.relationship_status) unless (self.relationship_status.blank? || self.relationship_status == 'single or unspecified')    
     users = users.where("relationship_status = 'Single' OR relationship_status IS NULL") if self.relationship_status == 'single or unspecified'
-
+    self.set_users(my_id,users)
     
     if self.get_sample
       users = users.sample(LikeMeConfig::maximal_matches)
@@ -95,9 +97,13 @@ class Filter
       self.excluded_users = []
   end
 
-  def set_users(id)
+  def set_users(id,users)
+    self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).map(&:friend_id)
+    self.included_users = Score.where(:user_id => id, :category => get_char(self.search_by), :friend_id => users).order("score").last(LikeMeConfig::number_of_precalculated_friends).map(&:friend_id)
+=begin    
     friends_id_array = User.find(id).friends.map(&:id) unless self.social_network == "include everyone"
     
+   
     if self.social_network == "include only friends"
       self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).map(&:friend_id)
       self.included_users = Score.where(:user_id => id, :category => get_char(self.search_by), :friend_id => friends_id_array).order("score").last(LikeMeConfig::number_of_precalculated_friends).map(&:friend_id)
@@ -105,16 +111,29 @@ class Filter
     
     if self.social_network == "don\'t include friends"
       self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).map(&:friend_id)
-      include = Score.where(:user_id => id, :category => get_char(self.search_by)).order("score").map(&:friend_id)
-      include = include.where('scores.friend_id NOT IN (?)', friends_id_array)
+      include = Score.where(:user_id => id, :category => get_char(self.search_by)).order("score")
+      include = include.where(['scores.friend_id NOT IN (?)', friends_id_array])
       include = include.order("score").last(LikeMeConfig::number_of_precalculated_users).map(&:friend_id)
-      self.included_users = include
+      self.included_users = include    
     end
     
     if self.social_network == "include everyone"
       self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).map(&:friend_id)
       self.included_users = Score.where(:user_id => id, :category => get_char(self.search_by)).order("score").last(LikeMeConfig::number_of_precalculated_users).map(&:friend_id)
-    end   
+    end
+    
+    self.remove_non_valid_users_from_include
+=end   
+  end
+  
+  def remove_non_valid_users(users)
+    users = User.where(:id => self.included_users)
+    users = users.where(:gender => self.gender) unless self.gender.blank?
+    users = users.where("age <= ?", self.max_age) unless self.max_age.blank? #todo: if you didn't give your age to facebook it is set to zero
+    users = users.where("age >= ?", self.min_age) unless self.min_age.blank?
+    users = users.where(:relationship_status => self.relationship_status) unless (self.relationship_status.blank? || self.relationship_status == 'single or unspecified')    
+    users = users.where("relationship_status = 'Single' OR relationship_status IS NULL") if self.relationship_status == 'single or unspecified'
+    return users
   end
   
   def persisted?

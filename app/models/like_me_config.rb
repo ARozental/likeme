@@ -12,16 +12,17 @@ class LikeMeConfig
     return 60*60*24
   end
   
-  def self.maximal_matches #of non pre calculated people
-    return 200
-  end
   
-  def self.number_of_precalculated_users
+  def self.maximal_matches #how many random users to calculate
     return 100
   end
   
-  def self.number_of_precalculated_friends
-    return 100
+  def self.number_of_precalculated_users  #how many of best precalculated non friends to add
+    return 50
+  end
+  
+  def self.number_of_precalculated_friends #how many of best precalculated friends to add
+    return 50
   end   
   
   def self.default_weights
