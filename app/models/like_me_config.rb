@@ -13,11 +13,11 @@ class LikeMeConfig
   end
   
   def self.maximal_matches #of non pre calculated people
-    return 300
+    return 200
   end
   
   def self.number_of_precalculated_users
-    return 50
+    return 100
   end
   
   def self.number_of_precalculated_friends
