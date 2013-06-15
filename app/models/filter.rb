@@ -3,7 +3,7 @@ class Filter
   include ActiveModel::Conversion
   extend ActiveModel::Naming
   attr_accessor :gender, :max_age, :min_age, :relationship_status, :search_by
-  attr_accessor :social_network, :weights, :get_sample, :excluded_users, :include_only
+  attr_accessor :social_network, :weights, :get_sample, :excluded_users, :included_users
 
   def set_weights
     if self.search_by == "likes"
@@ -41,12 +41,10 @@ class Filter
   end
   
   def get_scope(my_id)
-    #raise self.gender + self.max_age + self.min_age + self.relationship_status + self.search_by
-    self.set_weights 
-    exclude = excluded_users.push(my_id)
-    
+    self.set_weights
+    self.set_users(my_id) 
+    exclude = self.excluded_users.push(my_id)    
     users = User.where('users.id NOT IN (?)', exclude) #to exclude self
-    users = users.where(:id => self.include_only) unless self.include_only == nil
     friends_id_array = User.find(my_id).friends.map(&:id) unless self.social_network == "include everyone"
     users = users.where(:id => friends_id_array) if self.social_network == "include only friends"    
     users = users.where(['users.id NOT IN (?)', friends_id_array]) if self.social_network == "don\'t include friends"
@@ -63,13 +61,19 @@ class Filter
     end
     
     users_id = users.map(&:id)
+    users_id = users_id | self.included_users unless self.included_users == nil
+    
+    #second go, so we exclude users we included that don't fit the filter
+    
+    
+    
     users = User.where(:id => users_id)
     if self.search_by == 'likes'
       users = users.includes(:user_page_relationships)
     else
       users = users.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ? OR user_page_relationships.relationship_type = ?",get_char(self.search_by),'l')
     end
-    #users = users.all
+    #users = users.all        #this takes all te time because of the include
     return users
   end
   
@@ -91,6 +95,27 @@ class Filter
       self.excluded_users = []
   end
 
+  def set_users(id)
+    friends_id_array = User.find(id).friends.map(&:id) unless self.social_network == "include everyone"
+    
+    if self.social_network == "include only friends"
+      self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).map(&:friend_id)
+      self.included_users = Score.where(:user_id => id, :category => get_char(self.search_by), :friend_id => friends_id_array).order("score").last(LikeMeConfig::number_of_precalculated_friends).map(&:friend_id)
+    end
+    
+    if self.social_network == "don\'t include friends"
+      self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).map(&:friend_id)
+      include = Score.where(:user_id => id, :category => get_char(self.search_by)).order("score").map(&:friend_id)
+      include = include.where('scores.friend_id NOT IN (?)', friends_id_array)
+      include = include.order("score").last(LikeMeConfig::number_of_precalculated_users).map(&:friend_id)
+      self.included_users = include
+    end
+    
+    if self.social_network == "include everyone"
+      self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).map(&:friend_id)
+      self.included_users = Score.where(:user_id => id, :category => get_char(self.search_by)).order("score").last(LikeMeConfig::number_of_precalculated_users).map(&:friend_id)
+    end   
+  end
   
   def persisted?
     false

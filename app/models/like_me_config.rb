@@ -13,11 +13,31 @@ class LikeMeConfig
   end
   
   def self.maximal_matches
-    return 2000
+    return 300
   end
+  
+  def self.number_of_precalculated_users
+    return 50
+  end
+  
+  def self.number_of_precalculated_friends
+    return 100
+  end   
   
   def self.default_weights
     weights = {"l" => 2, "m" => 1, "b" => 1, "v" => 1, "t" => 1, "g" => 1, "a" => 1, "i" => 1}
+  end
+  
+  def self.all_page_types
+    return ["likes","music","books","movies","television","games","activities","interests"]
+  end
+  
+  def self.all_page_aliases
+    return ["l","m","b","v","t","g","a","i"]
+  end
+  
+  def self.pre_calculation_network
+    return "include everyone"
   end
 
 end

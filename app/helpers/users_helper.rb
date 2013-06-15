@@ -555,5 +555,32 @@ def find_matches(filter)  #with random likes
     
   end   
 =end
+=begin
+  def get_excluded_users_id_array(filter)
+    scores = Score.where(:user_id => self.id, :category => get_char(filter.search_by)).order("score")
+    if scores.count > 25
+      users = scores.first(scores.count - 25).map(&:friend_id)
+    else
+      users = []
+    end
+  end
+  
+  def get_likes_to_precalculated_scores(users_id,filter)
+    #I need an hash where every user_id go to [score,likes] 
+    filter.excluded_users = []
+    filter.include_only = users_id
+    users = filter.get_scope(self.id)
+    
+    users_order = users.order("score").first(25)
+    users = User.where(:id => users_order)
+    if self.search_by == 'likes'
+      users = users.includes(:user_page_relationships)
+    else
+      users = users.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ? OR user_page_relationships.relationship_type = ?",get_char(self.search_by),'l')
+    end
+    
+  end 
+=end
+
 
     

@@ -21,7 +21,8 @@ development:
   username: alon
   password: 
   reconnect: true
-
+  allow_concurrency: true #did nothing for me probably needs parallel extractions...
+  
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
@@ -39,7 +40,9 @@ production:
   database: likeme_pg
   username: alon
   password:
-  reconnect: true  
+  reconnect: true
+  allow_concurrency: true #did nothing for me probably needs parallel extractions...
+  
 #production:
 #  adapter: sqlite3
 #  database: db/production.sqlite3
