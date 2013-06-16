@@ -45,7 +45,7 @@ class Filter
      
     exclude = self.excluded_users.push(my_id)    
     users = User.where('users.id NOT IN (?)', exclude) #to exclude self
-    friends_id_array = User.find(my_id).friends.map(&:id) unless self.social_network == "include everyone"
+    friends_id_array = User.find(my_id).friends.pluck(:id) unless self.social_network == "include everyone"
     users = users.where(:id => friends_id_array) if self.social_network == "include only friends"    
     users = users.where(['users.id NOT IN (?)', friends_id_array]) if self.social_network == "don\'t include friends"
     
@@ -75,6 +75,7 @@ class Filter
     else
       users = users.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ? OR user_page_relationships.relationship_type = ?",get_char(self.search_by),'l')
     end
+    #raise users.first.user_page_relationships.to_s
     #users = users.all        #this takes all te time because of the include
     return users
   end
@@ -98,32 +99,9 @@ class Filter
   end
 
   def set_users(id,users)
-    self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).map(&:friend_id)
+    self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).pluck(:friend_id)
     self.included_users = Score.where(:user_id => id, :category => get_char(self.search_by), :friend_id => users).order("score").last(LikeMeConfig::number_of_precalculated_friends).map(&:friend_id)
-=begin    
-    friends_id_array = User.find(id).friends.map(&:id) unless self.social_network == "include everyone"
-    
-   
-    if self.social_network == "include only friends"
-      self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).map(&:friend_id)
-      self.included_users = Score.where(:user_id => id, :category => get_char(self.search_by), :friend_id => friends_id_array).order("score").last(LikeMeConfig::number_of_precalculated_friends).map(&:friend_id)
-    end
-    
-    if self.social_network == "don\'t include friends"
-      self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).map(&:friend_id)
-      include = Score.where(:user_id => id, :category => get_char(self.search_by)).order("score")
-      include = include.where(['scores.friend_id NOT IN (?)', friends_id_array])
-      include = include.order("score").last(LikeMeConfig::number_of_precalculated_users).map(&:friend_id)
-      self.included_users = include    
-    end
-    
-    if self.social_network == "include everyone"
-      self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).map(&:friend_id)
-      self.included_users = Score.where(:user_id => id, :category => get_char(self.search_by)).order("score").last(LikeMeConfig::number_of_precalculated_users).map(&:friend_id)
-    end
-    
-    self.remove_non_valid_users_from_include
-=end   
+
   end
   
   def remove_non_valid_users(users)

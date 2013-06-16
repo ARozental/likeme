@@ -8,10 +8,8 @@ class SessionsController < ApplicationController
     #if true
       current_user.insert_self_data_and_likes(graph)    
                                  #user.insert_my_info_to_db(graph) #the hard work #403087=dan        
-      system "rake import USER_ID=#{current_user.id} &"
+      system "rake import USER_ID=#{current_user.id} &" #import and calculate scores
       Process.detach($?.pid)     
-      system "rake calculate_scores USER_ID=#{current_user.id} &"
-      Process.detach($?.pid)
       
       redirect_to root_url, notice: 'updating your friends data, this may take a few minutes.'
     else
