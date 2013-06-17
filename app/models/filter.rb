@@ -59,22 +59,55 @@ class Filter
     self.set_users(my_id,users)
     
     if self.get_sample
-      users = users.sample(LikeMeConfig::maximal_matches)
+      users_id = users.order("RANDOM()").limit(LikeMeConfig::maximal_matches).pluck(:id)
+    else
+      users_id = users.order("RANDOM()").pluck(:id)
     end
-    
-    users_id = users.map(&:id)
+    #raise users_id.to_s
+    #users_id = users.map(&:id)
     users_id = users_id | self.included_users unless self.included_users == nil
-    
+    return {} if users_id.empty?
     #second go, so we exclude users we included that don't fit the filter
     
     
-    
+    #todo: delete this :)
     users = User.where(:id => users_id)
     if self.search_by == 'likes'
       users = users.includes(:user_page_relationships)
     else
       users = users.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ? OR user_page_relationships.relationship_type = ?",get_char(self.search_by),'l')
     end
+   
+     
+    t =Time.now
+    #u = users.all
+    users_id_string = users_id.to_s
+    users_id_string[0] = '('
+    users_id_string[-1] = ')'
+    
+    #raise users_id_string
+    if self.search_by == 'likes'
+      query = "SELECT user_id, relationship_type, page_id FROM user_page_relationships"
+      query +=" WHERE user_page_relationships.user_id IN #{users_id_string}"
+      query = ActiveRecord::Base.connection.execute(query)
+      #raise "ok"
+    else
+      char = "'"+get_char(self.search_by)+"'"
+      query = "SELECT user_id, relationship_type, page_id FROM user_page_relationships"
+      query +=" WHERE user_page_relationships.user_id IN #{users_id_string}"
+      query +=" AND (user_page_relationships.relationship_type = 'l'" 
+      query +=" OR user_page_relationships.relationship_type = #{char})"
+      query = ActiveRecord::Base.connection.execute(query)
+      #raise "ok2"
+    end    
+    
+    
+    #a hash of   user_id => [[user_id,char,page_id],[user_id,char,page_id]...]
+    #query = ActiveRecord::Base.connection.execute("SELECT user_id, relationship_type, page_id FROM user_page_relationships")    
+    result = query.collect { |i| [i["user_id"],i["relationship_type"],i["page_id"]] }.group_by { |i| i.first }#.to_s#group_by { |i| i["user_id"] }.to_s
+    #return result
+    raise result.to_s
+    #raise (Time.now-t).to_s 
     #raise users.first.user_page_relationships.to_s
     #users = users.all        #this takes all te time because of the include
     return users

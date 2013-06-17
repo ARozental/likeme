@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130614150057) do
+ActiveRecord::Schema.define(:version => 20130616151711) do
 
   create_table "delayed_jobs", :force => true do |t|
     t.integer  "priority",   :default => 0
@@ -59,6 +59,9 @@ ActiveRecord::Schema.define(:version => 20130614150057) do
     t.integer "page_id",           :limit => 8, :null => false
     t.string  "relationship_type", :limit => 1
   end
+
+  add_index "user_page_relationships", ["relationship_type"], :name => "index_user_page_relationships_on_relationship_type"
+  add_index "user_page_relationships", ["user_id"], :name => "index_user_page_relationships_on_user_id"
 
   create_table "users", :force => true do |t|
     t.string   "provider"
