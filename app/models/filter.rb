@@ -2,7 +2,7 @@ class Filter
   include ActiveModel::Validations
   include ActiveModel::Conversion
   extend ActiveModel::Naming
-  attr_accessor :gender, :max_age, :min_age, :relationship_status, :search_by
+  attr_accessor :gender, :max_age, :min_age, :relationship_status, :search_by, :chosen_users
   attr_accessor :social_network, :weights, :get_sample, :excluded_users, :included_users
 
   def set_weights
@@ -66,51 +66,9 @@ class Filter
     #raise users_id.to_s
     #users_id = users.map(&:id)
     users_id = users_id | self.included_users unless self.included_users == nil
-    return {} if users_id.empty?
-    #second go, so we exclude users we included that don't fit the filter
-    
-    
-    #todo: delete this :)
-    users = User.where(:id => users_id)
-    if self.search_by == 'likes'
-      users = users.includes(:user_page_relationships)
-    else
-      users = users.includes(:user_page_relationships).where("user_page_relationships.relationship_type = ? OR user_page_relationships.relationship_type = ?",get_char(self.search_by),'l')
-    end
-   
-     
-    t =Time.now
-    #u = users.all
-    users_id_string = users_id.to_s
-    users_id_string[0] = '('
-    users_id_string[-1] = ')'
-    
-    #raise users_id_string
-    if self.search_by == 'likes'
-      query = "SELECT user_id, relationship_type, page_id FROM user_page_relationships"
-      query +=" WHERE user_page_relationships.user_id IN #{users_id_string}"
-      query = ActiveRecord::Base.connection.execute(query)
-      #raise "ok"
-    else
-      char = "'"+get_char(self.search_by)+"'"
-      query = "SELECT user_id, relationship_type, page_id FROM user_page_relationships"
-      query +=" WHERE user_page_relationships.user_id IN #{users_id_string}"
-      query +=" AND (user_page_relationships.relationship_type = 'l'" 
-      query +=" OR user_page_relationships.relationship_type = #{char})"
-      query = ActiveRecord::Base.connection.execute(query)
-      #raise "ok2"
-    end    
-    
-    
-    #a hash of   user_id => [[user_id,char,page_id],[user_id,char,page_id]...]
-    #query = ActiveRecord::Base.connection.execute("SELECT user_id, relationship_type, page_id FROM user_page_relationships")    
-    result = query.collect { |i| [i["user_id"],i["relationship_type"],i["page_id"]] }.group_by { |i| i.first }#.to_s#group_by { |i| i["user_id"] }.to_s
-    #return result
-    raise result.to_s
-    #raise (Time.now-t).to_s 
-    #raise users.first.user_page_relationships.to_s
-    #users = users.all        #this takes all te time because of the include
-    return users
+    self.chosen_users = users_id
+ 
+    return nil
   end
   
   def get_char(type)
@@ -126,6 +84,37 @@ class Filter
     return 'x' #shouldn't happen   
   end
   
+  def get_users_query
+    users_id_string = self.chosen_users.to_s
+    users_id_string[0] = '('
+    users_id_string[-1] = ')'
+    if self.search_by == 'likes'
+      query = "SELECT user_id, relationship_type, page_id FROM user_page_relationships"
+      query +=" WHERE user_page_relationships.user_id IN #{users_id_string}"
+    else
+      char = "'"+get_char(self.search_by)+"'"
+      query = "SELECT user_id, relationship_type, page_id FROM user_page_relationships"
+      query +=" WHERE user_page_relationships.user_id IN #{users_id_string}"
+      query +=" AND (user_page_relationships.relationship_type = 'l'" 
+      query +=" OR user_page_relationships.relationship_type = #{char})"
+    end
+    return query 
+  end
+  
+  def get_user_query_by_id(id)
+    if self.search_by == 'likes'
+      query = "SELECT user_id, relationship_type, page_id FROM user_page_relationships"
+      query +=" WHERE user_page_relationships.user_id = #{id}"
+    else
+      char = "'"+get_char(self.search_by)+"'"
+      query = "SELECT user_id, relationship_type, page_id FROM user_page_relationships"
+      query +=" WHERE user_page_relationships.user_id = #{id}"
+      query +=" AND (user_page_relationships.relationship_type = 'l'" 
+      query +=" OR user_page_relationships.relationship_type = #{char})"
+    end
+    return query 
+  end
+  
   def initialize
       self.get_sample = true
       self.excluded_users = []
@@ -133,7 +122,7 @@ class Filter
 
   def set_users(id,users)
     self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).pluck(:friend_id)
-    self.included_users = Score.where(:user_id => id, :category => get_char(self.search_by), :friend_id => users).order("score").last(LikeMeConfig::number_of_precalculated_friends).map(&:friend_id)
+    self.included_users = Score.where(:user_id => id, :category => get_char(self.search_by), :friend_id => users).order("score").limit(LikeMeConfig::number_of_precalculated_friends).pluck(:friend_id)
 
   end
   

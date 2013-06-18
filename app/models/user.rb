@@ -257,175 +257,130 @@ class User < ActiveRecord::Base
     self.last_fb_update = Time.now
     self.save!
   end
-  #handle_asynchronously :insert_my_info_to_db   
-
-  def find_matches(filter)  #main matching algorithm, returns sorted hash of {id => score}
-
-    #excluded_users_id_array = get_excluded_users_id_array(filter)
-    #filter.excluded_users = Score.where(:user_id => self.id, :category => get_char(filter.search_by)).map(&:friend_id)
-    #filter.included_users = Score.where(:user_id => self.id, :category => get_char(filter.search_by)).order("score").last(LikeMeConfig::number_of_precalculated_users).map(&:friend_id)
-    #filter.set_users(self.id)
-    users = filter.get_scope(self.id) 
-    #raise users.all.to_s
-       
-    my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
-    @@all_page_aliases.each {|t|  my_pages[t] ||= []  } 
-   
-    user_type_scores = []
-    users_scores = Hash.new
+  #handle_asynchronously :insert_my_info_to_db
+  
+  def get_scores_array(filter) #returns an array of a [user_id, score, chosen_likes]
+    filter.get_scope(self.id)
+    users_id = filter.chosen_users
+    sliced_users_id = users_id.each_slice((users_id.count.to_f/LikeMeConfig.matching_cores.to_f).ceil.to_i)
+    my_query = filter.get_user_query_by_id(id)
+    my_pages = ActiveRecord::Base.connection.execute(my_query)
     
+    my_pages = my_pages.collect { |i| [i["relationship_type"],i["page_id"]] }
+    my_pages = my_pages.group_by { |i| i.first }
+    my_pages = my_pages.each do |char, likes|
+      my_pages[char] = likes.collect { |i| i[1]}
+    end
+    my_pages.values.flatten! #do I need it, some people get [] into their pages array
+         
+    
+    #result is an array of a [user_id, score, chosen_likes]
+    results = Parallel.map(sliced_users_id, :in_threads=>LikeMeConfig.matching_cores) do |user_group| #processes lose db connection after function returns
+    #results = sliced_users_id.collect do |user_group| #in single process
+      ActiveRecord::Base.connection.reconnect!
+      temp_filter = filter
+      temp_filter.chosen_users = user_group
+      users_query = temp_filter.get_users_query      
+      users_pages = ActiveRecord::Base.connection.execute(users_query)
+      users_pages = users_pages.collect { |i| [i["user_id"],i["relationship_type"],i["page_id"]] }.group_by { |i| i.first }      
 
-    results = Parallel.map(users, :in_processes=>LikeMeConfig::matching_cores) do |user| #have user groups here for parallel include
-      #shared_pages_id = [] 
-      user_pages = user.user_page_relationships.group_by(&:relationship_type)
-      shared_pages_id = []
-      if user_pages.blank?
-        user_type_scores = [0.0]
-      else
-        user_type_scores = []
-        user_pages.map do |type, page_array| #error if no likes
-          next if (filter.weights[type] == 0 ) #todo change here!
-
-          my_pages[type] = [] if my_pages[type].empty? 
-          user_pages['l'] = [] if user_pages['l'].empty? 
-          my_shared_pages_id = my_pages[type].map(&:page_id) & user_pages['l'].map(&:page_id)
-          my_score = (my_shared_pages_id.count.to_f)/(my_pages[type].count.to_f + 1)
-
-          user_pages[type] = [] if user_pages[type].empty? 
-          my_pages['l'] = [] if my_pages['l'].empty? 
-          user_shared_pages_id = user_pages[type].map(&:page_id) & my_pages['l'].map(&:page_id)
-          user_score = (user_shared_pages_id.count.to_f)/(user_pages[type].count.to_f + 1)
-          
-          shared_pages_id.push([my_shared_pages_id, user_shared_pages_id])
-          score = ((my_score+user_score).to_f / 2.0) * filter.weights[type].to_f          
-          user_type_scores.push(score)
+      user_score_and_chosen_likes = user_group.collect do |user_id|
+        user_pages = users_pages[user_id.to_s] #nil if user has no pages
+        next if (user_pages == nil )
+        
+        user_pages = user_pages.group_by { |i| i[1] }
+        user_pages = user_pages.each do |char, likes|
+          user_pages[char] = likes.collect { |i| i[2]}
         end
-      end
+        #now user pages is a hash from char to an array of page ids
+        user_type_scores_and_pages = @@all_page_aliases.collect do |type|
+          next if (filter.weights[type] == 0 )
+                    
+          my_pages[type] = [] if my_pages[type].blank? 
+          user_pages['l'] = [] if user_pages['l'].blank? 
+          my_shared_type_pages = my_pages[type] & user_pages['l']
+          my_score = (my_shared_type_pages.count.to_f)/(my_pages[type].count.to_f + 1)
+          
+          user_pages[type] = [] if user_pages[type].blank? 
+          my_pages['l'] = [] if my_pages['l'].blank? 
+          user_shared_type_pages = user_pages[type] & my_pages['l']
+          user_score = (user_shared_type_pages.count.to_f)/(user_pages[type].count.to_f + 1)
+          
+          #raise user_score.to_s
+          shared_type_pages = [my_shared_type_pages, user_shared_type_pages].flatten.uniq
+          score = ((my_score+user_score).to_f / 2.0) * filter.weights[type].to_f          
+          score_and_pages = [score, shared_type_pages]
+        end
+        user_type_scores_and_pages.compact!
+        
+        user_total_score = user_type_scores_and_pages.collect { |type| type[0]}
+        user_total_score = user_total_score.inject{ |sum, el| sum + el }.to_f / user_total_score.size
+        user_shared_pages = user_type_scores_and_pages.collect { |type| type[1]}.flatten.uniq
+        #user_total_pages = user_pages.values.flatten.uniq
+        user_total_pages = user_pages[get_char(filter.search_by)].uniq
+        
+        user_chosen_likes = user_shared_pages.flatten.uniq.shuffle
+        user_chosen_likes.push(user_total_pages.shuffle)  #if I want to show 6 likes even if unrelated
+        user_chosen_likes = user_chosen_likes.flatten.uniq.first(6)
+         
+        user_total_score = (user_total_score/(6-user_chosen_likes.size) - 0.000001*(6-user_chosen_likes.size)) if user_chosen_likes.size<6 #don't want them in the top 5
 
-      user_type_scores.compact!
-      if user_type_scores.empty?
-        user_total_score = 0.0
-      else
-        user_total_score = user_type_scores.inject{ |sum, el| sum + el }.to_f / user_type_scores.size
-      end
-      user_chosen_likes = []
-      user_chosen_likes = shared_pages_id.flatten.uniq.shuffle
-      user_chosen_likes.push(user_pages[get_char(filter.search_by)].sample(6).map(&:page_id)) unless user_pages[get_char(filter.search_by)].blank?
-      user_chosen_likes = user_chosen_likes.flatten.uniq.first(6)
-      #user_chosen_likes = user_pages[get_char(filter.search_by)].sample(6).map(&:page_id)
-      
-      user_total_score = (user_total_score/(6-user_chosen_likes.size) - 0.000001*(6-user_chosen_likes.size)) if user_chosen_likes.size<6 #don't want them in the top 5
-      users_scores[user.id] = [user.id,user_total_score,user_chosen_likes]
+        [user_id, user_total_score, user_chosen_likes] 
+      end 
+      user_score_and_chosen_likes
     end
-    #raise results.to_s  
-    results.each do |score_array|
-      users_scores[score_array[0]] = [score_array[1],score_array[2]]
-    end
-    
-    users = users.to_a.sort_by {|user| users_scores[user["id"]][0]*(-1)}
-    users_and_likes = []
-    users.each do |user|
-      users_and_likes << [user,users_scores[user.id][1]]
-    end
-    #raise users_and_likes.to_s
-    #users_objects = User.where(:id => users_scores.keys).all already have it
-    #raise users_scores.to_s
-    users_scores = users_scores.sort_by { |id, score| score[0]*(-1) }
-    #raise users_scores.to_s
-    #users_order = users_scores.collect {|x| x[0]}.to_s
-    #users_objects = User.where(:id => users_scores.keys)
-    #return users_scores
-    #raise users_and_likes.size.to_s
-    #raise users_and_likes.to_s
-    return users_and_likes
+    results = results.flatten(1).compact #result.flatten(1) is an array of a [user_id, score, chosen_likes] #may have nil here, possibly
+    results = results.sort_by {|array| array[1]*(-1)}
+    return results
   end
   
-  def calculate_scores(filter) # similar to find_matches can write it better...
-    #filter = Filter.new
-    #filter.set_params({})
-    #raise filter.search_by if filter.search_by=="music"
-    category = filter.search_by
-    filter.get_sample = false
-    #filter.set_weights
-    users = filter.get_scope(self.id)
+     
+  def find_matches(filter) #returns an array of [user,[chosen_likes]]
+    #self.calculate_scores(filter)
     
-    #filter.search_by = category
+    results = self.get_scores_array(filter)
+    pid = Process.fork do
+      save_matching_scores(filter,results)
+    end    
+    Process.detach(pid)
     
-    #users = filter.get_scope(self.id)
-    #users = users.sample(LikeMeConfig::maximal_matches) #to make it run faster #gets the array
-    my_pages = self.user_page_relationships.group_by(&:relationship_type) #hash: key=type, value=array of pages
-    @@all_page_aliases.each {|t|  my_pages[t] ||= []  } 
-   
-    user_type_scores = []
-    users_scores = Hash.new
-    #raise filter.weights.to_s
-    results = []
-    users.each do |user| 
-      user_pages = user.user_page_relationships.group_by(&:relationship_type)
-      #raise user_pages.to_s if user.id = 4812944 && category == "music" 
-      if user_pages.blank?
-        user_type_scores = [0.0]
-        #raise user_pages.to_s if user.id = 100003977536148
-      else
-        user_type_scores = []
-        user_pages.map do |type, page_array| #error if no likes
-          #raise filter.weights.to_s
-          next if (filter.weights[type] == 0 ) #todo change here!
-          #raise filter.weights.to_s if user.id = 4812944 && category == "music"
-          my_pages[type] = [] if my_pages[type].empty? 
-          user_pages['l'] = [] if user_pages['l'].empty? 
-          my_shared_pages_id = my_pages[type].map(&:page_id) & user_pages['l'].map(&:page_id)
-          my_score = (my_shared_pages_id.count.to_f)/(my_pages[type].count.to_f + 1)
+    users_id = results.first(LikeMeConfig.number_of_users_to_show).collect {|array| array[0]}           
+    users = User.where(:id => users_id).all
+    users = users.group_by { |user| user.id }
 
-          user_pages[type] = [] if user_pages[type].empty? 
-          my_pages['l'] = [] if my_pages['l'].empty? 
-          user_shared_pages_id = user_pages[type].map(&:page_id) & my_pages['l'].map(&:page_id)
-          user_score = (user_shared_pages_id.count.to_f)/(user_pages[type].count.to_f + 1)
-          
-          score = ((my_score+user_score).to_f / 2.0) * filter.weights[type].to_f
-          #raise category.to_s if user.id = 4812944 #&& category == "music"           
-          user_type_scores.push(score)
-        end
-      end
-      #raise user_type_scores.to_s if user.id = 100003977536148
-      user_type_scores.compact!
-      user_total_score = user_type_scores.inject{ |sum, el| sum + el }.to_f / user_type_scores.size unless user_type_scores.size == 0
-      user_total_score = 0 if user_type_scores.size == 0
-      user_chosen_likes = []
-      begin
-      user_chosen_likes = user_pages[get_char(filter.search_by)].sample(6).map(&:page_id) #choose whet type pf likes to show
-      rescue
-      end
-      user_total_score = (user_total_score/(6-user_chosen_likes.size) - 0.000001*(6-user_chosen_likes.size)) if user_chosen_likes.size<6 #don't want them in the top 5
-      #raise user_total_score.to_s if user.id = 4812944 && category == "music"
-      users_scores[user.id] = [user.id,user_total_score]
-      results << [user.id, user_total_score]
-      #raise filter.weights.to_s if user.id = 4812944 && category == "music"
-      #raise results.to_s if user.id = 4812944 && category == "music" #I got here with the right filter
-    end
-    #raise results.to_s if category == "music" #and here I have NaN
-    results.each do |score_array|
-      users_scores[score_array[0]] = score_array[1]
+    outcome = []
+    results.first(LikeMeConfig.number_of_users_to_show).each do |array|
+      outcome << [users[array[0]].first,array[2]]
     end
     
-    #users = users.to_a.sort_by {|user| users_scores[user["id"]][0]*(-1)}
-    begin
-    users_scores = users_scores.sort_by { |id, score| score*(-1) }
-    rescue
-      raise users_scores.to_s + "          " + category.to_s
-    end
-    #raise users_scores.to_s
-    score_array = []
-    my_id = self.id
-    users_scores.each do |user_and_score|
-      score_array << Score.new(:user_id => my_id, :friend_id => user_and_score[0], :category => get_char(category), :score => user_and_score[1])
-    end
-    #raise score_array.to_s
+
+    
+    return outcome
+  end
+  
+  def save_matching_scores(filter,results)
+    results = self.get_scores_array(filter)
+    id = self.id
+    char = get_char(filter.search_by)
+    user_ids = results.collect{ |s| s[0]}
+    scores = results.collect{ |s| [id,s[0],char,s[1]]}
+    scores = scores.to_s.gsub('[','(').gsub(']',')').gsub('"','\'')
+    scores[0] = ''
+    scores[-1] = ';'
+    #raise scores.to_s
+    query = "INSERT INTO scores (user_id, friend_id, category, score) VALUES #{scores}"
     ActiveRecord::Base.transaction do
-      #todo WTF WTF WTF ActiveRecord::StatementInvalid: PGError: ERROR:  column "b" does not exist
-      #ActiveRecord::Base.connection.execute("DELETE FROM scores WHERE user_id = #{self.id} AND category = #{get_char(category)};")
-      Score.destroy_all(:user_id => self.id, :category => get_char(category))
-      Score.import score_array   
+      Score.where(:user_id => id).where(:friend_id => user_ids).delete_all
+      ActiveRecord::Base.connection.execute(query)
     end
-  end      
+  end
+
+  def calculate_scores(filter)
+    results = self.get_scores_array(filter)
+    save_matching_scores(filter,results)
+  end
+  
+
+
+     
 end
