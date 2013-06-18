@@ -370,7 +370,7 @@ class User < ActiveRecord::Base
     #raise scores.to_s
     query = "INSERT INTO scores (user_id, friend_id, category, score) VALUES #{scores}"
     ActiveRecord::Base.transaction do
-      Score.where(:user_id => id).where(:friend_id => user_ids).delete_all
+      Score.where(:user_id => id).where(:friend_id => user_ids).where(:category => char).delete_all
       ActiveRecord::Base.connection.execute(query)
     end
   end
