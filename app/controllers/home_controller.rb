@@ -15,34 +15,13 @@ class HomeController < ApplicationController
         redirect_to "/auth/facebook" #loop it session exist but current user doesn't
       end     
         
-      #begin
-      #raise params.to_s
+      #begin #Ifail on about 1 in 8 tries due to db parallelism
         @filter||=Filter.new
-        #@filter.gender=params[:gender]
         @filter.set_params(params)
-        #raise params.to_s
-        #raise @filter.gender.to_s
-        #raise @filter.gender.to_s
-        #@filter.min_age=params[:min_age]
-        #@filter.max_age=params[:max_age]
-        #raise @filter.gender.to_s
-        #@filter.relationship_status=nil if params[:relationship_status]=="any" #move to find matches
-        #@filter.gender=nil if params[:gender]=="any" #move to find matches
         @matches = @current_user.find_matches(@filter) unless @current_user==nil
-        #@filter.gender=params[:gender]
-        #@filter.relationship_status=params[:relationship_status]
-        #raise @filter.gender.to_s
       #rescue
       #end
-        #@user_graph = Koala::Facebook::API.new(current_user.oauth_token)
-        #@something = @current_user.time_fb_connection(@user_graph) 
-        #@me = @user_graph.get_object("me")
-        #@my_likes = @user_graph.get_connections("me", "likes")
-        #@my_books = @user_graph.get_connections("me", "books")
-        #@other_user = @user_graph.get_object("681317849")
-        #@other_user = @user_graph.get_object("403087")
-        #@other_user_likes = @user_graph.get_connections("403087", "likes")
-
+ 
   
   end
 end

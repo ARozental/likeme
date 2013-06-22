@@ -1,18 +1,12 @@
 desc "calc..."
-task :calculate_scores => :environment do
-  filter = Filter.new
-  filter.social_network = LikeMeConfig::pre_calculation_network #"include everyone"
+task :calculate_scores, [:id, :filter] => :environment do |t, args|
   
-  user = User.find(ENV["USER_ID"])
-  
-  LikeMeConfig::all_page_types.each do |category|
-    filter.search_by = category
-    user.calculate_scores(filter)
-  end
-  
-  #user = User.find(584663600)
-  #user = User.find(ENV["USER_ID"])
-  #graph = Koala::Facebook::API.new(user.oauth_token) #ENV["GRAPH"]
-  #graph = ENV["GRAPH"]
-  #user.insert_my_info_to_db(graph)
+  #puts "Args were: #{args}"
+  #rake calculate_scores[1,2]
+  #args = {id => 1,filter => 2}
+  id = args["id"] 
+  filter = args["filter"]
+  user = User.find(id)
+  results = user.get_scores_array(filter)
+  save_matching_scores(filter,results)
 end

@@ -1,4 +1,7 @@
 class User < ActiveRecord::Base
+  #require 'rake'
+  #Rake::Task.clear
+  #Likeme::Application.load_tasks
   include UsersHelper
   attr_accessible :active, :name, :id, :location, :birthday, :gender, :age, :bio
   attr_accessible :hometown, :quotes, :relationship_status, :significant_other, :last_fb_update
@@ -275,9 +278,10 @@ class User < ActiveRecord::Base
          
     
     #result is an array of a [user_id, score, chosen_likes]
-    results = Parallel.map(sliced_users_id, :in_threads=>LikeMeConfig.matching_cores) do |user_group| #processes lose db connection after function returns
-    #results = sliced_users_id.collect do |user_group| #in single process
-      ActiveRecord::Base.connection.reconnect!
+    #ActiveRecord::Base.connection.disconnect!
+    #results = Parallel.map(sliced_users_id, :in_threads=>LikeMeConfig.matching_cores) do |user_group| #processes lose db connection after function returns
+    results = sliced_users_id.collect do |user_group| #in single process
+      #ActiveRecord::Base.connection.reconnect!
       temp_filter = filter
       temp_filter.chosen_users = user_group
       users_query = temp_filter.get_users_query      
@@ -339,13 +343,22 @@ class User < ActiveRecord::Base
     #self.calculate_scores(filter)
     
     results = self.get_scores_array(filter)
+    
+    #fails after ~ 8 times if Process.fork exist below 
+    #ActiveRecord::Base.connection.disconnect!
     pid = Process.fork do
+      #ActiveRecord::Base.establish_connection
       save_matching_scores(filter,results)
     end    
     Process.detach(pid)
-    
-    users_id = results.first(LikeMeConfig.number_of_users_to_show).collect {|array| array[0]}           
-    users = User.where(:id => users_id).all
+    #rake calculate_scores[1,2]
+    #system "rake import USER_ID=#{current_user.id} &"
+    #system "rake calculate_scores[#{self.id},#{filter}]"
+    #Rake::Task["calculate_scores[#{self.id},#{filter}]"].execute
+    ActiveRecord::Base.establish_connection
+    users_id = results.first(LikeMeConfig.number_of_users_to_show).collect {|array| array[0]}
+               
+    users = User.where(:id => users_id).all #errors when lots of requests...
     users = users.group_by { |user| user.id }
 
     outcome = []

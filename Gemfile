@@ -1,21 +1,22 @@
 source 'http://rubygems.org'
 #ruby '1.9.3', engine: 'jruby', engine_version: '1.7.2' for neo4j in heroku
-gem 'rails', '3.2.8'
+gem 'rails', '3.2.13'
 gem 'omniauth-facebook', '1.4.0'
 gem 'koala'
-gem 'delayed_job_active_record'
+#gem 'delayed_job_active_record'
 gem "daemons"
 gem "twitter-bootstrap-rails"
 gem 'activerecord-import'
 gem 'foreigner'
-gem 'pg', '0.12.2'
+gem 'pg', '0.15.1'
 gem 'parallel'
 gem 'excon', '~> 0.21.0'
+#gem 'rvm-capistrano' useless...
 #don't need those:
 #gem 'sqlite3'
 gem 'execjs'
 gem 'therubyracer'
-gem "capistrano-db-tasks", require: false
+gem "capistrano-db-tasks"#, require: false
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'#
 
@@ -57,7 +58,7 @@ gem 'capistrano'
 gem 'rubber', :git => 'git://github.com/alonzorz/rubber.git'
 gem 'open4'
 gem 'gelf'
-gem 'graylog2_exceptions', :git => 'git://github.com/wr0ngway/graylog2_exceptions.git'
-gem 'graylog2-resque'
+#gem 'graylog2_exceptions', :git => 'git://github.com/wr0ngway/graylog2_exceptions.git'
+#gem 'graylog2-resque'
 
-gem 'debugger'
+#gem 'debugger'
