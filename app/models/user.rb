@@ -237,7 +237,7 @@ class User < ActiveRecord::Base
     end
     
     #todo do not reject+import, use update+insert on all
-    existing_friends_id = User.where(:id => my_friends_id_array).map(&:id)
+    existing_friends_id = User.where(:id => my_friends_id_array).pluck(:id)
     friends_array = friends_array.reject { |friend|  existing_friends_id.include?(friend["id"])}
     User.import friends_array unless friends_array.blank?
       
@@ -265,7 +265,9 @@ class User < ActiveRecord::Base
   def get_scores_array(filter) #returns an array of a [user_id, score, chosen_likes]
     filter.get_scope(self.id)
     users_id = filter.chosen_users
-    sliced_users_id = users_id.each_slice((users_id.count.to_f/LikeMeConfig.matching_cores.to_f).ceil.to_i)
+    slices = (users_id.count.to_f/LikeMeConfig.matching_cores.to_f).ceil.to_i
+    slices = 1 if slices == 0
+    sliced_users_id = users_id.each_slice(slices)
     my_query = filter.get_user_query_by_id(id)
     my_pages = ActiveRecord::Base.connection.execute(my_query)
     
@@ -341,7 +343,6 @@ class User < ActiveRecord::Base
      
   def find_matches(filter) #returns an array of [user,[chosen_likes]]
     #self.calculate_scores(filter)
-    
     results = self.get_scores_array(filter)
     
     #fails after ~ 8 times if Process.fork exist below 

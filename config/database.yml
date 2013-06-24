@@ -18,8 +18,8 @@ development:
   Port: 5432
   pool: 50
   database: likeme_pg
-  #username: alon #got advise to delete this to avoid postgras problems
-  #password: 
+  username: alon #got advise to delete this to avoid postgras problems
+  password: 
   reconnect: true
   allow_concurrency: true #did nothing for me probably needs parallel extractions...
   
@@ -32,8 +32,8 @@ test:
   Port: 5432
   pool: 50
   database: likeme_pg_test
-  username: alon
-  password:
+  #username: alon
+  #password:
   reconnect: true
   allow_concurrency: true 
 

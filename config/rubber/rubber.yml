@@ -17,8 +17,8 @@ admin_email: "alonzorz1@gmail.com"
 timezone: US/Eastern
 
 # REQUIRED: the domain all the instances should be associated with
-#
-domain: foo.com
+# domain: foo.com
+domain: like-me.info
 
 # OPTIONAL: See rubber-dns.yml for dns configuration
 # This lets rubber update a dynamic dns service with the instance alias
