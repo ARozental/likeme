@@ -345,17 +345,15 @@ class User < ActiveRecord::Base
     #self.calculate_scores(filter)
     results = self.get_scores_array(filter)
     
-    #fails after ~ 8 times if Process.fork exist below 
-    #ActiveRecord::Base.connection.disconnect!
+  
+    ActiveRecord::Base.connection.disconnect!
     pid = Process.fork do
-      #ActiveRecord::Base.establish_connection
+      ActiveRecord::Base.establish_connection
       save_matching_scores(filter,results)
     end    
     Process.detach(pid)
-    #rake calculate_scores[1,2]
-    #system "rake import USER_ID=#{current_user.id} &"
-    #system "rake calculate_scores[#{self.id},#{filter}]"
-    #Rake::Task["calculate_scores[#{self.id},#{filter}]"].execute
+    
+    
     ActiveRecord::Base.establish_connection
     users_id = results.first(LikeMeConfig.number_of_users_to_show).collect {|array| array[0]}
                
@@ -364,7 +362,7 @@ class User < ActiveRecord::Base
 
     outcome = []
     results.first(LikeMeConfig.number_of_users_to_show).each do |array|
-      outcome << [users[array[0]].first,array[2]]
+      outcome << [users[array[0]].first,array[2],adjust_score(array[1])]
     end
     
 
@@ -374,24 +372,34 @@ class User < ActiveRecord::Base
   
   def save_matching_scores(filter,results)
     results = self.get_scores_array(filter)
-    id = self.id
-    char = get_char(filter.search_by)
-    user_ids = results.collect{ |s| s[0]}
-    scores = results.collect{ |s| [id,s[0],char,s[1]]}
-    scores = scores.to_s.gsub('[','(').gsub(']',')').gsub('"','\'')
-    scores[0] = ''
-    scores[-1] = ';'
-    #raise scores.to_s
-    query = "INSERT INTO scores (user_id, friend_id, category, score) VALUES #{scores}"
-    ActiveRecord::Base.transaction do
-      Score.where(:user_id => id).where(:friend_id => user_ids).where(:category => char).delete_all
-      ActiveRecord::Base.connection.execute(query)
+    unless results.empty?
+      id = self.id
+      char = get_char(filter.search_by)
+      user_ids = results.collect{ |s| s[0]}
+      scores = results.collect{ |s| [id,s[0],char,s[1]]}
+      scores = scores.to_s.gsub('[','(').gsub(']',')').gsub('"','\'')
+      scores[0] = ''
+      scores[-1] = ';'
+      #raise scores.to_s
+      query = "INSERT INTO scores (user_id, friend_id, category, score) VALUES #{scores}"
+      ActiveRecord::Base.transaction do
+        Score.where(:user_id => id).where(:friend_id => user_ids).where(:category => char).delete_all
+        ActiveRecord::Base.connection.execute(query)
+      end
     end
   end
 
   def calculate_scores(filter)
     results = self.get_scores_array(filter)
     save_matching_scores(filter,results)
+  end
+  
+  def adjust_score(score)
+    return 0 if score <= 0
+    score = Math.sqrt(score)
+    score = score*2
+    score = 1 if score > 1
+    score = (score*100).to_i
   end
   
 

@@ -3,9 +3,11 @@ Likeme::Application.routes.draw do
   resources :users
   resources :user_page_relationships
   #get 'home/insert', :via => :get
-  get 'home/insert', :via => :post
-  match 'home/insert' => 'home#insert', :via => :post
-
+  get 'home/index', :via => :post
+  match 'home/index' => 'home#index', :via => :post
+  get 'home/ajax_matching', :via => :post
+  match 'home/ajax_matching' => 'home#ajax_matching', :via => :post
+  root :to => 'home#index'
   
   match 'auth/:provider/callback', to: 'sessions#create'
   match 'auth/failure', to: redirect('/')
@@ -64,7 +66,7 @@ Likeme::Application.routes.draw do
 
   # You can have the root of your site routed with "root"
   # just remember to delete public/index.html.
-   root :to => 'home#index'
+
 
   # See how all your routes lay out with "rake routes"
 

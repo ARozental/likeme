@@ -20,68 +20,116 @@ Object.prototype.getName = function() {
    return (results && results.length > 1) ? results[1] : "";
 };
 
-function add_row(matches)
+function insert_user(user,place) //user == matches[user_number], place = -1
 {
-var table=document.getElementById("matche_table");
-
-	var user_number = table.rows.length/2;	
-	if(matches[user_number][0].id != null)
+	var table=document.getElementById("matche_table");
+	var row1=table.insertRow(place);
+	var cell1=row1.insertCell(-1);
+	var cell2=row1.insertCell(-1);
+	cell1.innerHTML = picture_link(user[0].id,120);
+	cell1.className = 'face_td';
+	cell1.rowSpan="2";
+	cell1.style.padding="0px";
+	//cell2.innerHTML = "<a href=\"http://www.facebook.com/" + matches[user_number][0].id + "\"><img src=\"https://graph.facebook.com/" + matches[user_number][0].id + "/picture?width=120&height=120\" width=" + "120" + " height=" + "120" + "></a>";		
+	cell2.rowSpan="2";
+	var user_div = document.createElement("div");
+	user_div.className = 'text_div';		
+	user_div.style.height = "120px";
+	user_div.style.maxHeight = "120px";
+	user_div.style.overflowY='auto';
+	user_div.style.padding="0px";
+	var user_text = name_link(user[0]);
+	user_text += print_stats(user[0]) +"<br />";
+	user_text += user[2] +"% Likeable" +"<br />";
+	//alert(JSON.stringify(matches[user_number][0]));
+	if (user[0].quotes != null)
 	{
-		var row1=table.insertRow(-1);
-		var cell1=row1.insertCell(-1);
-		var cell2=row1.insertCell(-1);
-		cell1.innerHTML = picture_link(matches[user_number][0].id,120);
-		cell1.className = 'face_td';
-		cell1.rowSpan="2";
-		cell1.style.padding="0px";
-		
-		//cell2.innerHTML = "<a href=\"http://www.facebook.com/" + matches[user_number][0].id + "\"><img src=\"https://graph.facebook.com/" + matches[user_number][0].id + "/picture?width=120&height=120\" width=" + "120" + " height=" + "120" + "></a>";		
-		cell2.innerHTML = name_link(matches[user_number][0]) + print_stats(matches[user_number][0]);
-		
-		for (var k=0;k<3;k++)
-		{ 
-			var cell=row1.insertCell(-1);
-			cell.className = 'like_td';
-			cell.style.padding="0px";
-			cell.style.maxHeight="40px";
-			try
-			{
-				cell.innerHTML = picture_link(matches[user_number][1][k],60);
-			}
-			catch(err)
-			{
-			}
+		user_text += user[0].quotes;
+	}		
+	//user_div.innerHTML = name_link(matches[user_number][0]) + print_stats(matches[user_number][0]) +"<br />"+ matches[user_number][2] +"% Likeable" +"<br />"+ matches[user_number][0].quotes;
+	user_div.innerHTML = user_text;
+	cell2.appendChild(user_div);
+	//cell2.innerHTML = name_link(matches[user_number][0]) + print_stats(matches[user_number][0]);
+	
+	for (var k=0;k<3;k++)
+	{ 
+		var cell=row1.insertCell(-1);
+		cell.className = 'like_td';
+		cell.style.padding="0px";
+		cell.style.maxHeight="40px";
+		try
+		{
+			cell.innerHTML = picture_link(user[1][k],60);
 		}
-
-		var row2=table.insertRow(-1);
-		//<td><div class="text_div" style="height: 60px;"><%= @matches[n][0].quotes %></div></td>
-		var cell3=row2.insertCell(-1);
-		var user_div = document.createElement("div");
-		user_div.className = 'text_div';		
-		user_div.style.height = "60px";
-		user_div.style.maxHeight = "60px";
-		user_div.style.overflowY='auto';
-		user_div.style.padding="0px";		
-		user_div.innerHTML = matches[user_number][0].quotes;
-		cell3.appendChild(user_div);
-		
-		for (var k=0;k<3;k++)
-		{ 
-			var cell=row2.insertCell(-1);
-			cell.className = 'like_td';
-			cell.style.padding="0px";
-			cell.style.maxHeight="40px";
-			try
-			{
-				cell.innerHTML = picture_link(matches[user_number][1][k+3],60);
-			}
-			catch(err)
-			{
-			}
+		catch(err)
+		{
 		}
 	}
 
+	var row2=table.insertRow(place);
+	//<td><div class="text_div" style="height: 60px;"><%= @matches[n][0].quotes %></div></td>
+
+	
+	for (var k=0;k<3;k++)
+	{ 
+		var cell=row2.insertCell(-1);
+		cell.className = 'like_td';
+		cell.style.padding="0px";
+		cell.style.maxHeight="40px";
+		try
+		{
+			cell.innerHTML = picture_link(user[1][k+3],60);
+		}
+		catch(err)
+		{
+		}
+	}
 }
+
+
+function add_row(matches)
+{
+var table=document.getElementById("matche_table");
+	var user_number = table.rows.length/2;
+	if(matches[user_number][0].id != null)
+	{
+		insert_user(matches[user_number],-1)
+	}
+}
+
+function ajax_test()
+{
+	//alert("ss");
+		var result = $.post("/home/ajax_matching", function(response) {
+		  
+		  alert(JSON.stringify(response));
+		  return "good";
+		})
+		//.done(function() { alert("second success"); })
+		.fail(function() { 
+			alert('error');
+			return "error"; })
+		//.always(function() { alert("finished"); });
+	//setTimeout('', 9000);
+	//alert(JSON.stringify(result));
+	return result;
+}
+function load_table()
+{
+	ajax_test();
+	//var h = ajax_test();
+	//alert(h);
+	var table = document.getElementById("matche_table");
+	var matches = document.getElementById("matche_table").getAttribute("data-matches");
+	matches = jQuery.parseJSON(matches);
+	for (var i=1;i<5;i++)
+	{ 
+	add_row(matches);
+	}
+}
+
+
+
 
 function picture_link(id,size)
 {

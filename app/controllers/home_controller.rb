@@ -20,8 +20,18 @@ class HomeController < ApplicationController
         @filter.set_params(params)
         @matches = @current_user.find_matches(@filter) unless @current_user==nil
       #rescue
-      #end
- 
-  
+      #end  
+  end
+  def ajax_matching
+    @current_user = current_user
+    @filter||=Filter.new
+    @filter.set_params(params)
+    ActiveRecord::Base.connection.reconnect!
+    @matches = @current_user.find_matches(@filter) unless @current_user==nil
+    
+    respond_to do |format|      
+      #just to see it works
+      format.json { render json: @matches, status: :created}
+    end
   end
 end
