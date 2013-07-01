@@ -36,13 +36,14 @@ class Filter
     self.search_by = 'likes' if self.search_by == nil
     self.social_network = params[:social_network]
     self.social_network = "include everyone" if self.social_network == nil
+    self.excluded_users = params[:excluded_users]
     #self.social_network = "don\'t include friends" if self.social_network == nil 
     return self
   end
   
   def get_scope(my_id)
     self.set_weights
-     
+    self.excluded_users = [] if self.excluded_users==nil #shouldn't happen 
     exclude = self.excluded_users.push(my_id)    
     users = User.where('users.id NOT IN (?)', exclude) #to exclude self
     friends_id_array = User.find(my_id).friends.pluck(:id) unless self.social_network == "include everyone"
@@ -65,7 +66,7 @@ class Filter
     end
     #raise users_id.to_s
     #users_id = users.map(&:id)
-    users_id = users_id | self.included_users unless self.included_users == nil
+    users_id = users_id | (self.included_users-self.excluded_users) #unless self.included_users == nil
     self.chosen_users = users_id
  
     return nil
@@ -118,10 +119,12 @@ class Filter
   def initialize
       self.get_sample = true
       self.excluded_users = []
+      self.included_users = []
   end
 
   def set_users(id,users)
-    self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).pluck(:friend_id)
+    #todo: get rid of excluded users?
+    #self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).pluck(:friend_id)
     self.included_users = Score.where(:user_id => id, :category => get_char(self.search_by), :friend_id => users).order("score").last(LikeMeConfig::number_of_precalculated_friends).map(&:friend_id)
 
   end

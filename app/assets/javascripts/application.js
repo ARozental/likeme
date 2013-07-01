@@ -23,6 +23,7 @@ Object.prototype.getName = function() {
 function insert_user(user,place) //user == matches[user_number], place = -1
 {
 	var table=document.getElementById("matche_table");
+	if(place != -1){place = place*2;} //2 rows for every user
 	var row1=table.insertRow(place);
 	var cell1=row1.insertCell(-1);
 	var cell2=row1.insertCell(-1);
@@ -65,11 +66,10 @@ function insert_user(user,place) //user == matches[user_number], place = -1
 		{
 		}
 	}
-
+	//alert(place);	
+	if(place >= 0){place++;}
+	//alert(place);
 	var row2=table.insertRow(place);
-	//<td><div class="text_div" style="height: 60px;"><%= @matches[n][0].quotes %></div></td>
-
-	
 	for (var k=0;k<3;k++)
 	{ 
 		var cell=row2.insertCell(-1);
@@ -97,35 +97,90 @@ var table=document.getElementById("matche_table");
 	}
 }
 
-function ajax_test()
+
+function remove_duplicate_matches()
 {
-	//alert("ss");
-		var result = $.post("/home/ajax_matching", function(response) {
-		  
-		  alert(JSON.stringify(response));
-		  return "good";
-		})
-		//.done(function() { alert("second success"); })
-		.fail(function() { 
-			alert('error');
-			return "error"; })
-		//.always(function() { alert("finished"); });
+	
+}
+
+function update_table(new_matches,old_matches,recursion)
+{
+	//var old_matches = document.getElementById("matche_table").getAttribute("data-matches");	
+	//old_matches = jQuery.parseJSON(old_matches);
+	var old_matches_index = 0;
+	var new_matches_index = 0;
+	//alert(new_matches[0][0].id);
+	//insert_user(new_matches[0],1);
+	
+	while(new_matches_index<new_matches.length && old_matches_index<old_matches.length)
+	{
+		if(new_matches[new_matches_index][2]>old_matches[old_matches_index][2])
+		{
+			//if no dupliction
+			old_matches.splice(old_matches_index, 0, new_matches[new_matches_index]);
+			insert_user(new_matches[new_matches_index],old_matches_index);
+			
+			new_matches_index++;
+			//alert(JSON.stringify(new_matches[new_matches_index][0].name));
+		}
+		else
+		{
+			old_matches_index++;
+		}
+	}
+	if(recursion<1){return true;}
+	else {return ajax_test(recursion-1,old_matches)}	
+}
+
+
+function ajax_test(recursion,matches)
+{
+	var min_age = document.getElementById("min_age").value;
+	var max_age = document.getElementById("max_age").value;
+	var search_by = document.getElementById("search_by").value;
+	var gender = document.getElementById("gender").value;
+	var relationship_status = document.getElementById("relationship_status").value;
+	var social_network = document.getElementById("social_network").value;
+	
+	//var old_matches = document.getElementById("matche_table").getAttribute("data-matches");// non recursive!
+	//old_matches = jQuery.parseJSON(old_matches);
+	old_matches = matches;
+	var excluded_users = [];
+	for(var i=0;i<old_matches.length;i++){excluded_users.push(old_matches[i][0].id);}
+	//alert(excluded_users);
+	
+	var result = $.post("/home/ajax_matching",
+	{ excluded_users: excluded_users, min_age: min_age, max_age: max_age, search_by: search_by,gender: gender,relationship_status: relationship_status,social_network: social_network},
+	function(response) {
+		//alert(recursion);
+		//insert_user(response[7],1) //it works :) insert user of rank 7 after place 1
+		//add_row(response);
+		update_table(response,old_matches,recursion);
+		//alert(JSON.stringify(response));
+		return "good";
+	})
+	//.done(function() { alert("second success"); })
+	.fail(function() { 
+		alert('error');
+		return "error"; })
+	//.always(function() { alert("finished"); });
 	//setTimeout('', 9000);
 	//alert(JSON.stringify(result));
 	return result;
 }
 function load_table()
 {
-	ajax_test();
+	
 	//var h = ajax_test();
 	//alert(h);
 	var table = document.getElementById("matche_table");
 	var matches = document.getElementById("matche_table").getAttribute("data-matches");
 	matches = jQuery.parseJSON(matches);
-	for (var i=1;i<5;i++)
+	for (var i=0;i<9;i++)
 	{ 
 	add_row(matches);
 	}
+	ajax_test(3,matches);
 }
 
 

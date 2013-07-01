@@ -23,11 +23,18 @@ class HomeController < ApplicationController
       #end  
   end
   def ajax_matching
+    logger.debug params
+    #@current_user = current_user
+    #I don't get the right filter and it makes a new one
     @current_user = current_user
     @filter||=Filter.new
     @filter.set_params(params)
-    ActiveRecord::Base.connection.reconnect!
     @matches = @current_user.find_matches(@filter) unless @current_user==nil
+    logger.debug "HERE"
+    logger.debug @current_user.to_s
+    logger.debug @filter.to_s
+    logger.debug @matches.to_s
+    logger.debug "HERE"
     
     respond_to do |format|      
       #just to see it works

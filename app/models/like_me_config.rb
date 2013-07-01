@@ -4,7 +4,7 @@ class LikeMeConfig
     return 3
   end
   
-  def self.matching_cores #threads now...
+  def self.matching_cores #threads now...???
     return 6
   end
   
@@ -14,19 +14,19 @@ class LikeMeConfig
   
   
   def self.maximal_matches #how many random users to calculate
-    return 200
+    return 200 #200
   end
   
   def self.number_of_precalculated_users  #how many of best precalculated non friends to add
-    return 50
+    return 50 #50
   end
   
   def self.number_of_precalculated_friends #how many of best precalculated friends to add
-    return 50
+    return 50 #50
   end 
     
-  def self.number_of_users_to_show
-    return 100
+  def self.number_of_users_to_show #to pass from find_matches
+    return 100 #100
   end
   def self.default_weights
     weights = {"l" => 2, "m" => 1, "b" => 1, "v" => 1, "t" => 1, "g" => 1, "a" => 1, "i" => 1}
