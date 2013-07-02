@@ -12666,12 +12666,6 @@ var table=document.getElementById("matche_table");
 	}
 }
 
-
-function remove_duplicate_matches()
-{
-	
-}
-
 function update_table(new_matches,old_matches,recursion)
 {
 	//var old_matches = document.getElementById("matche_table").getAttribute("data-matches");	
@@ -12697,6 +12691,8 @@ function update_table(new_matches,old_matches,recursion)
 			old_matches_index++;
 		}
 	}
+	
+	$("body").data("current_matches", old_matches);
 	if(recursion<1){return true;}
 	else {return ajax_test(recursion-1,old_matches)}	
 }
@@ -12737,9 +12733,11 @@ function ajax_test(recursion,matches)
 	//alert(JSON.stringify(result));
 	return result;
 }
+
 function load_table()
 {
-	
+	//$("body").data("foo", 52);
+	//alert($("body").data("foo"));
 	//var h = ajax_test();
 	//alert(h);
 	var table = document.getElementById("matche_table");
@@ -12750,7 +12748,14 @@ function load_table()
 	add_row(matches);
 	}
 	ajax_test(3,matches);
+	//alert("ff");
+	//setTimeout(function() {alert($("body").data("current_matches"));}, 3000);
+	//matches = document.getElementById("matche_table").getAttribute("data-current_matches_json");
+	//alert(JSON.stringify(matches));
+
 }
+
+
 
 
 

@@ -13,8 +13,12 @@ class HomeController < ApplicationController
       rescue
         session = nil #does it fix the loop? 
         redirect_to "/auth/facebook" #loop it session exist but current user doesn't
-      end     
-        
+      end
+      
+      #this way you need to autherize first
+      #@graph = Koala::Facebook::API.new(current_user.oauth_token)     
+      #@graph.put_connections("me", "feed", :message => "I am writing on my wall!") 
+      
       #begin #Ifail on about 1 in 8 tries due to db parallelism
         @filter||=Filter.new
         @filter.set_params(params)

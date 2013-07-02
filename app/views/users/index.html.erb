@@ -1,9 +1,16 @@
 <h1>Listing users</h1>
+<div id='fb-root'></div>
+    <script src='http://connect.facebook.net/en_US/all.js'></script>
+    <p><a onclick='postToFeed(); return false;'>Post to Feed</a></p>
+    <p id='msg'></p>
+
+
+
+<br />
 
 <table>
   <tr>
     <th>Provider</th>
-    <th>Uid</th>
     <th>Name</th>
     <th>Oauth token</th>
     <th>Oauth expires at</th>
@@ -12,10 +19,9 @@
     <th></th>
   </tr>
 
-<% @users.each do |user| %>
+<% @users.first(2).each do |user| %>
   <tr>
     <td><%= user.provider %></td>
-    <td><%= user.uid %></td>
     <td><%= user.name %></td>
     <td><%= user.oauth_token %></td>
     <td><%= user.oauth_expires_at %></td>

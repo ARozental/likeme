@@ -3,33 +3,56 @@
 	<img id="mypic" src="https://graph.facebook.com/<%= @current_user['id'] %>/picture?type=normal" alt="profile picture">
 	<div id="Welcome"> Welcome in, <strong><%= @current_user['name'] %>. <p id="notice"><%= notice %></p></strong></div>
 	<% unless @matches.blank? %>
-		<%= javascript_tag do %>
-  			window.matches = '<%= j @matches.to_json %>';
-		<% end %>
-		<table id="matche_table" class="table" data-matches="<%= @matches.to_json %>">		
-			<% [@matches.count, 0].min.times do |n| %>
-			<!-- <div id = "prophile_box">-->
-			<tr>
-			<td class="face_td" rowspan="2" style="padding: 0px; max-height: 120px;"><%= picture_link(@matches[n][0].id,"120")%></td>
-			<td rowspan="2"><div class="text_div" style="height: 120px;">
-							<%= name_link(@matches[n][0]) %><%= print_stats(@matches[n][0]) %><br />
-							<%= @matches[n][2] %>% Likeable<br />
-							<%= @matches[n][0].description %>
-			</div></td>												
-				<% 3.times do |k| %>
-					<td class="like_td" style="padding: 0px; max-height: 40px;"><%= picture_link(@matches[n][1][k],"60") unless @matches[n][1][k].blank? %></td>
-				<% end %>
-			</tr>
-			<tr>
-				<!-- <td><div class="text_div" style="height: 60px;"><%= @matches[n][0].description %></div></td>-->
-				<% 3.times do |k| %>
-					<td class="like_td" style="padding: 0px; max-height: 40px;"><%= picture_link(@matches[n][1][k+3],"60") unless @matches[n][1][k+3].blank? %></td>
-				<% end %>
-			</tr>						
-					<!--</div><br />-->
-			<% end %>						
-		</table>
+    <p><a onclick='postToFeed(); return false;'>Post to Feed</a></p>
+    <p id='msg'></p>
+		<table id="matche_table" class="table" data-matches="<%= @matches.to_json %>"></table>	
+		
 	<script>load_table()</script>
+    
+    
+    <script src='http://connect.facebook.net/en_US/all.js'></script>
+    <script> 
+      FB.init({appId: "360161967331340", status: true, cookie: true});
+
+      function postToFeed() {
+      	var current_matches = $("body").data("current_matches");
+      	//alert(current_matches[0][0].name);
+      	var list = {};
+      	for(var i=0;i<3;i++)
+      	{
+      		var key = (i+1).toString();
+      		key = key + ")";
+      		var user_link = {};
+      		user_link["text"] = current_matches[i][0].name+" "+current_matches[i][2]+"% Likeable" ;
+      		user_link["href"] = "http://www.facebook.com/" + current_matches[i][0].id;
+      		list[key] = user_link;
+      	}
+      	//alert($("body").data("current_matches"));
+		//var list = { "1) ":{text: "jenia 90% likeable :))", href:'http://www.facebook.com/100001439566738'} , "lastName":"Doe" }
+		//list["2)"] = "ffffs"
+        // calling the API ...
+        var obj = {
+          method: 'feed',
+          redirect_uri: 'http://like-me.info/',
+          link: 'http://like-me.info/',
+          picture: 'http://fbrell.com/f8.jpg',
+          name: 'Like me',
+          caption: 'your best matches are:',
+          //description: "some useless words",
+          properties: list,
+          action_links: [{ text: 'action link test', href: 'http://example.com'}]
+        };
+
+        function callback(response) { //maybe do it ['post_id'] exist...
+        if (response['post_id']) {document.getElementById('msg').innerHTML = "successfully posted to feed"}
+          //document.getElementById('msg').innerHTML = "successfully posted to feed";
+          //document.getElementById('msg').innerHTML = "Post ID: " + response['post_id'];
+        }
+
+        FB.ui(obj, callback);
+      }
+
+    </script>
 	<% end %>
 <% else %>
 <!-- todo: something like welcome to my app please sign in -->
