@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130616151711) do
+ActiveRecord::Schema.define(:version => 20130705105926) do
 
   create_table "delayed_jobs", :force => true do |t|
     t.integer  "priority",   :default => 0
@@ -35,10 +35,8 @@ ActiveRecord::Schema.define(:version => 20130616151711) do
   end
 
   create_table "pages", :force => true do |t|
-    t.string   "name"
-    t.string   "category"
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.string "name"
+    t.string "category"
   end
 
   add_index "pages", ["category"], :name => "index_pages_on_category"
@@ -68,9 +66,9 @@ ActiveRecord::Schema.define(:version => 20130616151711) do
     t.string   "name"
     t.string   "oauth_token"
     t.datetime "oauth_expires_at"
-    t.datetime "created_at",                             :null => false
-    t.datetime "updated_at",                             :null => false
-    t.boolean  "active",              :default => false
+    t.datetime "created_at",                                :null => false
+    t.datetime "updated_at",                                :null => false
+    t.boolean  "active",                 :default => false
     t.string   "email"
     t.datetime "last_fb_update"
     t.string   "location"
@@ -82,14 +80,9 @@ ActiveRecord::Schema.define(:version => 20130616151711) do
     t.string   "gender"
     t.string   "age"
     t.text     "bio"
+    t.datetime "last_foregin_fb_update"
   end
 
   add_index "users", ["birthday"], :name => "index_users_on_birthday"
-
-  add_foreign_key "friendships", "users", :name => "friendships_friend_id_fk", :column => "friend_id"
-  add_foreign_key "friendships", "users", :name => "friendships_user_id_fk"
-
-  add_foreign_key "user_page_relationships", "pages", :name => "user_page_relationships_page_id_fk"
-  add_foreign_key "user_page_relationships", "users", :name => "user_page_relationships_user_id_fk"
 
 end

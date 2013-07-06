@@ -1,7 +1,7 @@
 class LikeMeConfig
   
-  def self.insertion_cores
-    return 3
+  def self.insertion_cores #threads now...
+    return 20
   end
   
   def self.matching_cores #threads now...???

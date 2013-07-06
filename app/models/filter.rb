@@ -125,7 +125,7 @@ class Filter
   def set_users(id,users)
     #todo: get rid of excluded users?
     #self.excluded_users = Score.where(:user_id => id, :category => get_char(self.search_by)).pluck(:friend_id)
-    self.included_users = Score.where(:user_id => id, :category => get_char(self.search_by), :friend_id => users).order("score").last(LikeMeConfig::number_of_precalculated_friends).map(&:friend_id)
+    self.included_users = Score.where(:user_id => id, :category => get_char(self.search_by), :friend_id => users).order("score").reverse_order.limit(LikeMeConfig::number_of_precalculated_friends).pluck(:friend_id)
 
   end
   

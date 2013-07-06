@@ -50,6 +50,186 @@ end
 
 ############################# here is some old code #############################
 
+=begin
+  def retrive_and_save_batch_old(graph,users_id_array)
+    batch_results = graph.batch do |batch_api|#array of arraies of hashes
+      users_id_array.each do |id|
+        @@all_page_types.each do |type|
+          batch_api.get_connections(id, type)
+        end          
+      end   
+    end
+    pursed_batch = batch_results.each_slice(@@weights.count).to_a #every element is an array with all info on a user
+    data_hash = Hash[users_id_array.zip pursed_batch] #hash of 6 users, user_id=>array of arraies the contain likes, books, movies...
+    #raise graph.get_connections("509006501", "likes").to_s   can't get data on some people...
+    
+    # save the new pages
+    all_pages_id = Page.all.pluck(:id) #todo: change so I won't take all pages to memory move to save db entries   
+    batch_likes=data_hash.values.flatten
+    batch_pages = []
+    batch_likes.each do |like|      
+      #for some reson there is a nil in the like array
+      batch_pages << Page.new(:category=>like["category"], :name=>like["name"], :id=>like["id"]) unless like==nil
+    end
+    
+    batch_pages = batch_pages.uniq
+    batch_pages = batch_pages.delete_if{ |page|all_pages_id.include?(page.id.to_i) } unless batch_pages==nil #faster but won't notice if the page name changes
+    batch_pages.each do |page|
+      page["id"] = page["id"]
+    end 
+    
+    Page.import batch_pages 
+    
+    # save user_page_relationships
+    ActiveRecord::Base.transaction do
+      data_hash.each do |user_id,category| #category is an array of arrays [[likes],[books],...]
+        #raise category.to_s
+        ActiveRecord::Base.connection.execute("DELETE FROM user_page_relationships WHERE user_id = #{user_id}")
+        data_hash[user_id] = Hash[@@all_page_aliases.zip category]     
+      end
+      #raise data_hash.to_s    
+      user_page_relationship_array = []
+      data_hash.each do |user_id,category|
+        category.each do |category_name,like_array|
+          unless like_array == nil
+            like_array.each do |like|
+              user_page_relationship_array << UserPageRelationship.new(:relationship_type => category_name,:user_id => user_id,:page_id => like["id"])
+              #user_page_relationship_array.push({:fb_created_time => like["created_time"],:relationship_type => category_name,:user_id => user_id,:page_id => like["id"]})
+            end
+          end        
+        end           
+      end
+      UserPageRelationship.import user_page_relationship_array
+    end
+  end
+
+=end
+
+=begin
+  def insert_my_info_to_db(my_graph) #works but doesn't update existing non active users data
+    
+    
+    my_friends_id = my_graph.get_connections("me", "friends")
+    
+    
+    my_friends_id_array = []
+    my_friends_id.each do |fb_friend|
+      my_friends_id_array.push(fb_friend["id"])
+    end    
+    grouped_id_array = my_friends_id_array.each_slice(50).to_a
+    my_friends = []
+    grouped_id_array.each do |id_array|
+      batch_results = my_graph.batch do |batch_api|#array of arraies of hashes
+        id_array.each do |id|
+          batch_api.get_object(id)         
+        end   
+      end
+      my_friends.push(batch_results)
+    end
+    my_friends = my_friends.flatten.compact
+    friends_array = []
+    my_friends.each do |fb_friend|
+      #sometimes for some friends not all the info I can see on their profile gets to likeme from facebook... is that a privacy thing?
+      friends_array << User.new(
+      :id => fb_friend["id"],
+      :name => fb_friend["name"],
+      :location => fb_friend["location"],
+      :birthday => fb_friend["birthday"],
+      :hometown => fb_friend["hometown"],
+      :quotes => fb_friend["quotes"],
+      :relationship_status => fb_friend["relationship_status"],
+      :significant_other => fb_friend["significant_other"],
+      :gender => fb_friend["gender"],
+      :age => date_to_age(fb_friend["birthday"]),
+      :bio => fb_friend["bio"])        
+    end
+    #todo do not reject+import, use update+insert on all
+    existing_friends_id = User.where(:id => my_friends_id_array).pluck(:id)
+    friends_array = friends_array.reject { |friend|  existing_friends_id.include?(friend["id"])}
+    User.import friends_array unless friends_array.blank?
+      
+    #frienships
+    my_id = self.id.to_s 
+    my_friends_id_array = []
+        my_friends_id.each do |fb_friend|
+      my_friends_id_array.push("(" + my_id + "," + fb_friend["id"] + ")")
+    end
+    my_friends_id_string=my_friends_id_array.to_s.gsub!("\"", "")
+    #do it better with db constraints and no deletion? one transaction?
+    ActiveRecord::Base.transaction do
+      ActiveRecord::Base.connection.execute("DELETE FROM friendships WHERE user_id = #{my_id}")
+      ActiveRecord::Base.connection.execute("INSERT INTO friendships (user_id, friend_id) VALUES #{my_friends_id_string[1..-2]}")
+    end
+    #insert friends info
+    ActiveRecord::Base.connection.reconnect!
+    insert_batches_info(my_graph,my_friends) #losing connection here?
+    ActiveRecord::Base.connection.reconnect!
+    self.last_fb_update = Time.now
+    self.save!
+  end
+=end
+
+
+=begin
+  def insert_self_data_and_likes_old(my_graph) #works fine, 0.2 sec slower
+    fb_me = my_graph.get_object("me")
+    db_me = insert_friend_to_db(fb_me)
+    
+    my_id = db_me.id
+    user_page_relationship_array = []
+    page_array = []
+    
+    batch_results = my_graph.batch do |batch_api|#todo finish
+      @@all_page_types.each do |category|
+        batch_api.get_connections(my_id, category)          
+      end
+    end   
+    #raise batch_results.to_s
+    category_counter = 0
+    @@all_page_types.each do |category|
+      my_likes = batch_results[category_counter]
+      category_char = get_char(category)      
+      my_likes.each do |like|
+        user_page_relationship_array << UserPageRelationship.new(:relationship_type => category_char,:user_id => my_id,:page_id => like["id"]) #unless like.blank?
+        page_array << Page.new(:category => like["category"], :name => like["name"], :id => like["id"]) #unless like.blank?      
+      end
+      category_counter = category_counter+1
+    end
+
+    #remove existing pages and duplications from page array
+    existing_pages_id = Page.where(:id => page_array.map(&:id)).pluck(:id)
+    page_array = page_array.reject { |page|  existing_pages_id.include?(page["id"])}
+    page_hash = Hash.new
+    page_array.each do |page|
+      page_hash[page["id"]] = page
+    end
+    page_array = page_hash.values    
+
+ 
+    Page.import page_array unless page_array.blank?
+    ActiveRecord::Base.transaction do
+      ActiveRecord::Base.connection.execute("DELETE FROM user_page_relationships WHERE user_id = #{my_id}")
+      UserPageRelationship.import user_page_relationship_array unless user_page_relationship_array.blank?
+    end
+
+  end
+=end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #fb_like looks like this:
 #{"category"=>"Book", "name"=>"1984", "id"=>"111757942177556", "created_time"=>"2013-02-02T01:14:50+0000"}
 

@@ -41,24 +41,24 @@ class User < ActiveRecord::Base
   def insert_batches_info(my_graph,my_friends)
     
     my_id = self.id.to_s
-    id_array = [] 
-    my_friends.each do |friend|
-      id_array.push(friend["id"]) unless friend==nil
-    end
-    users_last_fb_update = User.where(:id => id_array).map(&:last_fb_update)
-    grouped_id_array = id_array.each_slice(50/(@@weights.count)).to_a #so we will have no more than 50 requests in a batch
+    id_array = my_friends.map { |friend| friend["id"]}
+    users_last_fb_update = User.where(:id => id_array).select("id, last_foregin_fb_update").all
+    users_last_fb_update.select! { |friend|  (friend.last_foregin_fb_update.nil? || (Time.now - friend.last_foregin_fb_update)>LikeMeConfig::minimal_update_time)}
+    users_last_fb_update.map! {|friend| friend.id.to_s}
+    grouped_id_array = users_last_fb_update.each_slice(50/(@@weights.count)).to_a #so we will have no more than 50 requests in a batch
     
     ########################################### old single processed way 
-    #grouped_id_array.each do |group|
-    #  retrive_and_save_batch(my_graph,group)
-    #end
-    Parallel.each(grouped_id_array, :in_processes => LikeMeConfig::insertion_cores) do |group|
+    #grouped_id_array.each { |group| retrive_and_save_batch(my_graph,group)}
+      
+#=begin    
+    Parallel.each(grouped_id_array, :in_threads => LikeMeConfig::insertion_cores) do |group|
       begin
         ActiveRecord::Base.connection.reconnect!
         retrive_and_save_batch(my_graph,group)
       rescue
       end
     end
+#=end    
   end
   
   def retrive_and_save_batch(graph,users_id_array)
@@ -73,23 +73,39 @@ class User < ActiveRecord::Base
     data_hash = Hash[users_id_array.zip pursed_batch] #hash of 6 users, user_id=>array of arraies the contain likes, books, movies...
     #raise graph.get_connections("509006501", "likes").to_s   can't get data on some people...
     
-    # save the new pages
-    all_pages_id = Page.all.map(&:id) #todo: change so I won't take all pages to memory move to save db entries   
+    # save the new pages #duplication with insert self data and likes
     batch_likes=data_hash.values.flatten
-    batch_pages = []
+    page_array = []
+    #batch_pages = []
+    #raise batch_likes.to_s #no good, no category char
     batch_likes.each do |like|      
       #for some reson there is a nil in the like array
-      batch_pages << Page.new(:category=>like["category"], :name=>like["name"], :id=>like["id"]) unless like==nil
+      #batch_pages << Page.new(:category=>like["category"], :name=>like["name"], :id=>like["id"]) unless like==nil
+      page_array << [like["category"],like["name"],like["id"]] 
     end
+    #raise page_array.to_s
+    page_array.uniq!
+    page_id_array = []
     
-    batch_pages = batch_pages.uniq
-    batch_pages = batch_pages.delete_if{ |page|all_pages_id.include?(page.id.to_i) } unless batch_pages==nil #faster but won't notice if the page name changes
-    batch_pages.each do |page|
-      page["id"] = page["id"]
-    end 
-    
-    Page.import batch_pages 
-    
+    page_array.each {|page| page_id_array << page[2].to_i}       
+    existing_pages_id = Page.where(:id => page_id_array).pluck(:id) #todo fix. this makes a race condition when threaded
+    page_id_array = (page_id_array-existing_pages_id)
+    page_array.select! { |page|  page_id_array.include?(page[2].to_i)}
+    unless page_array.empty?
+      page_delete_string = page_id_array.to_s
+      page_delete_string[0] = '('
+      page_delete_string[-1] = ')'
+      page_delete_string = "DELETE FROM pages WHERE id IN #{page_delete_string}"
+      page_string = "INSERT INTO pages (category,name,id) VALUES "
+      page_array.each { |page|  page_string += "(\'#{page[0]}\',\'#{page[1].gsub("'", "''")}\',#{page[2]}),"}
+      page_string[-1] = ';'
+      begin #because of race conditions
+        ActiveRecord::Base.connection.execute(page_delete_string)
+        ActiveRecord::Base.connection.execute(page_string)
+      rescue
+      end
+    end
+        
     # save user_page_relationships
     ActiveRecord::Base.transaction do
       data_hash.each do |user_id,category| #category is an array of arrays [[likes],[books],...]
@@ -103,13 +119,22 @@ class User < ActiveRecord::Base
         category.each do |category_name,like_array|
           unless like_array == nil
             like_array.each do |like|
-              user_page_relationship_array << UserPageRelationship.new(:relationship_type => category_name,:user_id => user_id,:page_id => like["id"])
-              #user_page_relationship_array.push({:fb_created_time => like["created_time"],:relationship_type => category_name,:user_id => user_id,:page_id => like["id"]})
+              #user_page_relationship_array << UserPageRelationship.new(:relationship_type => category_name,:user_id => user_id,:page_id => like["id"])
+              user_page_relationship_array << [category_name,user_id,like["id"]]
             end
           end        
         end           
       end
-      UserPageRelationship.import user_page_relationship_array
+
+      unless user_page_relationship_array.empty?
+        
+      UserPageRelationship.import [:relationship_type,:user_id,:page_id], user_page_relationship_array, :validate => false
+      #user_page_relationship_string = "INSERT INTO user_page_relationships (relationship_type,user_id,page_id) VALUES "
+      #user_page_relationship_array.each { |like|  user_page_relationship_string += "(\'#{like[0]}\',#{like[1]},#{like[2]}),"}
+      #user_page_relationship_string[-1] = ';'
+      #ActiveRecord::Base.connection.execute(user_page_relationship_string)
+      end
+      #UserPageRelationship.import user_page_relationship_array
     end
   end
   #handle_asynchronously :retrive_and_save_batch
@@ -158,49 +183,55 @@ class User < ActiveRecord::Base
     db_me = insert_friend_to_db(fb_me)
     
     my_id = db_me.id
-    user_page_relationship_array = []
-    page_array = []
-    
+    user_page_relationship_string = "INSERT INTO user_page_relationships (relationship_type,user_id,page_id) VALUES "
+    page_id_array = []
+        
     batch_results = my_graph.batch do |batch_api|#todo finish
       @@all_page_types.each do |category|
         batch_api.get_connections(my_id, category)          
       end
-    end   
-    #raise batch_results.to_s
+    end
+
+    page_array = []
     category_counter = 0
     @@all_page_types.each do |category|
       my_likes = batch_results[category_counter]
       category_char = get_char(category)      
       my_likes.each do |like|
-        user_page_relationship_array << UserPageRelationship.new(:relationship_type => category_char,:user_id => my_id,:page_id => like["id"]) #unless like.blank?
-        page_array << Page.new(:category => like["category"], :name => like["name"], :id => like["id"]) #unless like.blank?      
+        user_page_relationship_string += "(\'#{category_char}\',#{my_id},#{like["id"]}),"                
+        page_array << [like["category"],like["name"],like["id"]] unless category_char != 'l'     
       end
       category_counter = category_counter+1
     end
-
-    #remove existing pages and duplications from page array
-    existing_pages_id = Page.where(:id => page_array.map(&:id)).map(&:id)
-    page_array = page_array.reject { |page|  existing_pages_id.include?(page["id"])}
-    page_hash = Hash.new
-    page_array.each do |page|
-      page_hash[page["id"]] = page
+    #duplication with insert batches
+    page_array.uniq!
+    page_id_array = []
+    page_array.each {|page| page_id_array << page[2].to_i}        
+    existing_pages_id = Page.where(:id => page_id_array).pluck(:id)
+    page_id_array = (page_id_array-existing_pages_id)
+    page_array.select! { |page|  page_id_array.include?(page[2].to_i)}
+    
+    unless page_array.empty?
+      page_string = "INSERT INTO pages (category,name,id) VALUES "
+      page_array.each { |page|  page_string += "(\'#{page[0]}\',\'#{page[1].gsub("'", "''")}\',#{page[2]}),"}
+      page_string[-1] = ';'
+      ActiveRecord::Base.connection.execute(page_string)
     end
-    page_array = page_hash.values    
-
- 
-    Page.import page_array unless page_array.blank?
-    ActiveRecord::Base.transaction do
-      ActiveRecord::Base.connection.execute("DELETE FROM user_page_relationships WHERE user_id = #{my_id}")
-      UserPageRelationship.import user_page_relationship_array unless user_page_relationship_array.blank?
+    
+    unless user_page_relationship_string == "INSERT INTO user_page_relationships (relationship_type,user_id,page_id) VALUES "
+      user_page_relationship_string[-1] = ';'
+      ActiveRecord::Base.transaction do
+        ActiveRecord::Base.connection.execute("DELETE FROM user_page_relationships WHERE user_id = #{my_id}")
+        ActiveRecord::Base.connection.execute(user_page_relationship_string)
+      end
     end
-
   end
   
+
   def insert_my_info_to_db(my_graph)
     
-
-    my_friends_id = my_graph.get_connections("me", "friends")
     
+    my_friends_id = my_graph.get_connections("me", "friends")
     
     
     my_friends_id_array = []
@@ -218,7 +249,6 @@ class User < ActiveRecord::Base
       my_friends.push(batch_results)
     end
     my_friends = my_friends.flatten.compact
-    
     friends_array = []
     my_friends.each do |fb_friend|
       #sometimes for some friends not all the info I can see on their profile gets to likeme from facebook... is that a privacy thing?
@@ -235,12 +265,35 @@ class User < ActiveRecord::Base
       :age => date_to_age(fb_friend["birthday"]),
       :bio => fb_friend["bio"])        
     end
-    
-    #todo do not reject+import, use update+insert on all
+
+    unless friends_array.blank? 
     existing_friends_id = User.where(:id => my_friends_id_array).pluck(:id)
-    friends_array = friends_array.reject { |friend|  existing_friends_id.include?(friend["id"])}
-    User.import friends_array unless friends_array.blank?
-      
+    existing_friends_array = friends_array.select { |friend|  existing_friends_id.include?(friend["id"])}    
+    new_friends_array = friends_array.reject { |friend|  existing_friends_id.include?(friend["id"])}
+
+      ActiveRecord::Base.transaction do
+        unless existing_friends_array.blank?
+          existing_friends_array.each do |friend|
+            update_string = "UPDATE users SET name='#{friend.name.gsub("'", "''")}'"
+            update_string += ",location='#{friend.location.to_s.gsub("'", "''")}'" unless friend.location.blank?
+            update_string += ",birthday='#{friend.birthday}'" unless friend.birthday.blank?
+            update_string += ",hometown='#{friend.hometown.to_s.gsub("'", "''")}'" unless friend.hometown.blank?
+            update_string += ",quotes='#{friend.quotes.gsub("'", "''")}'" unless friend.quotes.blank?
+            update_string += ",relationship_status='#{friend.relationship_status.gsub("'", "''")}'" unless friend.relationship_status.blank?
+            update_string += ",significant_other='#{friend.significant_other.to_s.gsub("'", "''")}'" unless friend.significant_other.blank?
+            update_string += ",gender='#{friend.gender}'" unless friend.gender.blank?
+            update_string += ",age=#{friend.age}" unless friend.age.blank?
+            update_string += ",bio='#{friend.bio.gsub("'", "''")}'" unless friend.bio.blank?
+            update_string += " WHERE id=#{friend.id}"
+            ActiveRecord::Base.connection.execute(update_string)
+          end
+        end
+        unless new_friends_array.blank?        
+          User.import new_friends_array unless new_friends_array.blank?
+        end
+      end
+    end 
+     
     #frienships
     my_id = self.id.to_s 
     my_friends_id_array = []
@@ -249,10 +302,11 @@ class User < ActiveRecord::Base
     end
     my_friends_id_string=my_friends_id_array.to_s.gsub!("\"", "")
     #do it better with db constraints and no deletion? one transaction?
-    ActiveRecord::Base.transaction do
+    #ActiveRecord::Base.transaction do
       ActiveRecord::Base.connection.execute("DELETE FROM friendships WHERE user_id = #{my_id}")
       ActiveRecord::Base.connection.execute("INSERT INTO friendships (user_id, friend_id) VALUES #{my_friends_id_string[1..-2]}")
-    end
+    #end
+    #raise "bla2"
     #insert friends info
     ActiveRecord::Base.connection.reconnect!
     insert_batches_info(my_graph,my_friends) #losing connection here?
@@ -278,7 +332,7 @@ class User < ActiveRecord::Base
     end
     my_pages.values.flatten! #do I need it, some people get [] into their pages array
          
-    
+    #raise sliced_users_id.to_a.to_s
     #result is an array of a [user_id, score, chosen_likes]
     #ActiveRecord::Base.connection.disconnect!
     #results = Parallel.map(sliced_users_id, :in_threads=>LikeMeConfig.matching_cores) do |user_group| #processes lose db connection after function returns
@@ -288,6 +342,8 @@ class User < ActiveRecord::Base
       temp_filter.chosen_users = user_group
       users_query = temp_filter.get_users_query      
       users_pages = ActiveRecord::Base.connection.execute(users_query)
+      #raise user_group.to_s
+      #raise users_pages.to_a.to_s #of only 1 user
       users_pages = users_pages.collect { |i| [i["user_id"],i["relationship_type"],i["page_id"]] }.group_by { |i| i.first }      
 
       user_score_and_chosen_likes = user_group.collect do |user_id|
@@ -335,8 +391,10 @@ class User < ActiveRecord::Base
       end 
       user_score_and_chosen_likes
     end
+    
     results = results.flatten(1).compact #result.flatten(1) is an array of a [user_id, score, chosen_likes] #may have nil here, possibly
     results = results.sort_by {|array| array[1]*(-1)}
+    #raise results.count.to_s
     return results
   end
   
@@ -344,7 +402,6 @@ class User < ActiveRecord::Base
   def find_matches(filter) #returns an array of [user,[chosen_likes]]
     #self.calculate_scores(filter)
     results = self.get_scores_array(filter)
-    
   
     ActiveRecord::Base.connection.disconnect!
     pid = Process.fork do
