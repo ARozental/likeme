@@ -12588,6 +12588,17 @@ Object.prototype.getName = function() {
    var results = (funcNameRegex).exec((this).constructor.toString());
    return (results && results.length > 1) ? results[1] : "";
 };
+String.prototype.hashCode = function(){
+    var hash = 0, i, char;
+    if (this.length == 0) return hash;
+    for (i = 0, l = this.length; i < l; i++) {
+        char  = this.charCodeAt(i);
+        hash  = ((hash<<5)-hash)+char;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+};
+
 
 function insert_user(user,place) //user == matches[user_number], place = -1
 {
@@ -12610,7 +12621,7 @@ function insert_user(user,place) //user == matches[user_number], place = -1
 	user_div.style.padding="0px";
 	var user_text = name_link(user[0]);
 	user_text += print_stats(user[0]) +"<br />";
-	user_text += user[2] +"% Likeable" +"<br />";
+	user_text += user[2] +"% Like me" +"<br />";
 	//alert(JSON.stringify(matches[user_number][0]));
 	if (user[0].quotes != null)
 	{
@@ -12726,7 +12737,7 @@ function ajax_test(recursion,matches)
 	})
 	//.done(function() { alert("second success"); })
 	.fail(function() { 
-		alert('error');
+		//alert('error'); it will fail if user presses the button fast and refresh before finish
 		return "error"; })
 	//.always(function() { alert("finished"); });
 	//setTimeout('', 9000);
@@ -12776,17 +12787,29 @@ function name_link(user)
 
 function print_stats(user)
 {
-    var relationship_status = "";
-    var gender = "";
-    var age = "";
+
     var location = "";
-    
-    if(user.relationship_status != null){relationship_status = ", " + user.relationship_status;}
-    if(user.gender != null){gender = ", " + user.gender;}
-    if(user.location != null){location = ", " + user.location.name;}
-    if(user.age != null){age = ", " + user.age;}
-    
-    html = relationship_status + gender + age + location;
+    var hometown = "";
+    var html = "";
+    if(user.gender != null){html += ", " + user.gender;}
+    if(user.age != null){html += ", " + user.age;}
+    if(user.relationship_status != null){html += ", " + user.relationship_status;}
+        
+    if (user.location != null){   	
+    	location = user.location;
+    	location = JSON.stringify(location).replace(/\\/g,'').replace(/=>/g,":");
+    	if(location[0]== '"') {location = location.slice(1,-1)};
+    	location = jQuery.parseJSON(location);
+    	html += ", " + location.name;
+    	}
+    else if(user.hometown != null){
+    	hometown = user.hometown;
+    	hometown = JSON.stringify(hometown).replace(/\\/g,'').replace(/=>/g,":");
+    	if(hometown[0]== '"') {hometown = hometown.slice(1,-1)};
+    	hometown = jQuery.parseJSON(hometown);
+    	html += ", " + hometown.name;
+    	}
+        
     return html;
 }
 
