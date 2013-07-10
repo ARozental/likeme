@@ -1,5 +1,9 @@
 class LikeMeConfig
   
+  def self.page_insertion_chance
+    0.05
+  end
+  
   def self.insertion_cores #threads now...
     return 20
   end

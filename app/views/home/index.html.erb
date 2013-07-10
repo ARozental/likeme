@@ -1,12 +1,15 @@
 <% if @current_user %>
 	<%= render 'search' %>
+	<!-- 
 	<img id="mypic" src="https://graph.facebook.com/<%= @current_user['id'] %>/picture?type=normal" alt="profile picture">
 	<div id="Welcome"> Welcome in, <strong><%= @current_user['name'] %>. <p id="notice"><%= notice %></p></strong></div>
+	-->
+	<p id="notice"><%= notice %></p>
 	<% unless @matches.blank? %>
-    <p><a onclick='postToFeed(); return false;'>Post to Feed</a></p>
-    <p id='msg'></p>
-		<table id="matche_table" class="table" data-matches="<%= @matches.to_json %>"></table>	
-		
+    <!-- <p><a onclick='postToFeed(); return false;'>Post to Feed</a></p><p id='msg'></p> -->
+    
+    
+	<table id="matche_table" class="table" data-matches="<%= @matches.to_json %>"></table>			
 	<script>load_table()</script>
     
     
@@ -23,7 +26,7 @@
       		var key = (i+1).toString();
       		key = key + ")";
       		var user_link = {};
-      		user_link["text"] = current_matches[i][0].name+" "+current_matches[i][2]+"% Likeable" ;
+      		user_link["text"] = current_matches[i][0].name+" "+current_matches[i][2]+"% Like me" ;
       		user_link["href"] = "http://www.facebook.com/" + current_matches[i][0].id;
       		list[key] = user_link;
       	}
@@ -35,7 +38,7 @@
           method: 'feed',
           redirect_uri: 'http://like-me.info/',
           link: 'http://www.like-me.info/',
-          picture: 'http://fbrell.com/f8.jpg',
+          picture: 'http://www.rt23.com/Scenery/images/birds/blue_jay.gif',
           name: 'Like me',
           caption: 'your best matches are:',
           //description: "some useless words",
@@ -52,6 +55,19 @@
         FB.ui(obj, callback);
       }
 
+    </script>
+    
+    <!-- placeholders -->
+
+    <script>
+    
+    //alert("fff");
+    //var bbb = document.getElementById('gender').value = null;
+    //$("#gender").select2({
+    //            placeholder: "fsw"
+     //       });
+    //var aaa = document.getElementById('min_age').value = "kk";
+    //alert(aaa);
     </script>
 	<% end %>
 <% else %>

@@ -7,3 +7,13 @@ jQuery ->
     if $(window).scrollTop() > $(document).height() - $(window).height() - 20
       matches = $('#matche_table').data('matches')
       add_row(matches)
+
+jQuery ->
+  $('#main_div').scroll ->
+    if $(window).scrollTop() > $(document).height() - $(window).height() - 20
+      matches = $('#matche_table').data('matches')
+      add_row(matches)
+      
+#jQuery ->
+#  $('#post_to_facebook').click ->
+#    postToFeed()

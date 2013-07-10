@@ -1,0 +1,28 @@
+before table:
+		<%= javascript_tag do %>
+  			window.matches = '<%= j @matches.to_json %>';
+		<% end %>
+
+inside table:
+			<% [@matches.count, 0].min.times do |n| %>
+			<!-- <div id = "prophile_box">-->
+			<tr>
+			<td class="face_td" rowspan="2" style="padding: 0px; max-height: 120px;"><%= picture_link(@matches[n][0].id,"120")%></td>
+			<td rowspan="2"><div class="text_div" style="height: 120px;">
+							<%= name_link(@matches[n][0]) %><%= print_stats(@matches[n][0]) %><br />
+							<%= @matches[n][2] %>% Likeable<br />
+							<%= @matches[n][0].description %>
+			</div></td>												
+				<% 3.times do |k| %>
+					<td class="like_td" style="padding: 0px; max-height: 40px;"><%= picture_link(@matches[n][1][k],"60") unless @matches[n][1][k].blank? %></td>
+				<% end %>
+			</tr>
+			<tr>
+				<!-- <td><div class="text_div" style="height: 60px;"><%= @matches[n][0].description %></div></td>-->
+				<% 3.times do |k| %>
+					<td class="like_td" style="padding: 0px; max-height: 40px;"><%= picture_link(@matches[n][1][k+3],"60") unless @matches[n][1][k+3].blank? %></td>
+				<% end %>
+			</tr>						
+					<!--</div><br />-->
+			<% end %>
+					

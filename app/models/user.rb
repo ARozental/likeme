@@ -3,7 +3,7 @@ class User < ActiveRecord::Base
   #Rake::Task.clear
   #Likeme::Application.load_tasks
   include UsersHelper
-  attr_accessible :active, :name, :id, :location, :birthday, :gender, :age, :bio
+  attr_accessible :active, :name, :id, :location, :birthday, :gender, :age, :bio, :last_foregin_fb_update
   attr_accessible :hometown, :quotes, :relationship_status, :significant_other, :last_fb_update
   serialize :location
   serialize :hometown
@@ -61,19 +61,7 @@ class User < ActiveRecord::Base
 #=end    
   end
   
-  def retrive_and_save_batch(graph,users_id_array)
-    batch_results = graph.batch do |batch_api|#array of arraies of hashes
-      users_id_array.each do |id|
-        @@all_page_types.each do |type|
-          batch_api.get_connections(id, type)
-        end          
-      end   
-    end
-    pursed_batch = batch_results.each_slice(@@weights.count).to_a #every element is an array with all info on a user
-    data_hash = Hash[users_id_array.zip pursed_batch] #hash of 6 users, user_id=>array of arraies the contain likes, books, movies...
-    #raise graph.get_connections("509006501", "likes").to_s   can't get data on some people...
-    
-    # save the new pages #duplication with insert self data and likes
+  def save_batch_pages(data_hash)
     batch_likes=data_hash.values.flatten
     page_array = []
     #batch_pages = []
@@ -100,12 +88,33 @@ class User < ActiveRecord::Base
       page_array.each { |page|  page_string += "(\'#{page[0]}\',\'#{page[1].gsub("'", "''")}\',#{page[2]}),"}
       page_string[-1] = ';'
       begin #because of race conditions
+        ActiveRecord::Base.transaction do
         ActiveRecord::Base.connection.execute(page_delete_string)
         ActiveRecord::Base.connection.execute(page_string)
+        end
       rescue
       end
     end
-        
+  end
+  
+  def retrive_and_save_batch(graph,users_id_array)
+    batch_results = graph.batch do |batch_api|#array of arraies of hashes
+      users_id_array.each do |id|
+        @@all_page_types.each do |type|
+          batch_api.get_connections(id, type)
+        end          
+      end   
+    end
+    pursed_batch = batch_results.each_slice(@@weights.count).to_a #every element is an array with all info on a user
+    data_hash = Hash[users_id_array.zip pursed_batch] #hash of 6 users, user_id=>array of arraies the contain likes, books, movies...
+    #raise graph.get_connections("509006501", "likes").to_s   can't get data on some people...
+    
+    # save the new pages #duplication with insert self data and likes, ignore nost of the time
+    if rand()<LikeMeConfig.page_insertion_chance
+      save_batch_pages(data_hash)
+    end
+    
+            
     # save user_page_relationships
     ActiveRecord::Base.transaction do
       data_hash.each do |user_id,category| #category is an array of arrays [[likes],[books],...]
@@ -127,8 +136,12 @@ class User < ActiveRecord::Base
       end
 
       unless user_page_relationship_array.empty?
+        ActiveRecord::Base.transaction do
+          UserPageRelationship.import [:relationship_type,:user_id,:page_id], user_page_relationship_array, :validate => false
+          User.where(:id => users_id_array).update_all(:last_foregin_fb_update => Time.now) 
+        end
         
-      UserPageRelationship.import [:relationship_type,:user_id,:page_id], user_page_relationship_array, :validate => false
+
       #user_page_relationship_string = "INSERT INTO user_page_relationships (relationship_type,user_id,page_id) VALUES "
       #user_page_relationship_array.each { |like|  user_page_relationship_string += "(\'#{like[0]}\',#{like[1]},#{like[2]}),"}
       #user_page_relationship_string[-1] = ';'

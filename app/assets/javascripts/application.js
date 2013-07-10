@@ -10,6 +10,7 @@
 // WARNING: THE FIRST BLANK LINE MARKS THE END OF WHAT'S TO BE PROCESSED, ANY BLANK LINE SHOULD
 // GO AFTER THE REQUIRES BELOW.
 //
+//= require select2
 //= require jquery
 //= require jquery_ujs
 //= require twitter/bootstrap
@@ -29,6 +30,19 @@ String.prototype.hashCode = function(){
     }
     return hash;
 };
+
+$(document).ready(function(){
+	//alert('k');
+	//document.getElementById("gender").chosen();
+  //$('#gender').select2();
+  //alert('d');
+  
+  //$(function(){
+  //  $('#main_div').slimScroll({
+  //      height: '250px'
+  //  });
+  //});
+});
 
 
 function insert_user(user,place) //user == matches[user_number], place = -1
@@ -56,7 +70,7 @@ function insert_user(user,place) //user == matches[user_number], place = -1
 	//alert(JSON.stringify(matches[user_number][0]));
 	if (user[0].quotes != null)
 	{
-		user_text += user[0].quotes;
+		user_text += "<i><font color='grey'>" + user[0].quotes + "</font><i>";
 	}		
 	//user_div.innerHTML = name_link(matches[user_number][0]) + print_stats(matches[user_number][0]) +"<br />"+ matches[user_number][2] +"% Likeable" +"<br />"+ matches[user_number][0].quotes;
 	user_div.innerHTML = user_text;
@@ -189,7 +203,12 @@ function load_table()
 	{ 
 	add_row(matches);
 	}
-	ajax_test(3,matches);
+	ajax_test(2,matches);
+	//setTimeout(ajax_test(5,matches), 3000); 
+	setTimeout(function(){ajax_test(0,matches)},3000); //do it better, know when logging in for the first time
+	setTimeout(function(){ajax_test(0,matches)},6000);
+	setTimeout(function(){ajax_test(0,matches)},9000);
+	setTimeout(function(){ajax_test(0,matches)},12000);
 	//alert("ff");
 	//setTimeout(function() {alert($("body").data("current_matches"));}, 3000);
 	//matches = document.getElementById("matche_table").getAttribute("data-current_matches_json");
@@ -206,13 +225,13 @@ function picture_link(id,size)
 {
     size = size.toString(); //resolution is 120px
     id = id.toString();
-    html = "<a href=\"http://www.facebook.com/" + id + "\"><img src=\"https://graph.facebook.com/" + id + "/picture?width=" + size + "&height=" + size + "\" width=" + size + " height=" + size + "></a>"
+    html = "<a href=\"http://www.facebook.com/" + id + "\"target=\"_blank\"><img src=\"https://graph.facebook.com/" + id + "/picture?width=" + size + "&height=" + size + "\" width=" + size + " height=" + size + "></a>"
     return html;
 }
 
 function name_link(user)
 {
-    html = "<a href=\"http://www.facebook.com/" + user.id.toString() + "\">" + user.name + "</a>";
+    html = "<a href=\"http://www.facebook.com/" + user.id.toString() + "\"target=\"_blank\">" + user.name + "</a>";
     return html;
 }
 

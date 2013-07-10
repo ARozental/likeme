@@ -7,6 +7,12 @@ application.css: application.css
 application/index.css: application.css
 jquery.min.map: jquery.min.map
 jquery/index.min.map: jquery.min.map
+select2-spinner.gif: select2-spinner.gif
+select2-spinner/index.gif: select2-spinner.gif
+select2.png: select2.png
+select2/index.png: select2.png
+select2x2.png: select2x2.png
+select2x2/index.png: select2x2.png
 fontawesome-webfont.eot: fontawesome-webfont.eot
 fontawesome-webfont/index.eot: fontawesome-webfont.eot
 fontawesome-webfont.svg: fontawesome-webfont.svg
