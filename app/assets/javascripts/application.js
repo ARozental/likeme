@@ -10,10 +10,10 @@
 // WARNING: THE FIRST BLANK LINE MARKS THE END OF WHAT'S TO BE PROCESSED, ANY BLANK LINE SHOULD
 // GO AFTER THE REQUIRES BELOW.
 //
-//= require select2
 //= require jquery
 //= require jquery_ujs
 //= require twitter/bootstrap
+//= require select2
 //= require_tree .
 Object.prototype.getName = function() { 
    var funcNameRegex = /function (.{1,})\(/;
