@@ -31,18 +31,6 @@ String.prototype.hashCode = function(){
     return hash;
 };
 
-$(document).ready(function(){
-	//alert('k');
-	//document.getElementById("gender").chosen();
-  //$('#gender').select2();
-  //alert('d');
-  
-  //$(function(){
-  //  $('#main_div').slimScroll({
-  //      height: '250px'
-  //  });
-  //});
-});
 
 
 function insert_user(user,place) //user == matches[user_number], place = -1

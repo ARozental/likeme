@@ -15690,24 +15690,11 @@ if ( typeof module === "object" && module && typeof module.exports === "object" 
 }).call(this);
 (function() {
   jQuery(function() {
-    return $(window).scroll(function() {
-      var matches;
-
-      if ($(window).scrollTop() > $(document).height() - $(window).height() - 20) {
-        matches = $('#matche_table').data('matches');
-        return add_row(matches);
-      }
-    });
-  });
-
-  jQuery(function() {
     return $('#main_div').scroll(function() {
       var matches;
 
-      if ($(window).scrollTop() > $(document).height() - $(window).height() - 20) {
-        matches = $('#matche_table').data('matches');
-        return add_row(matches);
-      }
+      matches = $('#matche_table').data('matches');
+      return add_row(matches);
     });
   });
 
@@ -15749,18 +15736,6 @@ String.prototype.hashCode = function(){
     return hash;
 };
 
-$(document).ready(function(){
-	//alert('k');
-	//document.getElementById("gender").chosen();
-  //$('#gender').select2();
-  //alert('d');
-  
-  //$(function(){
-  //  $('#main_div').slimScroll({
-  //      height: '250px'
-  //  });
-  //});
-});
 
 
 function insert_user(user,place) //user == matches[user_number], place = -1
