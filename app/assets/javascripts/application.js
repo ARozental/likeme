@@ -187,6 +187,7 @@ function load_table()
 	var table = document.getElementById("matche_table");
 	var matches = document.getElementById("matche_table").getAttribute("data-matches");
 	matches = jQuery.parseJSON(matches);
+	$("body").data("current_matches", matches);
 	for (var i=0;i<9;i++)
 	{ 
 	add_row(matches);
