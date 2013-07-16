@@ -432,7 +432,7 @@ class User < ActiveRecord::Base
 
     outcome = []
     results.first(LikeMeConfig.number_of_users_to_show).each do |array|
-      outcome << [users[array[0]].first,array[2],adjust_score(array[1])]
+      outcome << [users[array[0]].first,array[2],adjust_score(array[1],filter.search_by)]
     end
     
 
@@ -464,12 +464,20 @@ class User < ActiveRecord::Base
     save_matching_scores(filter,results)
   end
   
-  def adjust_score(score)
+  def adjust_score(score,search_by)
     return 0 if score <= 0
-    score = Math.sqrt(score)
-    score = score*2
-    score = 1 if score > 1
-    score = (score*100).to_i
+    if search_by=="likes"
+      score = Math.sqrt(score)
+      score = score*2.5
+      score = 1 if score > 1
+      score = (score*100).to_i 
+    else
+      score = Math.sqrt(score)
+      score = score*2
+      score = 1 if score > 1
+      score = (score*100).to_i      
+    end
+
   end
   
 

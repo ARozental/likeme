@@ -13,8 +13,10 @@
 //= require jquery
 //= require jquery_ujs
 //= require twitter/bootstrap
-//= require select2
 //= require_tree .
+
+
+
 Object.prototype.getName = function() { 
    var funcNameRegex = /function (.{1,})\(/;
    var results = (funcNameRegex).exec((this).constructor.toString());
@@ -214,7 +216,7 @@ function picture_link(id,size)
 {
     size = size.toString(); //resolution is 120px
     id = id.toString();
-    html = "<a href=\"http://www.facebook.com/" + id + "\"target=\"_blank\"><img src=\"https://graph.facebook.com/" + id + "/picture?width=" + size + "&height=" + size + "\" width=" + size + " height=" + size + "></a>"
+    html = "<a href=\"http://www.facebook.com/" + id + "\"target=\"_blank\"><img style=\"border-radius: 5px;\"src=\"https://graph.facebook.com/" + id + "/picture?width=" + size + "&height=" + size + "\" width=" + size + " height=" + size + "></a>"
     return html;
 }
 
@@ -250,6 +252,44 @@ function print_stats(user)
     	}
         
     return html;
+}
+
+function postToFeed() {
+  	var current_matches = $("body").data("current_matches");
+  	//alert(current_matches[0][0].name);
+  	var list = {};
+  	for(var i=0;i<3;i++)
+  	{
+  		var key = (i+1).toString();
+  		key = key + ")";
+  		var user_link = {};
+  		user_link["text"] = current_matches[i][0].name+" "+current_matches[i][2]+"% Like me" ;
+  		user_link["href"] = "http://www.facebook.com/" + current_matches[i][0].id;
+  		list[key] = user_link;
+  	}
+  	//alert($("body").data("current_matches"));
+	//var list = { "1) ":{text: "jenia 90% likeable :))", href:'http://www.facebook.com/100001439566738'} , "lastName":"Doe" }
+	//list["2)"] = "ffffs"
+    // calling the API ...
+    var obj = {
+      method: 'feed',
+      redirect_uri: 'http://like-me.info/',
+      link: 'http://www.like-me.info/',
+      picture: 'http://www.rt23.com/Scenery/images/birds/blue_jay.gif',
+      name: 'Like me',
+      caption: 'my best matches are:',
+      //description: "some useless words",
+      properties: list,
+      action_links: [{ text: 'action link test', href: 'http://example.com'}]
+    };
+
+    function callback(response) { //maybe do it ['post_id'] exist...
+    if (response['post_id']) {document.getElementById('msg').innerHTML = "successfully posted to feed"}
+      //document.getElementById('msg').innerHTML = "successfully posted to feed";
+      //document.getElementById('msg').innerHTML = "Post ID: " + response['post_id'];
+    }
+
+    FB.ui(obj, callback);
 }
 
 

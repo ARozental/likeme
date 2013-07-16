@@ -2,12 +2,12 @@
 <%= form_tag(:action => :index) do %>
 	<table class="filter_table">
 		<tr>
-			<td><%= label_tag(:min_age,"min age:", :style => width) %></td>
-			<td><%= label_tag(:max_age,"max age:", :style => width) %></td>
+			<td><%= label_tag(:min_age,"minimum age:", :style => width) %></td>
+			<td><%= label_tag(:max_age,"maximum age:", :style => width) %></td>
 			<td><%= label_tag(:search_by,"search by:", :style => width) %></td>
 		</tr>
-			<td><%= number_field_tag(:min_age, @filter.min_age,:in => 16...99, :style => width,:placeholder => "minimal age") %></td> <!-- :class => "btn btn-info dropdown-toggle"-->
-			<td><%= number_field_tag(:max_age, @filter.max_age,:in => 16...99, :style => width,:placeholder => "maximal age") %></td>
+			<td><%= number_field_tag(:min_age, @filter.min_age,:in => 16...99, :style => width) %></td> <!--,:placeholder => "minimum age" :class => "btn btn-info dropdown-toggle"-->
+			<td><%= number_field_tag(:max_age, @filter.max_age,:in => 16...99, :style => width) %></td>
 			<td><%= select_tag(:search_by, options_for_select([['all likes', "likes"],'music', "books","movies","television","games","activities","interests"], @filter.search_by), :style => width) %></td>
 		</tr>		
 		<tr>		
@@ -25,7 +25,7 @@
 
 	<div class="actions">
 		<%= submit_tag("search", :class => 'btn btn-primary') %>
-		<div class="btn btn-primary" id="post_to_facebook" style="float: right;" onclick='postToFeed(); return false'>Post to Feed</div>
+		<div class="btn btn-primary" id="post_to_facebook" style="float: right;" onclick='postToFeed(); return false'>post results to feed</div>
 
 	</div>
 <% end %>

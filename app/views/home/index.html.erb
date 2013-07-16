@@ -10,52 +10,15 @@
     
     
 	<table id="matche_table" class="table" data-matches="<%= @matches.to_json %>"></table>			
-	<script>load_table()</script>
+
+	<script>
+		load_table();
+		FB.init({appId: "360161967331340", status: true, cookie: true});
+	</script>
     
     
-    <script src='http://connect.facebook.net/en_US/all.js'></script>
-    <script> 
-      FB.init({appId: "360161967331340", status: true, cookie: true});
+    
 
-      function postToFeed() {
-      	var current_matches = $("body").data("current_matches");
-      	//alert(current_matches[0][0].name);
-      	var list = {};
-      	for(var i=0;i<3;i++)
-      	{
-      		var key = (i+1).toString();
-      		key = key + ")";
-      		var user_link = {};
-      		user_link["text"] = current_matches[i][0].name+" "+current_matches[i][2]+"% Like me" ;
-      		user_link["href"] = "http://www.facebook.com/" + current_matches[i][0].id;
-      		list[key] = user_link;
-      	}
-      	//alert($("body").data("current_matches"));
-		//var list = { "1) ":{text: "jenia 90% likeable :))", href:'http://www.facebook.com/100001439566738'} , "lastName":"Doe" }
-		//list["2)"] = "ffffs"
-        // calling the API ...
-        var obj = {
-          method: 'feed',
-          redirect_uri: 'http://like-me.info/',
-          link: 'http://www.like-me.info/',
-          picture: 'http://www.rt23.com/Scenery/images/birds/blue_jay.gif',
-          name: 'Like me',
-          caption: 'your best matches are:',
-          //description: "some useless words",
-          properties: list,
-          action_links: [{ text: 'action link test', href: 'http://example.com'}]
-        };
-
-        function callback(response) { //maybe do it ['post_id'] exist...
-        if (response['post_id']) {document.getElementById('msg').innerHTML = "successfully posted to feed"}
-          //document.getElementById('msg').innerHTML = "successfully posted to feed";
-          //document.getElementById('msg').innerHTML = "Post ID: " + response['post_id'];
-        }
-
-        FB.ui(obj, callback);
-      }
-
-    </script>
     
     <!-- placeholders -->
 

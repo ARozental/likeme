@@ -37,6 +37,7 @@
 	column-width:100px;
 	width: 615px;
 	overflow: hidden;
+	margin-top: 10px;
 }
 .body_color {
 	background: black;

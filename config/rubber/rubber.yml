@@ -90,7 +90,7 @@ cloud_providers:
     #
     # Enables the creation of spot instance requests.  Rubber will wait synchronously until the request is fulfilled,
     # at which point it will begin initializing the instance, unless spot_instance_request_timeout is set.
-    spot_instance: true
+    spot_instance: false
     #
     # The maximum price you would like to pay for your spot instance.
     spot_price: "0.085"

@@ -1,7 +1,7 @@
 ---
 - !ruby/object:Rubber::Configuration::InstanceItem
   name: production
-  domain: foo.com
+  domain: like-me.info
   roles:
   - !ruby/object:Rubber::Configuration::RoleItem
     name: app
@@ -46,18 +46,17 @@
   - !ruby/object:Rubber::Configuration::RoleItem
     name: web_tools
     options: {}
-  instance_id: i-7972bc1b
+  instance_id: i-d29da6b1
   image_type: c1.medium
   image_id: ami-e7582d8e
   security_groups:
   - likeme_production_default
   - likeme_production_web
   - likeme_production_web_tools
-  spot_instance_request_id: sir-b807e632
-  external_host: ec2-54-235-20-214.compute-1.amazonaws.com
-  external_ip: 54.235.20.214
-  internal_host: ip-10-194-222-51.ec2.internal
-  internal_ip: 10.194.222.51
+  external_host: ec2-50-17-69-152.compute-1.amazonaws.com
+  external_ip: 50.17.69.152
+  internal_host: ip-10-244-222-166.ec2.internal
+  internal_ip: 10.244.222.166
   zone: us-east-1d
   provider: aws
   platform: linux

@@ -46,18 +46,18 @@
   - !ruby/object:Rubber::Configuration::RoleItem
     name: web_tools
     options: {}
-  instance_id: i-e2534e8c
+  instance_id: i-7972bc1b
   image_type: c1.medium
   image_id: ami-e7582d8e
   security_groups:
   - likeme_production_default
   - likeme_production_web
   - likeme_production_web_tools
-  spot_instance_request_id: sir-c5dfb635
-  external_host: ec2-54-225-41-61.compute-1.amazonaws.com
-  external_ip: 54.225.41.61
-  internal_host: ip-10-204-181-162.ec2.internal
-  internal_ip: 10.204.181.162
+  spot_instance_request_id: sir-b807e632
+  external_host: ec2-54-235-20-214.compute-1.amazonaws.com
+  external_ip: 54.235.20.214
+  internal_host: ip-10-194-222-51.ec2.internal
+  internal_ip: 10.194.222.51
   zone: us-east-1d
   provider: aws
   platform: linux

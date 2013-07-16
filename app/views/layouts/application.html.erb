@@ -2,10 +2,12 @@
 <html>
 <head>
   <title>Likeme</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <link rel="shortcut icon" href="http://www.rt23.com/Scenery/images/birds/blue_jay.gif"/>
   <%= stylesheet_link_tag    "application", :media => "all" %>
-  <%= javascript_include_tag 'jquery', 'application' %> <!--I added the "jquery," part -->
+  <%= javascript_include_tag  'application' %> <!--I added the "jquery," part -->
   <%= csrf_meta_tags %>
+  <script src='http://connect.facebook.net/en_US/all.js'></script>
 </head>
 <body class="body_color">
 <a href="/" id="fake"></a> <!--todo: WTF the first link never works no matter what it is -->
@@ -48,17 +50,17 @@
 
   <div style="height: 10px"></div>
 
-      <div class="span3"></div>     
-      <div class="span6"><div class="main_div" id="main_div">
+<div class="main_div" id="main_div" style="width:630px;margin: 0 auto;">
+	
       	
       	
-<div class="container" style="width: 630px;">
+<div>
     <div class="navbar navbar-static-top">
         <div class="navbar-inner" style="padding-left: 35px; border-radius: 20px;">
             <ul class="nav" style="width: 550px;">
 	          	<% if current_user %>
 	          		<li class="nav pull-left"><div style="padding: 10px 10px 10px 0px;"><%= "Welcome " + current_user.name %></div> </li>
-	            	<li class="nav pull-right"><%= link_to "Sign out", signout_path, id: "sign_out" %></li>
+	            	<li class="nav pull-right"><img src="http://www.rt23.com/Scenery/images/birds/blue_jay.gif" alt="logo" height="35" width="35"></li>
 	            <% else %>
 	            	<li class="nav pull-right"><%= link_to "Sign in with Facebook", "/auth/facebook", id: "sign_in" %></li>
 	            <% end %>
@@ -69,8 +71,7 @@
       	
       	
       	<%= yield %>
-      </div></div>
-      <div class="span3"></div>     
+      </div>
 
 </body>
 </html>
