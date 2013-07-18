@@ -1,14 +1,16 @@
 Likeme::Application.routes.draw do
   
-  resources :users
-  resources :user_page_relationships
+  #resources :users, only: :index
+  #resources :user_page_relationships
   #get 'home/insert', :via => :get
+  match '/users', to: 'users#index'
   get 'home/index', :via => :post
   match 'home/index' => 'home#index', :via => :post
   get 'home/ajax_matching', :via => :post
   match 'home/ajax_matching' => 'home#ajax_matching', :via => :post
   root :to => 'home#index'
   
+  match 'users', to: 'users#index'
   match 'auth/:provider/callback', to: 'sessions#create'
   match 'auth/failure', to: redirect('/')
   match 'signout', to: 'sessions#destroy', as: 'signout'
