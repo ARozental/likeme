@@ -1,3 +1,5 @@
+
+
 <% width = "width:193px" %> <!-- todo: make it % of table size -->
 <%= form_tag(:action => :index) do %>
 	<table class="filter_table">
@@ -24,7 +26,9 @@
 
 
 	<div class="actions">
+
 		<%= submit_tag("search", :class => 'btn btn-primary') %>
+
 		<div class="btn btn-primary" id="post_to_facebook" style="float: right;" onclick='postToFeed(); return false'>post results to feed</div>
 
 	</div>
