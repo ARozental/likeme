@@ -18,7 +18,7 @@ class LikeMeConfig
   
   
   def self.maximal_matches #how many random users to calculate
-    return 200 #200
+    return 300 #200
   end
   
   def self.number_of_precalculated_users  #how many of best precalculated non friends to add
