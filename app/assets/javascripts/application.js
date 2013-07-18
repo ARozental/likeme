@@ -284,7 +284,7 @@ function postToFeed() {
     };
 
     function callback(response) { //maybe do it ['post_id'] exist...
-    if (response['post_id']) {document.getElementById('msg').innerHTML = "successfully posted to feed"}
+    if (response['post_id']) {document.getElementById('notice').innerHTML = "successfully posted to feed"}
       //document.getElementById('msg').innerHTML = "successfully posted to feed";
       //document.getElementById('msg').innerHTML = "Post ID: " + response['post_id'];
     }
