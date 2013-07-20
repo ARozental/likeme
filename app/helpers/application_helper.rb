@@ -23,4 +23,18 @@ module ApplicationHelper
     html.html_safe
   end
   
+  def get_char(type)
+    #duplication with @@all_page_aliases and user   
+    return 'l' if type == "likes"
+    return 'm' if type == "music"
+    return 'b' if type == "books"
+    return 'v' if type == "movies"
+    return 't' if type == "television"
+    return 'g' if type == "games"
+    return 'a' if type == "activities"
+    return 'i' if type == "interests"
+    return 'x' #shouldn't happen   
+  end
+
+  
 end

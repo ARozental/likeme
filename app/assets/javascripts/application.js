@@ -208,6 +208,115 @@ function load_table()
 }
 
 
+function add_page_row(pages)
+{
+var table=document.getElementById("page_table");
+	var page_number = table.rows.length/2;
+	insert_page(pages[page_number],-1)
+}
+
+function insert_page(page,place) //user == matches[user_number], place = -1
+{
+	var table=document.getElementById("page_table");
+	if(place != -1){place = place*2;} //2 rows for every user
+	var row1=table.insertRow(place);
+	var cell1=row1.insertCell(-1);
+	var cell2=row1.insertCell(-1);
+	cell1.innerHTML = picture_link(page[0],120);
+	cell1.className = 'face_td';
+	cell1.rowSpan="2";
+	cell1.style.padding="0px";
+	//cell2.innerHTML = "<a href=\"http://www.facebook.com/" + matches[user_number][0].id + "\"><img src=\"https://graph.facebook.com/" + matches[user_number][0].id + "/picture?width=120&height=120\" width=" + "120" + " height=" + "120" + "></a>";		
+	cell2.rowSpan="2";
+	cell2.innerHTML = '<div class="fb-like" data-href="https://www.facebook.com/pages/Likeme/' + page[0] +'" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="arial"></div>'
+
+	var page_div = document.createElement("div");
+	page_div.className = 'text_div';		
+	page_div.style.height = "120px";
+	page_div.style.maxHeight = "93px";
+	page_div.style.overflowY='auto';
+	page_div.style.padding="0px";
+	page_div.id = page[0];
+	//page_div.innerHTML = "something about the page";
+	
+	
+	cell2.appendChild(page_div);
+	get_description(page[0]);
+	//page_div.innerHTML = get_description(page[0]);
+	//cell2.innerHTML = name_link(matches[user_number][0]) + print_stats(matches[user_number][0]);
+	//alert(JSON.stringify(page));
+
+	for (var k=0;k<3;k++)
+	{ 
+		var cell=row1.insertCell(-1);
+		cell.className = 'like_td';
+		cell.style.padding="0px";
+		cell.style.maxHeight="40px";
+		try
+		{
+			cell.innerHTML = picture_link(page[1][1][k],60);
+		}
+		catch(err)
+		{
+		}
+	}
+	//alert(place);	
+	if(place >= 0){place++;}
+	//alert(place);
+	var row2=table.insertRow(place);
+	for (var k=0;k<3;k++)
+	{ 
+		var cell=row2.insertCell(-1);
+		cell.className = 'like_td';
+		cell.style.padding="0px";
+		cell.style.maxHeight="40px";
+		try
+		{
+			cell.innerHTML = picture_link(page[1][1][k+3],60);
+		}
+		catch(err)
+		{
+		}
+	}
+}
+
+function get_description(page_id)
+{
+  var flickerAPI = "http://graph.facebook.com/" + page_id;
+  var api_data = $.getJSON( flickerAPI, {
+    tags: "mount rainier",
+    tagmode: "any",
+    format: "json"
+  })
+  .done(function( data ) {
+  	//alert(data.description);
+  	//alert(data.description);
+  	text_div = document.getElementById(page_id);
+  	html = "";
+  	if (data.about) {html = data.about;}
+  	if (data.description) {html = data.description;}  	
+  	text_div.innerHTML = html;
+  	
+  });
+}
+
+function load_page_table()
+{
+	
+	var table = document.getElementById("page_table");
+	var pages = document.getElementById("page_table").getAttribute("data-pages");
+	pages = jQuery.parseJSON(pages);
+	//$("body").data("current_pages", pages);
+	for (var i=0;i<5;i++)
+	{ 
+		//alert("1");
+		add_page_row(pages);
+	}
+	return 1
+
+
+}
+
 
 
 

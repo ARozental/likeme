@@ -480,7 +480,47 @@ class User < ActiveRecord::Base
 
   end
   
-
+############################################################### pages
+  def find_pages(page_filter)
+    #pages_select_users
+    
+    users_and_scores = self.pages_set_users_and_scores(page_filter) #Hash user_id => user_score
+    page_filter.chosen_users = users_and_scores.keys
+    #raise users_and_scores.to_s
+    recommendations = page_filter.get_user_page_relationships
+    page_scores = Hash.new
+    
+    recommendations.each do |recommendation|
+      if page_scores[recommendation["page_id"]] #not first recommendation
+        page_scores[recommendation["page_id"]] = [page_scores[recommendation["page_id"]][0] + users_and_scores[recommendation["user_id"].to_i],page_scores[recommendation["page_id"]][1].push(recommendation["user_id"])]
+      else
+        page_scores[recommendation["page_id"]] = [users_and_scores[recommendation["user_id"].to_i],[recommendation["user_id"]]]
+        #raise page_scores[recommendation["page_id"]]
+      end
+    end
+    
+    page_scores = page_scores.sort_by {|key, value| -1 *value[0]}
+    #raise page_scores.to_s
+    #raise recommendations.to_a.to_s
+    return page_scores.first(100)
+    
+    
+    #get users likes
+    
+    #Hash page_id => page_score
+    #for_each like Hash[page_id] += 1*user_score
+  end
+  
+  def pages_set_users_and_scores(page_filter)
+    recommenders = 50
+    users_and_scores_category = Score.select("friend_id, score").where(:user_id => self.id, :category => get_char(page_filter.search_by)).order("score").reverse_order.first(recommenders)
+    # add more users if less than 50    
+    users_and_scores = Hash.new
+    users_and_scores_category.each {|score| users_and_scores[score.friend_id]=score.score}
+    #raise users_and_scores.to_s
+    return users_and_scores
+  end
+  
 
      
 end

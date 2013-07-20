@@ -4,6 +4,7 @@ Likeme::Application.routes.draw do
   #resources :user_page_relationships
   #get 'home/insert', :via => :get
   match '/users', to: 'users#index'
+  match '/pages', to: 'home#pages'
   get 'home/index', :via => :post
   match 'home/index' => 'home#index', :via => :post
   get 'home/ajax_matching', :via => :post

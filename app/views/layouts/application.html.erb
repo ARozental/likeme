@@ -66,8 +66,8 @@
         <div class="navbar-inner" style="padding-left: 35px; border-radius: 20px;">
             <ul class="nav" style="width: 550px;">
 	          	<% if current_user %>
-	          		<li class="nav pull-left"><div style="padding: 10px 10px 10px 0px;"><%= "Welcome " + current_user.name %></div> </li>
-	            	<li class="nav pull-right"><div class="fb-like" data-href="https://www.facebook.com/pages/Likeme/311627115638339" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="arial" style="padding-top: 10px;"></div></li>
+	          		<li class="nav pull-left"><div class="fb-like" data-href="https://www.facebook.com/pages/Likeme/311627115638339" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="arial" style="padding-top: 10px;"></div></li>
+	            	<li class="nav pull-right"><div style="padding: 10px 10px 10px 0px;"><%= "Welcome " + current_user.name %></div></li>
 	            <% else %>
 	            	<li class="nav pull-right"><%= link_to "Sign in with Facebook", "/auth/facebook", id: "sign_in" %></li>
 	            <% end %>
