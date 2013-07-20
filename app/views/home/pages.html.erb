@@ -1,0 +1,56 @@
+<% if @current_user %>
+	<%= render 'page_search' %>
+	<!-- 
+	<img id="mypic" src="https://graph.facebook.com/<%= @current_user['id'] %>/picture?type=normal" alt="profile picture">
+	<div id="Welcome"> Welcome in, <strong><%= @current_user['name'] %>. <p id="notice"><%= notice %></p></strong></div>
+	-->
+	<p id="notice"><%= notice %></p>
+
+	<% unless @pages.blank? %>
+    <!-- <p><a onclick='postToFeed(); return false;'>Post to Feed</a></p><p id='msg'></p> -->
+<!--    
+<script>
+(function() {
+  var flickerAPI = "http://graph.facebook.com/402991343106786";
+  $.getJSON( flickerAPI, {
+    tags: "mount rainier",
+    tagmode: "any",
+    format: "json"
+  })
+  .done(function( data ) {
+  	alert(JSON.stringify(data));
+    $.each( data.items, function( i, item ) {
+      $( "<img/>" ).attr( "src", item.media.m ).appendTo( "#images" );
+      if ( i === 3 ) {
+        return false;
+      }
+    });
+  });
+})();
+</script>
+-->
+    
+    <table id="page_table" class="table" data-pages="<%= @pages.to_json %>"></table>
+    <script>
+		load_page_table();
+		FB.init({appId: "360161967331340", status: true, cookie: true});
+	</script>
+    <!--
+	<table id="page_table" class="table" data-pages="<%= @pages.to_json %>">
+		<% 27.times do |i|%>
+		<tr>
+			<td><%= picture_link( @pages[i][0] ,200)%></td>
+			<td>description and like button</td>
+			<% 3.times do |j|%>
+				<td><%= picture_link( @pages[i][1][1][j] ,100)%></td>
+			<% end %>
+		</tr>
+		<% end %>
+	
+	</table>			
+	-->	
+
+	<% end %>
+<% else %>
+<!-- todo: something like welcome to my app please sign in -->
+<% end %>

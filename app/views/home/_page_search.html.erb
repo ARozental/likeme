@@ -1,0 +1,25 @@
+
+
+<% width = "width:193px" %> <!-- todo: make it % of table size -->
+<%= form_tag(:action => :pages) do %>
+	<table class="filter_table">
+		<tr>
+			<td><%= label_tag(:search_by,"search by:", :style => width) %></td>
+			<td><%= label_tag(:relevant_pages,"relevant pages", :style => width) %></td>
+			<td><%= label_tag(:social_network,"social network::", :style => width) %></td>
+		</tr>
+			<td><%= select_tag(:search_by, options_for_select([['all likes', "likes"],'music', "books","movies","television","games","activities","interests"], @page_filter.search_by), :style => width) %></td>
+			<td><%= select_tag(:relevant_pages, options_for_select(["include all pages","exclude pages I know"], @page_filter.relevant_pages), :style => width) %></td>
+			<td><%= select_tag(:social_network, options_for_select(["don\'t include friends","include only friends", "include everyone"], @page_filter.social_network), :style => width) %></td>
+		</tr>		
+	</table>
+
+
+	<div class="actions">
+
+		<%= submit_tag("search", :class => 'btn btn-primary') %>
+
+		<div class="btn btn-primary" id="post_to_facebook" style="float: right;" onclick='postToFeed(); return false'>post results to feed</div>
+
+	</div>
+<% end %>
