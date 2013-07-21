@@ -1,5 +1,9 @@
 class LikeMeConfig
   
+  def self.page_recommenders
+    70
+  end
+  
   def self.page_insertion_chance
     0.05
   end

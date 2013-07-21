@@ -5,6 +5,10 @@
  *= require_self
  *= require_tree .
 */
+.fb-like{
+    height: 21px;
+    overflow: hidden;
+}
 .face_td{
 	width: 120px;
 	height: 120px;

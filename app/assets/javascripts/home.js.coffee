@@ -13,9 +13,19 @@ jQuery ->
   $('#main_div').scroll ->
     #ignore the condition because of different zoom levels
     #if $(window).scrollTop() > $(document).height() - $(window).height() - 60
+    if ($('#matche_table').length > 0) 
       matches = $('#matche_table').data('matches')
       add_row(matches)
-      
+    else if ($('#page_table').length > 0) 
+      pages = $('#page_table').data('pages')      
+      add_page_row(pages)  
+
+    
+#jQuery ->
+#  $('#main_div').scroll ->
+#    alert("a")
+#    pages = $('#page_table').data('pages')      
+#    add_page_row(pages)      
 #jQuery ->
 #  $('#post_to_facebook').click ->
 #    postToFeed()

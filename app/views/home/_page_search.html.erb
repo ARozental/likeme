@@ -4,13 +4,13 @@
 <%= form_tag(:action => :pages) do %>
 	<table class="filter_table">
 		<tr>
-			<td><%= label_tag(:search_by,"search by:", :style => width) %></td>
+			<td><%= label_tag(:search_for,"search for:", :style => width) %></td>
 			<td><%= label_tag(:relevant_pages,"relevant pages", :style => width) %></td>
-			<td><%= label_tag(:social_network,"social network::", :style => width) %></td>
+			<td><%= label_tag(:recommended_by,"recommended by", :style => width) %></td>
 		</tr>
-			<td><%= select_tag(:search_by, options_for_select([['all likes', "likes"],'music', "books","movies","television","games","activities","interests"], @page_filter.search_by), :style => width) %></td>
+			<td><%= select_tag(:search_for, options_for_select([['all likes', "likes"],'music', "books","movies","television","games","activities","interests"], @page_filter.search_for), :style => width) %></td>
 			<td><%= select_tag(:relevant_pages, options_for_select(["include all pages","exclude pages I know"], @page_filter.relevant_pages), :style => width) %></td>
-			<td><%= select_tag(:social_network, options_for_select(["don\'t include friends","include only friends", "include everyone"], @page_filter.social_network), :style => width) %></td>
+			<td><%= select_tag(:recommended_by, options_for_select(["people like me","friends"], @page_filter.recommended_by), :style => width) %></td>
 		</tr>		
 	</table>
 

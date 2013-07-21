@@ -498,7 +498,13 @@ class User < ActiveRecord::Base
         #raise page_scores[recommendation["page_id"]]
       end
     end
-    
+    if page_filter.relevant_pages == "exclude pages I know"
+      my_likes_id = UserPageRelationship.where(:user_id => self.id, :relationship_type => 'l').pluck(:page_id)
+      #raise page_scores.to_s
+      page_scores.reject! { |score| my_likes_id.include?(score.to_i) }
+
+    end
+    #raise page_scores.to_s
     page_scores = page_scores.sort_by {|key, value| -1 *value[0]}
     #raise page_scores.to_s
     #raise recommendations.to_a.to_s
@@ -512,12 +518,20 @@ class User < ActiveRecord::Base
   end
   
   def pages_set_users_and_scores(page_filter)
-    recommenders = 50
-    users_and_scores_category = Score.select("friend_id, score").where(:user_id => self.id, :category => get_char(page_filter.search_by)).order("score").reverse_order.first(recommenders)
-    # add more users if less than 50    
+    recommenders = LikeMeConfig.page_recommenders
+    users_and_scores_category = Score.select("friend_id, score").where(:user_id => self.id, :category => get_char(page_filter.search_for)).order("score").reverse_order
+    if page_filter.recommended_by == "friends"
+      my_friends_id = self.friends.pluck(:id)
+      users_and_scores_category = users_and_scores_category.where(:friend_id => my_friends_id)
+    end
+    users_and_scores_category = users_and_scores_category.first(recommenders)
+    
+    #todo: add more users if less than 50    
     users_and_scores = Hash.new
     users_and_scores_category.each {|score| users_and_scores[score.friend_id]=score.score}
-    #raise users_and_scores.to_s
+    if page_filter.recommended_by == "friends"
+      
+    end
     return users_and_scores
   end
   

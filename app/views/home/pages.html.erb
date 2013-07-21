@@ -7,28 +7,7 @@
 	<p id="notice"><%= notice %></p>
 
 	<% unless @pages.blank? %>
-    <!-- <p><a onclick='postToFeed(); return false;'>Post to Feed</a></p><p id='msg'></p> -->
-<!--    
-<script>
-(function() {
-  var flickerAPI = "http://graph.facebook.com/402991343106786";
-  $.getJSON( flickerAPI, {
-    tags: "mount rainier",
-    tagmode: "any",
-    format: "json"
-  })
-  .done(function( data ) {
-  	alert(JSON.stringify(data));
-    $.each( data.items, function( i, item ) {
-      $( "<img/>" ).attr( "src", item.media.m ).appendTo( "#images" );
-      if ( i === 3 ) {
-        return false;
-      }
-    });
-  });
-})();
-</script>
--->
+
     
     <table id="page_table" class="table" data-pages="<%= @pages.to_json %>"></table>
     <script>

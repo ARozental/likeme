@@ -15,8 +15,10 @@
 //= require twitter/bootstrap
 //= require_tree .
 
-
-
+String.prototype.trunc = 
+      function(n){
+          return this.substr(0,n-1)+(this.length>n?'&hellip;':'');
+      };
 Object.prototype.getName = function() { 
    var funcNameRegex = /function (.{1,})\(/;
    var results = (funcNameRegex).exec((this).constructor.toString());
@@ -54,6 +56,8 @@ function insert_user(user,place) //user == matches[user_number], place = -1
 	user_div.style.maxHeight = "120px";
 	user_div.style.overflowY='auto';
 	user_div.style.padding="0px";
+	//user_div.style.width = "300px";
+	//user_div.style.maxWidth = "300px";
 	var user_text = name_link(user[0]);
 	user_text += print_stats(user[0]) +"<br />";
 	user_text += user[2] +"% Like me" +"<br />";
@@ -212,7 +216,10 @@ function add_page_row(pages)
 {
 var table=document.getElementById("page_table");
 	var page_number = table.rows.length/2;
-	insert_page(pages[page_number],-1)
+	if(pages[page_number][0] != null)
+	{
+		insert_page(pages[page_number],-1)
+	}
 }
 
 function insert_page(page,place) //user == matches[user_number], place = -1
@@ -228,7 +235,7 @@ function insert_page(page,place) //user == matches[user_number], place = -1
 	cell1.style.padding="0px";
 	//cell2.innerHTML = "<a href=\"http://www.facebook.com/" + matches[user_number][0].id + "\"><img src=\"https://graph.facebook.com/" + matches[user_number][0].id + "/picture?width=120&height=120\" width=" + "120" + " height=" + "120" + "></a>";		
 	cell2.rowSpan="2";
-	cell2.innerHTML = '<div class="fb-like" data-href="https://www.facebook.com/pages/Likeme/' + page[0] +'" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="arial"></div>'
+	cell2.innerHTML = '<span style="font-size: 16px;" id="'+ "l" + page[0] +'"></span><span style="float: right;" class="fb-like" data-href="https://www.facebook.com/pages/Likeme/' + page[0] +'" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="arial"></span>'               
 
 	var page_div = document.createElement("div");
 	page_div.className = 'text_div';		
@@ -237,6 +244,8 @@ function insert_page(page,place) //user == matches[user_number], place = -1
 	page_div.style.overflowY='auto';
 	page_div.style.padding="0px";
 	page_div.id = page[0];
+	page_div.style.width = "300px";
+	page_div.style.maxWidth = "300px";
 	//page_div.innerHTML = "something about the page";
 	
 	
@@ -295,19 +304,27 @@ function get_description(page_id)
   	html = "";
   	if (data.about) {html = data.about;}
   	if (data.description) {html = data.description;}  	
-  	text_div.innerHTML = html;
+  	text_div.innerHTML = '<i><font color="grey">' + html + '</i></font>';
   	
+  	like_id =  'l' + page_id
+  	like_td = document.getElementById(like_id);
+  	like_td.innerHTML = data.name.trunc(25);
+  	//like_div.appendChild = name_div;
   });
 }
 
 function load_page_table()
 {
+	/*var table = document.getElementById("matche_table");
+	var matches = document.getElementById("matche_table").getAttribute("data-matches");
+	matches = jQuery.parseJSON(matches);
+	$("body").data("current_matches", matches);*/
 	
 	var table = document.getElementById("page_table");
 	var pages = document.getElementById("page_table").getAttribute("data-pages");
 	pages = jQuery.parseJSON(pages);
-	//$("body").data("current_pages", pages);
-	for (var i=0;i<5;i++)
+	$("body").data("current_pages", pages);
+	for (var i=0;i<9;i++)
 	{ 
 		//alert("1");
 		add_page_row(pages);
