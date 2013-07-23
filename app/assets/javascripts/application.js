@@ -423,16 +423,20 @@ function postPagesToFeed() {
   	//alert(current_pages);
   	//alert(current_pages[2][0]);
   	var list = {};
-  	for(var i=0;i<4;i++)
+  	for(var i=0;i<3;i++)
   	{
   		var key = (i+1).toString();
   		key = key + ")";
   		var page_link = {};
   		//var name=document.getElementById("l"+current_pages[i][0]).innerText;
   		//alert(name.innerText);
-  		page_link["text"] = document.getElementById("l"+current_pages[i][0]).innerText;
-  		page_link["href"] = "http://www.facebook.com/" + current_pages[i][0];
-  		list[key] = page_link;
+  		if(document.getElementById("l"+current_pages[i][0]).innerText) // in case there is no name for a page in the top 3
+  		{
+	  		page_link["text"] = document.getElementById("l"+current_pages[i][0]).innerText;
+	  		page_link["href"] = "http://www.facebook.com/" + current_pages[i][0];
+	  		list[key] = page_link;  			
+  		}
+
   	}
   	//alert($("body").data("current_matches"));
 	//var list = { "1) ":{text: "jenia 90% likeable :))", href:'http://www.facebook.com/100001439566738'} , "lastName":"Doe" }
