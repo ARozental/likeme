@@ -19,7 +19,8 @@
 
 		<%= submit_tag("search", :class => 'btn btn-primary') %>
 
-		<div class="btn btn-primary" id="post_to_facebook" style="float: right;" onclick='postToFeed(); return false'>post results to feed</div>
-
+		<div class="btn btn-primary" id="post_to_facebook" style="float: right;" onclick='postPagesToFeed(); return false'>post results to feed</div>
+		<span style="padding-left: 175px;"><a href=<%= home_index_path %> class="btn btn-success">go to people</a></span>
+				
 	</div>
 <% end %>

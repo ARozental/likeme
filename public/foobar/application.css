@@ -6,6 +6,12 @@
 
 */
 
+.a:hover 
+{
+     color:red; 
+     text-decoration:none; 
+     cursor:pointer;  
+}
 .fb-like{
     height: 21px;
     overflow: hidden;

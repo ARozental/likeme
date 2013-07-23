@@ -12863,13 +12863,12 @@ function load_page_table()
 	$("body").data("current_matches", matches);*/
 	
 	var table = document.getElementById("page_table");
-	var pages = document.getElementById("page_table").getAttribute("data-pages");
-	pages = jQuery.parseJSON(pages);
+	pages = $('#page_table').data('pages');
 	$("body").data("current_pages", pages);
-	for (var i=0;i<9;i++)
+	for (var i=0;i<7;i++)
 	{ 
-		//alert("1");
 		add_page_row(pages);
+		//setTimeout(function(){add_page_row(pages)},40);
 	}
 	return 1
 
@@ -12960,5 +12959,45 @@ function postToFeed() {
     FB.ui(obj, callback);
 }
 
+function postPagesToFeed() {
+	//alert('fff');
+  	var current_pages = $("body").data("current_pages");
+  	//alert(current_pages);
+  	//alert(current_pages[2][0]);
+  	var list = {};
+  	for(var i=0;i<4;i++)
+  	{
+  		var key = (i+1).toString();
+  		key = key + ")";
+  		var page_link = {};
+  		//var name=document.getElementById("l"+current_pages[i][0]).innerText;
+  		//alert(name.innerText);
+  		page_link["text"] = document.getElementById("l"+current_pages[i][0]).innerText;
+  		page_link["href"] = "http://www.facebook.com/" + current_pages[i][0];
+  		list[key] = page_link;
+  	}
+  	//alert($("body").data("current_matches"));
+	//var list = { "1) ":{text: "jenia 90% likeable :))", href:'http://www.facebook.com/100001439566738'} , "lastName":"Doe" }
+	//list["2)"] = "ffffs"
+    // calling the API ...
+    var obj = {
+      method: 'feed',
+      redirect_uri: 'http://like-me.info/',
+      link: 'http://www.like-me.info/',
+      picture: 'http://www.rt23.com/Scenery/images/birds/blue_jay.gif',
+      name: 'Like me',
+      caption: 'recommended for me:',
+      //description: "some useless words",
+      properties: list,
+    };
+
+    function callback(response) { //maybe do it ['post_id'] exist...
+    if (response['post_id']) {document.getElementById('notice').innerHTML = "successfully posted to feed"}
+      //document.getElementById('msg').innerHTML = "successfully posted to feed";
+      //document.getElementById('msg').innerHTML = "Post ID: " + response['post_id'];
+    }
+
+    FB.ui(obj, callback);
+}
 
 ;

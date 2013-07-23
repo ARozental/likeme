@@ -519,19 +519,43 @@ class User < ActiveRecord::Base
   
   def pages_set_users_and_scores(page_filter)
     recommenders = LikeMeConfig.page_recommenders
+    users_and_scores = Hash.new
+    
     users_and_scores_category = Score.select("friend_id, score").where(:user_id => self.id, :category => get_char(page_filter.search_for)).order("score").reverse_order
     if page_filter.recommended_by == "friends"
       my_friends_id = self.friends.pluck(:id)
       users_and_scores_category = users_and_scores_category.where(:friend_id => my_friends_id)
     end
     users_and_scores_category = users_and_scores_category.first(recommenders)
-    
-    #todo: add more users if less than 50    
-    users_and_scores = Hash.new
+    users_and_scores_category.reject! { |score| score.score < 0 }
+    chosen_users = users_and_scores_category.collect{ |score| score.friend_id}    
     users_and_scores_category.each {|score| users_and_scores[score.friend_id]=score.score}
-    if page_filter.recommended_by == "friends"
-      
+    #add more users from score table (likes) if less than number needed
+    if users_and_scores_category.count < LikeMeConfig.page_recommenders
+      users_and_scores_likes = Score.select("friend_id, score").where(:user_id => self.id, :category => "l").order("score").reverse_order
+      if page_filter.recommended_by == "friends"
+        #my_friends_id = self.friends.pluck(:id)
+        users_and_scores_likes = users_and_scores_likes.where(:friend_id => my_friends_id)
+      end
+      users_and_scores_likes = users_and_scores_likes.first(recommenders)
+      users_and_scores_likes.reject! { |score| score.score < 0 || chosen_users.include?(score.friend_id)}
+      like_chosen_users = users_and_scores_likes.collect{ |score| score.friend_id}
+      chosen_users = [chosen_users,like_chosen_users].flatten
+      users_and_scores_likes.each {|score| users_and_scores[score.friend_id]=score.score}
     end
+
+    if chosen_users.count < LikeMeConfig.page_recommenders
+      filter = Filter.new
+      filter.search_by = page_filter.search_for
+      filter.social_network = "include only friends" if page_filter.recommended_by == "friends"
+      scores_array = self.get_scores_array(filter)
+      scores_array scores_array.first(LikeMeConfig.page_recommenders)
+      scores_array.each do |array|
+        users_and_scores[array[0]] = array[1]
+      end
+    end
+
+    #raise users_and_scores.to_s
     return users_and_scores
   end
   

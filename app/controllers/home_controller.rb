@@ -69,13 +69,16 @@ class HomeController < ApplicationController
     end
   end
   
-  def pages     
+  def pages
+    
+    redirect_to "/../auth/facebook" unless current_user
+    
     @current_user = current_user
     @page_filter ||= PageFilter.new
     #@page_filter.search_for = 'television'
     @page_filter.set_params(params)
     #raise @page_filter.recommended_by
-    @pages = @current_user.find_pages(@page_filter)
+    @pages = @current_user.find_pages(@page_filter) unless @current_user==nil
     #raise Koala::Facebook::API.new(current_user.oauth_token).get_object(@pages.first[0]).to_s
     #raise @pages.to_s
   end
