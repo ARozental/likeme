@@ -23,7 +23,7 @@ class HomeController < ApplicationController
       #raise "fefef"
       #raise current_user.oauth_token.to_s
       #graph = Koala::Facebook::API.new(current_user.oauth_token)
-      #raise graph.get_connections(690782893, "books").to_s 
+      #raise graph.get_connections("me", "likes", :limit => 999).count.to_s 
       #current_user.insert_my_info_to_db(graph)
       #current_user.insert_self_data_and_likes(graph) #1.5 sec for me...
       #testing

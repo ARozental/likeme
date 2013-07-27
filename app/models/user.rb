@@ -101,7 +101,7 @@ class User < ActiveRecord::Base
     batch_results = graph.batch do |batch_api|#array of arraies of hashes
       users_id_array.each do |id|
         @@all_page_types.each do |type|
-          batch_api.get_connections(id, type)
+          batch_api.get_connections(id, type, :limit => 999)
         end          
       end   
     end
@@ -201,7 +201,7 @@ class User < ActiveRecord::Base
         
     batch_results = my_graph.batch do |batch_api|#todo finish
       @@all_page_types.each do |category|
-        batch_api.get_connections(my_id, category)          
+        batch_api.get_connections(my_id, category, :limit => 999)          
       end
     end
 

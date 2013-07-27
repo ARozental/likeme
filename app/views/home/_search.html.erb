@@ -8,6 +8,7 @@
 			<td><%= label_tag(:max_age,"maximum age:", :style => width) %></td>
 			<td><%= label_tag(:search_by,"search by:", :style => width) %></td>
 		</tr>
+		</tr>
 			<td><%= number_field_tag(:min_age, @filter.min_age,:in => 16...99, :style => width) %></td> <!--,:placeholder => "minimum age" :class => "btn btn-info dropdown-toggle"-->
 			<td><%= number_field_tag(:max_age, @filter.max_age,:in => 16...99, :style => width) %></td>
 			<td><%= select_tag(:search_by, options_for_select([['all likes', "likes"],'music', "books","movies","television","games","activities","interests"], @filter.search_by), :style => width) %></td>
@@ -22,9 +23,14 @@
 			<td><%= select_tag(:relationship_status, options_for_select(['any',['single', "Single"],['single or unspecified', "single or unspecified"],['in a relationship', "In a Relationship"],['engaged', "Engaged"],['married', "Married"]], @filter.relationship_status), :style => width) %></td>
 			<td><%= select_tag(:social_network, options_for_select(["don\'t include friends","include only friends", "include everyone"], @filter.social_network), :style => width) %></td>
 		</tr>
+		<tr>		
+			<td><%= submit_tag("search", :class => 'btn btn-primary', :style => width) %></td>
+			<td></td>
+			<td class="btn btn-primary" id="post_to_facebook" style="width: 168px;" onclick='postToFeed(); return false'>post results to feed</td>
+		</tr>
 	</table>
 
-
+<!--
 	<div class="actions">
 
 		<%= submit_tag("search", :class => 'btn btn-primary') %>
@@ -33,4 +39,5 @@
 		<span style="padding-left: 145px;"><a href=<%= pages_path %> class="btn btn-success">go to recommendations</a></span>
 
 	</div>
+-->	
 <% end %>

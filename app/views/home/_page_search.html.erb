@@ -5,22 +5,33 @@
 	<table class="filter_table">
 		<tr>
 			<td><%= label_tag(:search_for,"search for:", :style => width) %></td>
-			<td><%= label_tag(:relevant_pages,"relevant pages", :style => width) %></td>
-			<td><%= label_tag(:recommended_by,"recommended by", :style => width) %></td>
+			<td><%= label_tag(:relevant_pages,"relevant pages:", :style => width) %></td>
+			<td><%= label_tag(:recommended_by,"recommended by:", :style => width) %></td>
 		</tr>
+		<tr>
 			<td><%= select_tag(:search_for, options_for_select([['all likes', "likes"],'music', "books","movies","television","games","activities","interests"], @page_filter.search_for), :style => width) %></td>
 			<td><%= select_tag(:relevant_pages, options_for_select(["include all pages","exclude pages I know"], @page_filter.relevant_pages), :style => width) %></td>
 			<td><%= select_tag(:recommended_by, options_for_select(["people like me","friends"], @page_filter.recommended_by), :style => width) %></td>
-		</tr>		
+		</tr>
+		<tr>
+			<td><%= submit_tag("search", :class => 'btn btn-primary', :style => width) %></td>
+			<td></td>
+			<!-- <td><span><a href=<%= home_index_path %> class="btn btn-success">go to people</a></span></td>-->
+			<td class="btn btn-primary" id="post_to_facebook" style="width: 168px;" onclick='postPagesToFeed(); return false'>post results to feed</td>
+			
+		</tr>			
 	</table>
 
 
 	<div class="actions">
-
+		
+		<!--
+			 
 		<%= submit_tag("search", :class => 'btn btn-primary') %>
 
 		<div class="btn btn-primary" id="post_to_facebook" style="float: right;" onclick='postPagesToFeed(); return false'>post results to feed</div>
 		<span style="padding-left: 175px;"><a href=<%= home_index_path %> class="btn btn-success">go to people</a></span>
-				
+		
+		-->		
 	</div>
 <% end %>
