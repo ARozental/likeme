@@ -12777,7 +12777,15 @@ function insert_page(page,place) //user == matches[user_number], place = -1
 	cell1.style.padding="0px";
 	//cell2.innerHTML = "<a href=\"http://www.facebook.com/" + matches[user_number][0].id + "\"><img src=\"https://graph.facebook.com/" + matches[user_number][0].id + "/picture?width=120&height=120\" width=" + "120" + " height=" + "120" + "></a>";		
 	cell2.rowSpan="2";
-	cell2.innerHTML = '<span style="font-size: 16px;" id="'+ "l" + page[0] +'"></span><span style="float: right;" class="fb-like" data-href="https://www.facebook.com/pages/Likeme/' + page[0] +'" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="arial"></span>'               
+	var like_button = '<iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Fwww.facebook.com';
+	like_button += '%2F' + page[0] +'&amp;width=450&amp;height=21&amp;colorscheme=light&amp;layout=butto';
+	like_button += 'n_count&amp;action=like&amp;show_faces=false&amp;send=false&amp;appId=360161967331340"';
+	//like_button += page[0] + '"';
+	like_button += 'scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:450px; height:21px;"';
+	like_button += 'allowTransparency="true"></iframe>';
+	//cell2.innerHTML = '<span style="font-size: 16px;" id="'+ "l" + page[0] +'"></span><span style="float: right;" class="fb-like" data-href="https://www.facebook.com/pages/Likeme/' + page[0] +'" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="arial"></span>'               
+	cell2.innerHTML = '<span style="font-size: 16px;" id="'+ "l" + page[0] +'"></span><span style="float: right; width:82px;">' + like_button + '</span>';               
+
 
 	var page_div = document.createElement("div");
 	page_div.className = 'text_div';		
@@ -12829,6 +12837,13 @@ function insert_page(page,place) //user == matches[user_number], place = -1
 		{
 		}
 	}
+	//var id = "l" + page[0];
+	//return set_page_like(id)
+}
+function set_page_like(id)
+{
+	div = document.getElementById(id);
+	//alert(id);
 }
 
 function get_description(page_id)
@@ -12868,8 +12883,9 @@ function load_page_table()
 	for (var i=0;i<7;i++)
 	{ 
 		add_page_row(pages);
-		//setTimeout(function(){add_page_row(pages)},40);
+		
 	}
+	//setTimeout(function(){bla(document, 'script', 'facebook-jssdk')},3000);
 	return 1
 
 
@@ -12942,7 +12958,7 @@ function postToFeed() {
       method: 'feed',
       redirect_uri: 'http://like-me.info/',
       link: 'http://www.like-me.info/',
-      picture: 'http://www.rt23.com/Scenery/images/birds/blue_jay.gif',
+      picture: 'http://oi44.tinypic.com/1py0c3.jpg',
       name: 'Like me',
       caption: 'my best matches are:',
       //description: "some useless words",
@@ -12972,7 +12988,7 @@ function postPagesToFeed() {
   		var page_link = {};
   		//var name=document.getElementById("l"+current_pages[i][0]).innerText;
   		//alert(name.innerText);
-  		if(document.getElementById("l"+current_pages[i][0]).innerText)
+  		if(document.getElementById("l"+current_pages[i][0]).innerText) // in case there is no name for a page in the top 3
   		{
 	  		page_link["text"] = document.getElementById("l"+current_pages[i][0]).innerText;
 	  		page_link["href"] = "http://www.facebook.com/" + current_pages[i][0];
@@ -12988,7 +13004,7 @@ function postPagesToFeed() {
       method: 'feed',
       redirect_uri: 'http://like-me.info/',
       link: 'http://www.like-me.info/',
-      picture: 'http://www.rt23.com/Scenery/images/birds/blue_jay.gif',
+      picture: 'http://oi44.tinypic.com/1py0c3.jpg',
       name: 'Like me',
       caption: 'recommended for me:',
       //description: "some useless words",
@@ -13003,5 +13019,16 @@ function postPagesToFeed() {
 
     FB.ui(obj, callback);
 }
+
+
+/* likes with html 5:
+jQuery(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_GB/all.js#xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+*/
 
 ;

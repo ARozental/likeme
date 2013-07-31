@@ -3,18 +3,12 @@
 <head>
   <title>Likeme</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <link rel="shortcut icon" href="http://www.rt23.com/Scenery/images/birds/blue_jay.gif"/>
+  <link rel="shortcut icon" href="http://oi44.tinypic.com/1py0c3.jpg"/>
   <%= stylesheet_link_tag    "application", :media => "all" %>
-  <%= javascript_include_tag  'application' %> <!--I added the "jquery," part -->
+  <%= javascript_include_tag  'application' %>
   <%= csrf_meta_tags %>
   <script src='http://connect.facebook.net/en_US/all.js'></script>
-  <script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) return;
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/en_GB/all.js#xfbml=1";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
+
 </head>
 <body class="body_color">
 <a href="/" id="fake"></a> <!--todo: WTF the first link never works no matter what it is -->
@@ -72,7 +66,7 @@
 	            	<li><a href=<%= pages_path(:search_for => "television") %> >television</a></li>
 	            	<li><a href=<%= pages_path(:search_for => "games") %> >games</a></li>
 	            	<li><a href=<%= pages_path(:search_for => "activities") %> >activities</a></li>
-	          		<li class="nav pull-right"><div class="fb-like" data-href="https://www.facebook.com/pages/Likeme/311627115638339" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="arial" style="padding-top: 10px;"></div></li>
+	          		<li class="nav pull-right"><iframe class="fb-like" src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Fwww.facebook.com%2Fpages%2FLikeme%2F311627115638339&amp;width=450&amp;height=21&amp;colorscheme=light&amp;layout=button_count&amp;action=like&amp;show_faces=false&amp;send=false&amp;appId=360161967331340" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:90px; height:21px;" allowTransparency="true"></iframe></li>
 	            	
 	            	<!--<li><a href=<%= pages_path(:search_for => "interests") %> >interests</a></li> -->
 	            	<!-- <li class="nav pull-right"><div style="padding: 10px 10px 10px 0px;"><%= "Welcome " + current_user.name %></div></li>-->

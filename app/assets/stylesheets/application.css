@@ -5,9 +5,24 @@
  *= require_self
  *= require_tree .
 */
+.page_text_table{
+	width: 100%;
+	border: none;
+}
+.page_name
+{
+	/* this is irrelevent because I have it inline :(*/
+	padding: 8px;
+	width: 70%;
+	padding: 0px;
+	overflow: hidden;
+	border: none;
+}
+
 .fb-like{
     height: 21px;
     overflow: hidden;
+    padding-top: 10px;
 }
 .face_td{
 	width: 120px;
