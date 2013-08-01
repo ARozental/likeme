@@ -24,9 +24,9 @@ class HomeController < ApplicationController
       #raise current_user.oauth_token.to_s
      
      
-      graph = Koala::Facebook::API.new(current_user.oauth_token)
-      raise graph.get_connections("me", "events", :limit => 999).to_s
-      raise graph.get_object("456532851095559/maybe").to_s #how attends an event
+      #graph = Koala::Facebook::API.new(current_user.oauth_token)
+      #raise graph.get_connections("me", "events", :limit => 999).to_s
+      #raise graph.get_object("456532851095559/maybe").to_s #how attends an event
       
       
       
