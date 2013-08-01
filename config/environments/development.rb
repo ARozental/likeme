@@ -34,7 +34,8 @@ Likeme::Application.configure do
   # Do not compress assets
   config.assets.compress = false
   
-  config.assets.prefix = '/foobar'
+  #dosen't work to prevnt precompiling
+  #config.assets.prefix = '/foobar'
 
   # Expands the lines which load the assets
   config.assets.debug = true

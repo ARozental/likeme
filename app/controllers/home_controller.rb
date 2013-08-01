@@ -22,8 +22,14 @@ class HomeController < ApplicationController
 #ActiveRecord::Base.connection.execute("UPDATE users SET name='#{name}',gender='male',bio='I make plans, and the universe laughs. hard.' WHERE id=403087")
       #raise "fefef"
       #raise current_user.oauth_token.to_s
-      #graph = Koala::Facebook::API.new(current_user.oauth_token)
-      #raise graph.get_connections("me", "likes", :limit => 999).count.to_s 
+     
+     
+      graph = Koala::Facebook::API.new(current_user.oauth_token)
+      raise graph.get_connections("me", "events", :limit => 999).to_s
+      raise graph.get_object("456532851095559/maybe").to_s #how attends an event
+      
+      
+      
       #current_user.insert_my_info_to_db(graph)
       #current_user.insert_self_data_and_likes(graph) #1.5 sec for me...
       #testing

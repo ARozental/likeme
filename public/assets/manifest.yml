@@ -1,6 +1,10 @@
 ---
+down_arrow.png: down_arrow.png
+down_arrow/index.png: down_arrow.png
 rails.png: rails.png
 rails/index.png: rails.png
+up_arrow.png: up_arrow.png
+up_arrow/index.png: up_arrow.png
 application.js: application.js
 application/index.js: application.js
 application.css: application.css

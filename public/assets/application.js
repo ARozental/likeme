@@ -12508,223 +12508,6 @@ if ( typeof module === "object" && module && typeof module.exports === "object" 
 
 
 
-/*
- * Tiny Scrollbar
- * http://www.baijs.nl/tinyscrollbar/
- *
- * Dual licensed under the MIT or GPL Version 2 licenses.
- * http://www.opensource.org/licenses/mit-license.php
- * http://www.opensource.org/licenses/gpl-2.0.php
- *
- * Date: 13 / 08 / 2012
- * @version 1.81
- * @author Maarten Baijs
- *
- */
-
-;( function( $ ) 
-{
-    $.tiny = $.tiny || { };
-
-    $.tiny.scrollbar = {
-        options: {
-                axis         : 'y'    // vertical or horizontal scrollbar? ( x || y ).
-            ,   wheel        : 40     // how many pixels must the mouswheel scroll at a time.
-            ,   scroll       : true   // enable or disable the mousewheel.
-            ,   lockscroll   : true   // return scrollwheel to browser if there is no more content.
-            ,   size         : 'auto' // set the size of the scrollbar to auto or a fixed number.
-            ,   sizethumb    : 'auto' // set the size of the thumb to auto or a fixed number.
-            ,   invertscroll : false  // Enable mobile invert style scrolling
-        }
-    };
-
-    $.fn.tinyscrollbar = function( params )
-    {
-        var options = $.extend( {}, $.tiny.scrollbar.options, params );
-        
-        this.each( function()
-        { 
-            $( this ).data('tsb', new Scrollbar( $( this ), options ) ); 
-        });
-
-        return this;
-    };
-
-    $.fn.tinyscrollbar_update = function(sScroll)
-    {
-        return $( this ).data( 'tsb' ).update( sScroll ); 
-    };
-
-    function Scrollbar( root, options )
-    {
-        var oSelf       = this
-        ,   oWrapper    = root
-        ,   oViewport   = { obj: $( '.viewport', root ) }
-        ,   oContent    = { obj: $( '.overview', root ) }
-        ,   oScrollbar  = { obj: $( '.scrollbar', root ) }
-        ,   oTrack      = { obj: $( '.track', oScrollbar.obj ) }
-        ,   oThumb      = { obj: $( '.thumb', oScrollbar.obj ) }
-        ,   sAxis       = options.axis === 'x'
-        ,   sDirection  = sAxis ? 'left' : 'top'
-        ,   sSize       = sAxis ? 'Width' : 'Height'
-        ,   iScroll     = 0
-        ,   iPosition   = { start: 0, now: 0 }
-        ,   iMouse      = {}
-        ,   touchEvents = 'ontouchstart' in document.documentElement
-        ;
-
-        function initialize()
-        {
-            oSelf.update();
-            setEvents();
-
-            return oSelf;
-        }
-
-        this.update = function( sScroll )
-        {
-            oViewport[ options.axis ] = oViewport.obj[0][ 'offset'+ sSize ];
-            oContent[ options.axis ]  = oContent.obj[0][ 'scroll'+ sSize ];
-            oContent.ratio            = oViewport[ options.axis ] / oContent[ options.axis ];
-
-            oScrollbar.obj.toggleClass( 'disable', oContent.ratio >= 1 );
-
-            oTrack[ options.axis ] = options.size === 'auto' ? oViewport[ options.axis ] : options.size;
-            oThumb[ options.axis ] = Math.min( oTrack[ options.axis ], Math.max( 0, ( options.sizethumb === 'auto' ? ( oTrack[ options.axis ] * oContent.ratio ) : options.sizethumb ) ) );
-        
-            oScrollbar.ratio = options.sizethumb === 'auto' ? ( oContent[ options.axis ] / oTrack[ options.axis ] ) : ( oContent[ options.axis ] - oViewport[ options.axis ] ) / ( oTrack[ options.axis ] - oThumb[ options.axis ] );
-            
-            iScroll = ( sScroll === 'relative' && oContent.ratio <= 1 ) ? Math.min( ( oContent[ options.axis ] - oViewport[ options.axis ] ), Math.max( 0, iScroll )) : 0;
-            iScroll = ( sScroll === 'bottom' && oContent.ratio <= 1 ) ? ( oContent[ options.axis ] - oViewport[ options.axis ] ) : isNaN( parseInt( sScroll, 10 ) ) ? iScroll : parseInt( sScroll, 10 );
-            
-            setSize();
-        };
-
-        function setSize()
-        {
-            var sCssSize = sSize.toLowerCase();
-
-            oThumb.obj.css( sDirection, iScroll / oScrollbar.ratio );
-            oContent.obj.css( sDirection, -iScroll );
-            iMouse.start = oThumb.obj.offset()[ sDirection ];
-
-            oScrollbar.obj.css( sCssSize, oTrack[ options.axis ] );
-            oTrack.obj.css( sCssSize, oTrack[ options.axis ] );
-            oThumb.obj.css( sCssSize, oThumb[ options.axis ] );
-        }
-
-        function setEvents()
-        {
-            if( ! touchEvents )
-            {
-                oThumb.obj.bind( 'mousedown', start );
-                oTrack.obj.bind( 'mouseup', drag );
-            }
-            else
-            {
-                oViewport.obj[0].ontouchstart = function( event )
-                {   
-                    if( 1 === event.touches.length )
-                    {
-                        start( event.touches[ 0 ] );
-                        event.stopPropagation();
-                    }
-                };
-            }
-
-            if( options.scroll && window.addEventListener )
-            {
-                oWrapper[0].addEventListener( 'DOMMouseScroll', wheel, false );
-                oWrapper[0].addEventListener( 'mousewheel', wheel, false );
-                oWrapper[0].addEventListener( 'MozMousePixelScroll', function( event ){
-                    event.preventDefault();
-                }, false);
-            }
-            else if( options.scroll )
-            {
-                oWrapper[0].onmousewheel = wheel;
-            }
-        }
-
-        function start( event )
-        {
-            $( "body" ).addClass( "noSelect" );
-
-            var oThumbDir   = parseInt( oThumb.obj.css( sDirection ), 10 );
-            iMouse.start    = sAxis ? event.pageX : event.pageY;
-            iPosition.start = oThumbDir == 'auto' ? 0 : oThumbDir;
-            
-            if( ! touchEvents )
-            {
-                $( document ).bind( 'mousemove', drag );
-                $( document ).bind( 'mouseup', end );
-                oThumb.obj.bind( 'mouseup', end );
-            }
-            else
-            {
-                document.ontouchmove = function( event )
-                {
-                    event.preventDefault();
-                    drag( event.touches[ 0 ] );
-                };
-                document.ontouchend = end;        
-            }
-        }
-
-        function wheel( event )
-        {
-            if( oContent.ratio < 1 )
-            {
-                var oEvent = event || window.event
-                ,   iDelta = oEvent.wheelDelta ? oEvent.wheelDelta / 120 : -oEvent.detail / 3
-                ;
-
-                iScroll -= iDelta * options.wheel;
-                iScroll = Math.min( ( oContent[ options.axis ] - oViewport[ options.axis ] ), Math.max( 0, iScroll ));
-
-                oThumb.obj.css( sDirection, iScroll / oScrollbar.ratio );
-                oContent.obj.css( sDirection, -iScroll );
-
-                if( options.lockscroll || ( iScroll !== ( oContent[ options.axis ] - oViewport[ options.axis ] ) && iScroll !== 0 ) )
-                {
-                    oEvent = $.event.fix( oEvent );
-                    oEvent.preventDefault();
-                }
-            }
-        }
-
-        function drag( event )
-        {
-            if( oContent.ratio < 1 )
-            {
-                if( options.invertscroll && touchEvents )
-                {
-                    iPosition.now = Math.min( ( oTrack[ options.axis ] - oThumb[ options.axis ] ), Math.max( 0, ( iPosition.start + ( iMouse.start - ( sAxis ? event.pageX : event.pageY ) ))));
-                }
-                else
-                {
-                     iPosition.now = Math.min( ( oTrack[ options.axis ] - oThumb[ options.axis ] ), Math.max( 0, ( iPosition.start + ( ( sAxis ? event.pageX : event.pageY ) - iMouse.start))));
-                }
-
-                iScroll = iPosition.now * oScrollbar.ratio;
-                oContent.obj.css( sDirection, -iScroll );
-                oThumb.obj.css( sDirection, iPosition.now );
-            }
-        }
-        
-        function end()
-        {
-            $( "body" ).removeClass( "noSelect" );
-            $( document ).unbind( 'mousemove', drag );
-            $( document ).unbind( 'mouseup', end );
-            oThumb.obj.unbind( 'mouseup', end );
-            document.ontouchmove = document.ontouchend = null;
-        }
-
-        return initialize();
-    }
-
-}(jQuery));
 (function() {
   jQuery(function() {
     $("a[rel=popover]").popover();
@@ -12739,12 +12522,16 @@ if ( typeof module === "object" && module && typeof module.exports === "object" 
 }).call(this);
 (function() {
   jQuery(function() {
-    $('#main_div').tinyscroll();
-    return $('#main_div').on('scrollEnd', function() {
-      var matches;
+    return $('#main_div').scroll(function() {
+      var matches, pages;
 
-      matches = $('#matche_table').data('matches');
-      return add_row(matches);
+      if ($('#matche_table').length > 0) {
+        matches = $('#matche_table').data('matches');
+        return add_row(matches);
+      } else if ($('#page_table').length > 0) {
+        pages = $('#page_table').data('pages');
+        return add_page_row(pages);
+      }
     });
   });
 
@@ -12770,9 +12557,10 @@ if ( typeof module === "object" && module && typeof module.exports === "object" 
 
 
 
-
-
-
+String.prototype.trunc = 
+      function(n){
+          return this.substr(0,n-1)+(this.length>n?'&hellip;':'');
+      };
 Object.prototype.getName = function() { 
    var funcNameRegex = /function (.{1,})\(/;
    var results = (funcNameRegex).exec((this).constructor.toString());
@@ -12810,6 +12598,8 @@ function insert_user(user,place) //user == matches[user_number], place = -1
 	user_div.style.maxHeight = "120px";
 	user_div.style.overflowY='auto';
 	user_div.style.padding="0px";
+	//user_div.style.width = "300px";
+	//user_div.style.maxWidth = "300px";
 	var user_text = name_link(user[0]);
 	user_text += print_stats(user[0]) +"<br />";
 	user_text += user[2] +"% Like me" +"<br />";
@@ -12964,6 +12754,143 @@ function load_table()
 }
 
 
+function add_page_row(pages)
+{
+var table=document.getElementById("page_table");
+	var page_number = table.rows.length/2;
+	if(pages[page_number][0] != null)
+	{
+		insert_page(pages[page_number],-1)
+	}
+}
+
+function insert_page(page,place) //user == matches[user_number], place = -1
+{
+	var table=document.getElementById("page_table");
+	if(place != -1){place = place*2;} //2 rows for every user
+	var row1=table.insertRow(place);
+	var cell1=row1.insertCell(-1);
+	var cell2=row1.insertCell(-1);
+	cell1.innerHTML = picture_link(page[0],120);
+	cell1.className = 'face_td';
+	cell1.rowSpan="2";
+	cell1.style.padding="0px";
+	//cell2.innerHTML = "<a href=\"http://www.facebook.com/" + matches[user_number][0].id + "\"><img src=\"https://graph.facebook.com/" + matches[user_number][0].id + "/picture?width=120&height=120\" width=" + "120" + " height=" + "120" + "></a>";		
+	cell2.rowSpan="2";
+	var like_button = '<iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Fwww.facebook.com';
+	like_button += '%2F' + page[0] +'&amp;width=450&amp;height=21&amp;colorscheme=light&amp;layout=butto';
+	like_button += 'n_count&amp;action=like&amp;show_faces=false&amp;send=false&amp;appId=360161967331340"';
+	//like_button += page[0] + '"';
+	like_button += 'scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:450px; height:21px;"';
+	like_button += 'allowTransparency="true"></iframe>';
+	//cell2.innerHTML = '<span style="font-size: 16px;" id="'+ "l" + page[0] +'"></span><span style="float: right;" class="fb-like" data-href="https://www.facebook.com/pages/Likeme/' + page[0] +'" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="arial"></span>'               
+	cell2.innerHTML = '<span style="font-size: 16px;" id="'+ "l" + page[0] +'"></span><span style="float: right; width:82px;">' + like_button + '</span>';               
+
+
+	var page_div = document.createElement("div");
+	page_div.className = 'text_div';		
+	page_div.style.height = "120px";
+	page_div.style.maxHeight = "93px";
+	page_div.style.overflowY='auto';
+	page_div.style.padding="0px";
+	page_div.id = page[0];
+	page_div.style.width = "300px";
+	page_div.style.maxWidth = "300px";
+	//page_div.innerHTML = "something about the page";
+	
+	
+	cell2.appendChild(page_div);
+	get_description(page[0]);
+	//page_div.innerHTML = get_description(page[0]);
+	//cell2.innerHTML = name_link(matches[user_number][0]) + print_stats(matches[user_number][0]);
+	//alert(JSON.stringify(page));
+
+	for (var k=0;k<3;k++)
+	{ 
+		var cell=row1.insertCell(-1);
+		cell.className = 'like_td';
+		cell.style.padding="0px";
+		cell.style.maxHeight="40px";
+		try
+		{
+			cell.innerHTML = picture_link(page[1][1][k],60);
+		}
+		catch(err)
+		{
+		}
+	}
+	//alert(place);	
+	if(place >= 0){place++;}
+	//alert(place);
+	var row2=table.insertRow(place);
+	for (var k=0;k<3;k++)
+	{ 
+		var cell=row2.insertCell(-1);
+		cell.className = 'like_td';
+		cell.style.padding="0px";
+		cell.style.maxHeight="40px";
+		try
+		{
+			cell.innerHTML = picture_link(page[1][1][k+3],60);
+		}
+		catch(err)
+		{
+		}
+	}
+	//var id = "l" + page[0];
+	//return set_page_like(id)
+}
+function set_page_like(id)
+{
+	div = document.getElementById(id);
+	//alert(id);
+}
+
+function get_description(page_id)
+{
+  var flickerAPI = "http://graph.facebook.com/" + page_id;
+  var api_data = $.getJSON( flickerAPI, {
+    tags: "mount rainier",
+    tagmode: "any",
+    format: "json"
+  })
+  .done(function( data ) {
+  	//alert(data.description);
+  	//alert(data.description);
+  	text_div = document.getElementById(page_id);
+  	html = "";
+  	if (data.about) {html = data.about;}
+  	if (data.description) {html = data.description;}  	
+  	text_div.innerHTML = '<i><font color="grey">' + html + '</i></font>';
+  	
+  	like_id =  'l' + page_id
+  	like_td = document.getElementById(like_id);
+  	like_td.innerHTML = data.name.trunc(25);
+  	//like_div.appendChild = name_div;
+  });
+}
+
+function load_page_table()
+{
+	/*var table = document.getElementById("matche_table");
+	var matches = document.getElementById("matche_table").getAttribute("data-matches");
+	matches = jQuery.parseJSON(matches);
+	$("body").data("current_matches", matches);*/
+	
+	var table = document.getElementById("page_table");
+	pages = $('#page_table').data('pages');
+	$("body").data("current_pages", pages);
+	for (var i=0;i<7;i++)
+	{ 
+		add_page_row(pages);
+		
+	}
+	//setTimeout(function(){bla(document, 'script', 'facebook-jssdk')},3000);
+	return 1
+
+
+}
+
 
 
 
@@ -12972,7 +12899,7 @@ function picture_link(id,size)
 {
     size = size.toString(); //resolution is 120px
     id = id.toString();
-    html = "<a href=\"http://www.facebook.com/" + id + "\"target=\"_blank\"><img src=\"https://graph.facebook.com/" + id + "/picture?width=" + size + "&height=" + size + "\" width=" + size + " height=" + size + "></a>"
+    html = "<a href=\"http://www.facebook.com/" + id + "\"target=\"_blank\"><img style=\"border-radius: 5px;\"src=\"https://graph.facebook.com/" + id + "/picture?width=" + size + "&height=" + size + "\" width=" + size + " height=" + size + "></a>"
     return html;
 }
 
@@ -13031,7 +12958,7 @@ function postToFeed() {
       method: 'feed',
       redirect_uri: 'http://like-me.info/',
       link: 'http://www.like-me.info/',
-      picture: 'http://www.rt23.com/Scenery/images/birds/blue_jay.gif',
+      picture: 'http://oi44.tinypic.com/1py0c3.jpg',
       name: 'Like me',
       caption: 'my best matches are:',
       //description: "some useless words",
@@ -13040,7 +12967,7 @@ function postToFeed() {
     };
 
     function callback(response) { //maybe do it ['post_id'] exist...
-    if (response['post_id']) {document.getElementById('msg').innerHTML = "successfully posted to feed"}
+    if (response['post_id']) {document.getElementById('notice').innerHTML = "successfully posted to feed"}
       //document.getElementById('msg').innerHTML = "successfully posted to feed";
       //document.getElementById('msg').innerHTML = "Post ID: " + response['post_id'];
     }
@@ -13048,5 +12975,87 @@ function postToFeed() {
     FB.ui(obj, callback);
 }
 
+function postPagesToFeed() {
+	//alert('fff');
+  	var current_pages = $("body").data("current_pages");
+  	//alert(current_pages);
+  	//alert(current_pages[2][0]);
+  	var list = {};
+  	for(var i=0;i<3;i++)
+  	{
+  		var key = (i+1).toString();
+  		key = key + ")";
+  		var page_link = {};
+  		//var name=document.getElementById("l"+current_pages[i][0]).innerText;
+  		//alert(name.innerText);
+  		if(document.getElementById("l"+current_pages[i][0]).innerText) // in case there is no name for a page in the top 3
+  		{
+	  		page_link["text"] = document.getElementById("l"+current_pages[i][0]).innerText;
+	  		page_link["href"] = "http://www.facebook.com/" + current_pages[i][0];
+	  		list[key] = page_link;  			
+  		}
+
+  	}
+  	//alert($("body").data("current_matches"));
+	//var list = { "1) ":{text: "jenia 90% likeable :))", href:'http://www.facebook.com/100001439566738'} , "lastName":"Doe" }
+	//list["2)"] = "ffffs"
+    // calling the API ...
+    var obj = {
+      method: 'feed',
+      redirect_uri: 'http://like-me.info/',
+      link: 'http://www.like-me.info/',
+      picture: 'http://oi44.tinypic.com/1py0c3.jpg',
+      name: 'Like me',
+      caption: 'recommended for me:',
+      //description: "some useless words",
+      properties: list,
+    };
+
+    function callback(response) { //maybe do it ['post_id'] exist...
+    if (response['post_id']) {document.getElementById('notice').innerHTML = "successfully posted to feed"}
+      //document.getElementById('msg').innerHTML = "successfully posted to feed";
+      //document.getElementById('msg').innerHTML = "Post ID: " + response['post_id'];
+    }
+
+    FB.ui(obj, callback);
+}
+
+function extend_menu() 
+{
+	var state = $("body").data("advanced_search");
+	var row2 = $('#row2');
+	var arrow = $('#arrow');
+	document.getElementById("advanced_search").innerHTML = "ccc";
+	if(state=="hidden")
+	{
+		row2.show();
+		document.getElementById("advanced_search").innerHTML = '<img alt="Down_arrow" id="arrow" onclick="extend_menu(); return false" src="/assets/up_arrow.png">';
+		$("body").data("advanced_search", "visible");
+	}else if(state=="visible")
+	{
+		row2.hide();
+		document.getElementById("advanced_search").innerHTML = '<img alt="Down_arrow" id="arrow" onclick="extend_menu(); return false" src="/assets/down_arrow.png">';
+		$("body").data("advanced_search", "hidden");
+	}
+
+}
+
+//on load actions:
+jQuery(function() {
+	$("body").data("advanced_search", "hidden");
+	var row2 = $('#row2');
+	row2.hide();
+});
+
+
+/* likes with html 5:
+jQuery(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_GB/all.js#xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+*/
 
 ;

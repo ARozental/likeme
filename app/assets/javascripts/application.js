@@ -478,6 +478,33 @@ function postPagesToFeed() {
     FB.ui(obj, callback);
 }
 
+function extend_menu() 
+{
+	var state = $("body").data("advanced_search");
+	var row2 = $('#row2');
+	var arrow = $('#arrow');
+	document.getElementById("advanced_search").innerHTML = "ccc";
+	if(state=="hidden")
+	{
+		row2.show();
+		document.getElementById("advanced_search").innerHTML = '<img alt="Down_arrow" id="arrow" onclick="extend_menu(); return false" src="/assets/up_arrow.png">';
+		$("body").data("advanced_search", "visible");
+	}else if(state=="visible")
+	{
+		row2.hide();
+		document.getElementById("advanced_search").innerHTML = '<img alt="Down_arrow" id="arrow" onclick="extend_menu(); return false" src="/assets/down_arrow.png">';
+		$("body").data("advanced_search", "hidden");
+	}
+
+}
+
+//on load actions:
+jQuery(function() {
+	$("body").data("advanced_search", "hidden");
+	var row2 = $('#row2');
+	row2.hide();
+});
+
 
 /* likes with html 5:
 jQuery(function(d, s, id) {
