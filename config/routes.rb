@@ -9,6 +9,8 @@ Likeme::Application.routes.draw do
   match 'home/index' => 'home#index', :via => :post
   get 'home/ajax_matching', :via => :post
   match 'home/ajax_matching' => 'home#ajax_matching', :via => :post
+  #get 'home/autocomplete_user_name', :via => :post
+  #match 'home/autocomplete_user_name' => 'home#auto_complete_name', :via => :post
   root :to => 'home#index'
   
   match 'users', to: 'users#index'

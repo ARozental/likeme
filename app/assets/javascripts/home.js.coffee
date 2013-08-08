@@ -20,6 +20,8 @@ jQuery ->
       pages = $('#page_table').data('pages')      
       add_page_row(pages)  
 
+#jQuery ->
+#  $('#name').autocomplete({source: "/home/auto_complete_name"})
     
 #jQuery ->
 #  $('#main_div').scroll ->

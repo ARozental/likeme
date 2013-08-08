@@ -12,6 +12,7 @@
 //
 //= require jquery
 //= require jquery_ujs
+//= require jquery-ui
 //= require twitter/bootstrap
 //= require_tree .
 
@@ -156,6 +157,9 @@ function ajax_test(recursion,matches)
 	var gender = document.getElementById("gender").value;
 	var relationship_status = document.getElementById("relationship_status").value;
 	var social_network = document.getElementById("social_network").value;
+	var name = document.getElementById("name").value;
+	var location = document.getElementById("location").value;
+	var last_relationship_status_update = document.getElementById("last_relationship_status_update").value;
 	
 	//var old_matches = document.getElementById("matche_table").getAttribute("data-matches");// non recursive!
 	//old_matches = jQuery.parseJSON(old_matches);
@@ -165,7 +169,7 @@ function ajax_test(recursion,matches)
 	//alert(excluded_users);
 	
 	var result = $.post("/home/ajax_matching",
-	{ excluded_users: excluded_users, min_age: min_age, max_age: max_age, search_by: search_by,gender: gender,relationship_status: relationship_status,social_network: social_network},
+	{ last_relationship_status_update: last_relationship_status_update, location: location, name: name, excluded_users: excluded_users, min_age: min_age, max_age: max_age, search_by: search_by,gender: gender,relationship_status: relationship_status,social_network: social_network},
 	function(response) {
 		//alert(recursion);
 		//insert_user(response[7],1) //it works :) insert user of rank 7 after place 1
@@ -480,29 +484,52 @@ function postPagesToFeed() {
 
 function extend_menu() 
 {
-	var state = $("body").data("advanced_search");
+	//alert("baba");
+	//var state = $("body").data("advanced_search");
+	var state = document.getElementById("full_menu")
 	var row2 = $('#row2');
+	var row3 = $('#row3');
 	var arrow = $('#arrow');
-	document.getElementById("advanced_search").innerHTML = "ccc";
-	if(state=="hidden")
+	if(state.value=="hidden")
 	{
 		row2.show();
+		row3.show();
 		document.getElementById("advanced_search").innerHTML = '<img alt="Down_arrow" id="arrow" onclick="extend_menu(); return false" src="/assets/up_arrow.png">';
-		$("body").data("advanced_search", "visible");
-	}else if(state=="visible")
+		//$("body").data("advanced_search", "visible");
+		state.value = "visible";
+		//alert(state.value);
+	}else if(state.value=="visible")
 	{
 		row2.hide();
+		row3.hide();
 		document.getElementById("advanced_search").innerHTML = '<img alt="Down_arrow" id="arrow" onclick="extend_menu(); return false" src="/assets/down_arrow.png">';
-		$("body").data("advanced_search", "hidden");
+		//$("body").data("advanced_search", "hidden");
+		state.value = "hidden";
 	}
 
 }
 
 //on load actions:
 jQuery(function() {
-	$("body").data("advanced_search", "hidden");
-	var row2 = $('#row2');
-	row2.hide();
+	//$("body").data("advanced_search", "hidden");
+	var state = document.getElementById("full_menu").value;
+	//alert(state.value);
+	if(state == "hidden"){
+		var row2 = $('#row2');
+		var row3 = $('#row3');
+		row2.hide();
+		row3.hide();
+	} 
+
+	/*
+	alert("1");
+	var name = $('#name');
+	alert(name);
+	$('#name').autocomplete({
+  		source: "/home/auto_complete_name"
+	});
+	alert("2");
+	*/
 });
 
 

@@ -5,6 +5,7 @@ class User < ActiveRecord::Base
   include UsersHelper
   attr_accessible :active, :name, :id, :location, :birthday, :gender, :age, :bio, :last_foregin_fb_update
   attr_accessible :hometown, :quotes, :relationship_status, :significant_other, :last_fb_update
+  attr_accessible :last_relationship_status_update
   serialize :location
   serialize :hometown
   serialize :significant_other
@@ -108,6 +109,8 @@ class User < ActiveRecord::Base
     pursed_batch = batch_results.each_slice(@@weights.count).to_a #every element is an array with all info on a user
     data_hash = Hash[users_id_array.zip pursed_batch] #hash of 6 users, user_id=>array of arraies the contain likes, books, movies...
     #raise graph.get_connections("509006501", "likes").to_s   can't get data on some people...
+    #rasie data_hash.to_s
+    
     
     # save the new pages #duplication with insert self data and likes, ignore nost of the time
     if rand()<LikeMeConfig.page_insertion_chance
@@ -174,6 +177,7 @@ class User < ActiveRecord::Base
 
   def insert_friend_to_db(fb_friend)
     db_friend = User.find_or_initialize_by_id(fb_friend["id"])
+    if db_friend.relationship_status == fb_friend["relationship_status"] #&& (fb_friend["relationship_status"] != nil) for people who can only update themselves   
       db_friend.update_attributes({
          :id => fb_friend["id"],
          :name => fb_friend["name"],
@@ -187,8 +191,25 @@ class User < ActiveRecord::Base
          :age => date_to_age(fb_friend["birthday"]),
          :bio => fb_friend["bio"]
       })
-      #raise fb_friend.to_s unless fb_friend["name"]=="Alon Rozental"
-      return db_friend      
+    else
+      db_friend.update_attributes({
+       :id => fb_friend["id"],
+       :name => fb_friend["name"],
+       :location => fb_friend["location"],
+       :birthday => fb_friend["birthday"],
+       :hometown => fb_friend["hometown"],
+       :quotes => fb_friend["quotes"],
+       :relationship_status => fb_friend["relationship_status"],
+       :significant_other => fb_friend["significant_other"],
+       :gender => fb_friend["gender"],
+       :age => date_to_age(fb_friend["birthday"]),
+       :bio => fb_friend["bio"],
+       :last_relationship_status_update => Time.now
+    })
+    end
+
+    #raise fb_friend.to_s unless fb_friend["name"]=="Alon Rozental"
+    return db_friend      
   end
   
   def insert_self_data_and_likes(my_graph)
@@ -283,9 +304,21 @@ class User < ActiveRecord::Base
     existing_friends_id = User.where(:id => my_friends_id_array).pluck(:id)
     existing_friends_array = friends_array.select { |friend|  existing_friends_id.include?(friend["id"])}    
     new_friends_array = friends_array.reject { |friend|  existing_friends_id.include?(friend["id"])}
-
+    
+    #reltionship status updates todo: make it faster, now it takes n^2 my friends
+    now = Time.now
+    friends_with_new_status = []
+    old_friends_statuses = User.select("id, relationship_status").where(:id => my_friends_id_array).all
+    
+    fb_friend_hash = Hash[friends_array.map {|friend| [friend.id,friend.relationship_status]}]
+    db_friend_hash = Hash[old_friends_statuses.map {|friend| [friend.id,friend.relationship_status]}]
+    fb_friend_hash.each do |id,status|
+      friends_with_new_status << id unless status == db_friend_hash[id] #todo || (status == nil) for people who can only update themselves 
+    end
+    #raise friends_with_new_status.to_s
+    
       ActiveRecord::Base.transaction do
-        unless existing_friends_array.blank?
+        unless existing_friends_array.blank? #todo: add relationship_status_update, batch or lose string
           existing_friends_array.each do |friend|
             update_string = "UPDATE users SET name='#{friend.name.gsub("'", "''")}'"
             update_string += ",location='#{friend.location.to_s.gsub("'", "''")}'" unless friend.location.blank?
@@ -293,10 +326,12 @@ class User < ActiveRecord::Base
             update_string += ",hometown='#{friend.hometown.to_s.gsub("'", "''")}'" unless friend.hometown.blank?
             update_string += ",quotes='#{friend.quotes.gsub("'", "''")}'" unless friend.quotes.blank?
             update_string += ",relationship_status='#{friend.relationship_status.gsub("'", "''")}'" unless friend.relationship_status.blank?
+            update_string += ",relationship_status=NULL" if (friend.relationship_status.blank? && (friends_with_new_status.include?(friend.id)))
             update_string += ",significant_other='#{friend.significant_other.to_s.gsub("'", "''")}'" unless friend.significant_other.blank?
             update_string += ",gender='#{friend.gender}'" unless friend.gender.blank?
             update_string += ",age=#{friend.age}" unless friend.age.blank?
             update_string += ",bio='#{friend.bio.gsub("'", "''")}'" unless friend.bio.blank?
+            update_string += ",last_relationship_status_update='#{now}'" if friends_with_new_status.include?(friend.id)
             update_string += " WHERE id=#{friend.id}"
             ActiveRecord::Base.connection.execute(update_string)
           end

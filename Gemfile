@@ -17,7 +17,8 @@ gem 'excon', '~> 0.21.0'
 gem 'execjs'
 gem 'therubyracer'
 gem "capistrano-db-tasks", require: false
-gem "select2-rails"
+gem 'rails3-jquery-autocomplete'
+#gem "select2-rails"
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'#
 

@@ -4,7 +4,12 @@ class Filter
   extend ActiveModel::Naming
   attr_accessor :gender, :max_age, :min_age, :relationship_status, :search_by, :chosen_users
   attr_accessor :social_network, :weights, :get_sample, :excluded_users, :included_users
-
+  attr_accessor :name, :full_menu, :location, :last_relationship_status_update
+  
+  def update_time
+    return 1.week.ago if self.last_relationship_status_update == 'since last week'
+    return 1.month.ago if self.last_relationship_status_update == 'since last month'
+  end
   def set_weights
     if self.search_by == "likes"
       self.weights = LikeMeConfig::default_weights
@@ -37,12 +42,24 @@ class Filter
     self.social_network = params[:social_network]
     self.social_network = "include everyone" if self.social_network == nil
     self.excluded_users = params[:excluded_users]
+    self.name = params[:name]
+    self.full_menu = params[:full_menu]
+    self.location = params[:location]
+    self.last_relationship_status_update = params[:last_relationship_status_update]
+    
     #self.social_network = "don\'t include friends" if self.social_network == nil 
     return self
   end
   
   def get_scope(my_id)
     self.set_weights
+    
+    #unless self.name.blank?
+    #  self.chosen_users = User.where(:name => self.name).pluck(:id)
+    #  self.name = nil
+    #  return nil
+    #end
+    
     self.excluded_users = [] if self.excluded_users==nil #shouldn't happen 
     exclude = self.excluded_users.push(my_id)    
     users = User.where('users.id NOT IN (?)', exclude) #to exclude self
@@ -57,6 +74,9 @@ class Filter
     users = users.where("age >= ?", self.min_age) unless self.min_age.blank?
     users = users.where(:relationship_status => self.relationship_status) unless (self.relationship_status.blank? || self.relationship_status == 'single or unspecified')    
     users = users.where("relationship_status = 'Single' OR relationship_status IS NULL") if self.relationship_status == 'single or unspecified'
+    users = users.where("lower(name) like ?", "%#{self.name}%") unless self.name.blank?
+    users = users.where("lower(location) like ?", "%#{self.location.downcase}%") unless self.location.blank?
+    users = users.where("last_relationship_status_update >= :date", :date => self.update_time) unless self.last_relationship_status_update.blank?
     self.set_users(my_id,users)
     
     if self.get_sample
@@ -118,6 +138,7 @@ class Filter
   
   def initialize
       self.get_sample = true
+      self.full_menu = "hidden"
       self.excluded_users = []
       self.included_users = []
   end

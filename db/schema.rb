@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130705105926) do
+ActiveRecord::Schema.define(:version => 20130803191421) do
 
   create_table "delayed_jobs", :force => true do |t|
     t.integer  "priority",   :default => 0
@@ -66,9 +66,9 @@ ActiveRecord::Schema.define(:version => 20130705105926) do
     t.string   "name"
     t.string   "oauth_token"
     t.datetime "oauth_expires_at"
-    t.datetime "created_at",                                :null => false
-    t.datetime "updated_at",                                :null => false
-    t.boolean  "active",                 :default => false
+    t.datetime "created_at",                                         :null => false
+    t.datetime "updated_at",                                         :null => false
+    t.boolean  "active",                          :default => false
     t.string   "email"
     t.datetime "last_fb_update"
     t.string   "location"
@@ -81,6 +81,7 @@ ActiveRecord::Schema.define(:version => 20130705105926) do
     t.string   "age"
     t.text     "bio"
     t.datetime "last_foregin_fb_update"
+    t.datetime "last_relationship_status_update"
   end
 
   add_index "users", ["birthday"], :name => "index_users_on_birthday"
