@@ -14666,7 +14666,9 @@ function load_table()
 	var matches = document.getElementById("matche_table").getAttribute("data-matches");
 	matches = jQuery.parseJSON(matches);
 	$("body").data("current_matches", matches);
-	for (var i=0;i<9;i++)
+	//alert(matches.length);
+	var iterations = Math.min(9,matches.length);
+	for (var i=0;i<iterations;i++) //ruins the post if iterations > matches
 	{ 
 	add_row(matches);
 	}
@@ -14880,6 +14882,7 @@ function postToFeed() {
   		user_link["href"] = "http://www.facebook.com/" + current_matches[i][0].id;
   		list[key] = user_link;
   	}
+  	//alert(JSON.stringify(list));
   	//alert($("body").data("current_matches"));
 	//var list = { "1) ":{text: "jenia 90% likeable :))", href:'http://www.facebook.com/100001439566738'} , "lastName":"Doe" }
 	//list["2)"] = "ffffs"

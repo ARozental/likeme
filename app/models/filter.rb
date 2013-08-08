@@ -74,7 +74,7 @@ class Filter
     users = users.where("age >= ?", self.min_age) unless self.min_age.blank?
     users = users.where(:relationship_status => self.relationship_status) unless (self.relationship_status.blank? || self.relationship_status == 'single or unspecified')    
     users = users.where("relationship_status = 'Single' OR relationship_status IS NULL") if self.relationship_status == 'single or unspecified'
-    users = users.where("lower(name) like ?", "%#{self.name.downcase}%") unless self.name.blank?
+    users = users.where("lower(name) like ?", "%#{self.name.downcase}%") unless self.name.blank? 
     users = users.where("lower(location) like ?", "%#{self.location.downcase}%") unless self.location.blank?
     users = users.where("last_relationship_status_update >= :date", :date => self.update_time) unless self.last_relationship_status_update.blank?
     self.set_users(my_id,users)
