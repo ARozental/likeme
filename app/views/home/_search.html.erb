@@ -1,0 +1,42 @@
+
+
+<% width = "width:193px" %> <!-- todo: make it % of table size -->
+<% text_width = "width:179px" %>
+<%= form_tag(:action => :index) do %>
+	<%= hidden_field_tag 'full_menu', @filter.full_menu  if @filter.full_menu%>
+	<%= hidden_field_tag 'full_menu', "hidden"  unless @filter.full_menu%>
+	<table class="filter_table">	
+		<tr id="row1">
+			<td><%= select_tag(:search_by, options_for_select([['search by all likes', "likes"],'music', "books","movies","television","games","activities","interests"], @filter.search_by), :style => width) %></td>
+			<td><%= select_tag(:social_network, options_for_select(["don\'t include friends","include only friends", "include everyone"], @filter.social_network), :style => width) %></td>
+			<td><%= text_field_tag(:location, @filter.location, :style => text_width, :placeholder => "search by location") %></td>
+		</tr>		
+		<tr id="row2">
+			<td><%= select_tag(:gender, options_for_select([['of any gender', 'any'],'female', "male"], @filter.gender), :style => width) %></td>		
+			<td><%= select_tag(:relationship_status, options_for_select([['any relationship status','any'],['single', "Single"],['single or unspecified', "single or unspecified"],['in a relationship', "In a Relationship"],['engaged', "Engaged"],['married', "Married"]], @filter.relationship_status), :style => width) %></td>
+			<td><%= select_tag(:last_relationship_status_update, options_for_select([['of any duration', nil],'since last week', 'since last month'], @filter.last_relationship_status_update), :style => width) %></td>		
+		</tr>
+		<tr id="row3">		
+			<td><%= text_field_tag(:name, @filter.name, :style => text_width, :placeholder => "search by name") %></td>
+			<td><%= number_field_tag(:min_age, @filter.min_age,:in => 16...99, :style => text_width, :placeholder => "minimum age") %></td> <!--,:placeholder => "minimum age" :class => "btn btn-info dropdown-toggle"-->
+			<td><%= number_field_tag(:max_age, @filter.max_age,:in => 16...99, :style => text_width, :placeholder => "maximun age") %></td>
+
+		</tr>
+		<tr>		
+			<td><%= submit_tag("search", :class => 'btn btn-primary', :style => width) %></td>
+			<td style="text-align: center; margin: 0px auto;"><div id="advanced_search" ><%= image_tag("down_arrow.png",:id => 'arrow', :onclick => 'extend_menu(); return false') %></div></td>
+			<td class="btn btn-primary" id="post_to_facebook" style="width: 168px;" onclick='postToFeed(); return false'>post results to feed</td>
+		</tr>
+	</table>
+
+<!--
+	<div class="actions">
+
+		<%= submit_tag("search", :class => 'btn btn-primary') %>
+
+		<div class="btn btn-primary" id="post_to_facebook" style="float: right;" onclick='postToFeed(); return false'>post results to feed</div>
+		<span style="padding-left: 145px;"><a href=<%= pages_path %> class="btn btn-success">go to recommendations</a></span>
+
+	</div>
+-->	
+<% end %>
