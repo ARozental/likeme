@@ -331,7 +331,7 @@ class User < ActiveRecord::Base
             update_string += ",gender='#{friend.gender}'" unless friend.gender.blank?
             update_string += ",age=#{friend.age}" unless friend.age.blank?
             update_string += ",bio='#{friend.bio.gsub("'", "''")}'" unless friend.bio.blank?
-            update_string += ",last_relationship_status_update='#{now}'" if friends_with_new_status.include?(friend.id)
+            update_string += ",last_relationship_status_update='#{now}'" if (friends_with_new_status.include?(friend.id) && !(friend.birthday.blank? && friend.location.blank? && friend.hometown.blank? && friend.relationship_status.blank?))                                                  
             update_string += " WHERE id=#{friend.id}"
             ActiveRecord::Base.connection.execute(update_string)
           end
