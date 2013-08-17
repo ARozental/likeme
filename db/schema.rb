@@ -11,7 +11,16 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130803191421) do
+ActiveRecord::Schema.define(:version => 20130817082433) do
+
+  create_table "attendances", :force => true do |t|
+    t.integer "user_id",     :limit => 8, :null => false
+    t.integer "event_id",    :limit => 8, :null => false
+    t.string  "rsvp_status", :limit => 1
+  end
+
+  add_index "attendances", ["rsvp_status"], :name => "index_attendances_on_rsvp_status"
+  add_index "attendances", ["user_id"], :name => "index_attendances_on_user_id"
 
   create_table "delayed_jobs", :force => true do |t|
     t.integer  "priority",   :default => 0
@@ -28,6 +37,16 @@ ActiveRecord::Schema.define(:version => 20130803191421) do
   end
 
   add_index "delayed_jobs", ["priority", "run_at"], :name => "delayed_jobs_priority"
+
+  create_table "events", :force => true do |t|
+    t.string   "name"
+    t.datetime "start_time"
+    t.datetime "end_time"
+    t.string   "location"
+  end
+
+  add_index "events", ["end_time"], :name => "index_events_on_end_time"
+  add_index "events", ["location"], :name => "index_events_on_location"
 
   create_table "friendships", :id => false, :force => true do |t|
     t.integer "user_id",   :limit => 8, :null => false

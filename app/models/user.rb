@@ -14,7 +14,8 @@ class User < ActiveRecord::Base
                                      association_foreign_key: "friend_id"
   has_many :user_page_relationships
   has_many :pages , :through => :user_page_relationships
-  
+  has_many :events , :through => :attendance
+ 
   #@@cores = 3
   @@all_page_types = ["likes","music","books","movies","television","games","activities","interests"] #add: Sports teams, Favourite sports and Inspirational People
   @@all_page_aliases = ["l","m","b","v","t","g","a","i"] #add: Sports teams, Favourite sports and Inspirational People
@@ -30,6 +31,7 @@ class User < ActiveRecord::Base
     "i" => 1,                       
                       
   }
+
   
   def description
     return "" if self.bio.blank? && self.quotes.blank?
@@ -42,7 +44,7 @@ class User < ActiveRecord::Base
   def insert_batches_info(my_graph,my_friends)
     
     my_id = self.id.to_s
-    id_array = my_friends.map { |friend| friend["id"]}
+    id_array = my_friends.map { |friend| friend["id"]} #sometimes client error form koala, usually ok after 1 refresh, this is a koala bug??
     users_last_fb_update = User.where(:id => id_array).select("id, last_foregin_fb_update").all
     users_last_fb_update.select! { |friend|  (friend.last_foregin_fb_update.nil? || (Time.now - friend.last_foregin_fb_update)>LikeMeConfig::minimal_update_time)}
     users_last_fb_update.map! {|friend| friend.id.to_s}
@@ -51,7 +53,6 @@ class User < ActiveRecord::Base
     ########################################### old single processed way 
     #grouped_id_array.each { |group| retrive_and_save_batch(my_graph,group)}
       
-#=begin    
     Parallel.each(grouped_id_array, :in_threads => LikeMeConfig::insertion_cores) do |group|
       begin
         ActiveRecord::Base.connection.reconnect!
@@ -59,7 +60,21 @@ class User < ActiveRecord::Base
       rescue
       end
     end
-#=end    
+    
+    
+    #insert events
+    events_grouped_id_array = users_last_fb_update.each_slice(50).to_a
+    ########################################### old single processed way 
+    #events_grouped_id_array.each { |group| retrive_and_save_events_batch(my_graph,group)}
+    
+   
+    Parallel.each(events_grouped_id_array, :in_threads => LikeMeConfig::insertion_cores) do |group|
+      begin
+        ActiveRecord::Base.connection.reconnect!
+        retrive_and_save_events_batch(my_graph,group)
+      rescue
+      end
+    end                
   end
   
   def save_batch_pages(data_hash)
@@ -98,6 +113,34 @@ class User < ActiveRecord::Base
     end
   end
   
+  def retrive_and_save_events_batch(graph,users_id_array)
+    #group is an array of up to 50 friends ids as strings
+    batch_results = graph.batch do |batch_api|#array of arraies of hashes
+      users_id_array.each do |id|
+        batch_api.get_connections(id, "events", :limit => 999)
+      end   
+    end
+    data_hash = Hash[users_id_array.zip batch_results] #hash of user id => array of his events
+    attendance_array = []
+    new_events_array = [] #event to insert to db
+    data_hash.each do |id, event_array|
+      event_array.each { |event| attendance_array<<[id,event["id"],event["rsvp_status"][0]]}
+      event_array.each { |event| new_events_array<<[event["id"],event["name"],event["location"],event["start_time"],event["end_time"]]}     
+    end
+    
+    ActiveRecord::Base.transaction do
+      updated_users = attendance_array.collect{ |attendance| attendance[0]}.uniq
+      Attendance.where(:user_id => updated_users).delete_all
+      Attendance.import [:user_id,:event_id,:rsvp_status], attendance_array, :validate => false
+    end
+    ActiveRecord::Base.transaction do
+      new_events_array.uniq!
+      updated_events = new_events_array.collect{ |event| event[0]}
+      Event.where(:id => updated_events).delete_all
+      Event.import [:id,:name,:location,:start_time,:end_time], new_events_array, :validate => false
+    end
+  end
+  
   def retrive_and_save_batch(graph,users_id_array)
     batch_results = graph.batch do |batch_api|#array of arraies of hashes
       users_id_array.each do |id|
@@ -111,8 +154,8 @@ class User < ActiveRecord::Base
     #raise graph.get_connections("509006501", "likes").to_s   can't get data on some people...
     #rasie data_hash.to_s
     
-    
-    # save the new pages #duplication with insert self data and likes, ignore nost of the time
+    #todo: delete this or make use of it
+    #save the new pages #duplication with insert self data and likes, ignore nost of the time
     if rand()<LikeMeConfig.page_insertion_chance
       save_batch_pages(data_hash)
     end
@@ -233,23 +276,9 @@ class User < ActiveRecord::Base
       category_char = get_char(category)      
       my_likes.each do |like|
         user_page_relationship_string += "(\'#{category_char}\',#{my_id},#{like["id"]}),"                
-        page_array << [like["category"],like["name"],like["id"]] unless category_char != 'l'     
+        #page_array << [like["category"],like["name"],like["id"]] unless category_char != 'l'     
       end
       category_counter = category_counter+1
-    end
-    #duplication with insert batches
-    page_array.uniq!
-    page_id_array = []
-    page_array.each {|page| page_id_array << page[2].to_i}        
-    existing_pages_id = Page.where(:id => page_id_array).pluck(:id)
-    page_id_array = (page_id_array-existing_pages_id)
-    page_array.select! { |page|  page_id_array.include?(page[2].to_i)}
-    
-    unless page_array.empty?
-      page_string = "INSERT INTO pages (category,name,id) VALUES "
-      page_array.each { |page|  page_string += "(\'#{page[0]}\',\'#{page[1].gsub("'", "''")}\',#{page[2]}),"}
-      page_string[-1] = ';'
-      ActiveRecord::Base.connection.execute(page_string)
     end
     
     unless user_page_relationship_string == "INSERT INTO user_page_relationships (relationship_type,user_id,page_id) VALUES "
@@ -259,6 +288,45 @@ class User < ActiveRecord::Base
         ActiveRecord::Base.connection.execute(user_page_relationship_string)
       end
     end
+    
+    my_events = my_graph.get_connections("me", "events")
+    attendance_array = []
+    new_events_array = [] #event to insert to db
+    my_events.each do |event|
+      attendance_array<<[my_id,event["id"],event["rsvp_status"][0]]
+      new_events_array<<[event["id"],event["name"],event["location"],event["start_time"],event["end_time"]]    
+    end
+    unless attendance_array.empty?
+      ActiveRecord::Base.transaction do
+        Attendance.where(:user_id => my_id).delete_all
+        Attendance.import [:user_id,:event_id,:rsvp_status], attendance_array, :validate => false
+      end
+      ActiveRecord::Base.transaction do
+        updated_events = new_events_array.collect{ |event| event[0]}
+        Event.where(:id => updated_events).delete_all
+        Event.import [:id,:name,:location,:start_time,:end_time], new_events_array, :validate => false
+      end
+    end
+    
+    
+#pages    
+=begin     
+    #duplication with insert batches
+    page_array.uniq!
+    page_id_array = []
+    page_array.each {|page| page_id_array << page[2].to_i}        
+    existing_pages_id = Page.where(:id => page_id_array).pluck(:id)
+    page_id_array = (page_id_array-existing_pages_id)
+    page_array.select! { |page|  page_id_array.include?(page[2].to_i)}
+    unless page_array.empty?
+      page_string = "INSERT INTO pages (category,name,id) VALUES "
+      page_array.each { |page|  page_string += "(\'#{page[0]}\',\'#{page[1].gsub("'", "''")}\',#{page[2]}),"}
+      page_string[-1] = ';'
+      ActiveRecord::Base.connection.execute(page_string)
+    end
+=end
+    
+
   end
   
 
@@ -286,18 +354,21 @@ class User < ActiveRecord::Base
     friends_array = []
     my_friends.each do |fb_friend|
       #sometimes for some friends not all the info I can see on their profile gets to likeme from facebook... is that a privacy thing?
-      friends_array << User.new(
-      :id => fb_friend["id"],
-      :name => fb_friend["name"],
-      :location => fb_friend["location"],
-      :birthday => fb_friend["birthday"],
-      :hometown => fb_friend["hometown"],
-      :quotes => fb_friend["quotes"],
-      :relationship_status => fb_friend["relationship_status"],
-      :significant_other => fb_friend["significant_other"],
-      :gender => fb_friend["gender"],
-      :age => date_to_age(fb_friend["birthday"]),
-      :bio => fb_friend["bio"])        
+      begin
+        friends_array << User.new(
+        :id => fb_friend["id"],
+        :name => fb_friend["name"],
+        :location => fb_friend["location"],
+        :birthday => fb_friend["birthday"],
+        :hometown => fb_friend["hometown"],
+        :quotes => fb_friend["quotes"],
+        :relationship_status => fb_friend["relationship_status"],
+        :significant_other => fb_friend["significant_other"],
+        :gender => fb_friend["gender"],
+        :age => date_to_age(fb_friend["birthday"]),
+        :bio => fb_friend["bio"])
+      rescue
+      end        
     end
 
     unless friends_array.blank? 
@@ -305,7 +376,7 @@ class User < ActiveRecord::Base
     existing_friends_array = friends_array.select { |friend|  existing_friends_id.include?(friend["id"])}    
     new_friends_array = friends_array.reject { |friend|  existing_friends_id.include?(friend["id"])}
     
-    #reltionship status updates todo: make it faster, now it takes n^2 my friends
+    
     now = Time.now
     friends_with_new_status = []
     old_friends_statuses = User.select("id, relationship_status").where(:id => my_friends_id_array).all
