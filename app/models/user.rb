@@ -52,7 +52,7 @@ class User < ActiveRecord::Base
     
     ########################################### old single processed way 
     #grouped_id_array.each { |group| retrive_and_save_batch(my_graph,group)}
-      
+
     Parallel.each(grouped_id_array, :in_threads => LikeMeConfig::insertion_cores) do |group|
       begin
         ActiveRecord::Base.connection.reconnect!
@@ -60,21 +60,17 @@ class User < ActiveRecord::Base
       rescue
       end
     end
-    
-    
     #insert events
     events_grouped_id_array = users_last_fb_update.each_slice(50).to_a
     ########################################### old single processed way 
-    #events_grouped_id_array.each { |group| retrive_and_save_events_batch(my_graph,group)}
-    
-   
+    #events_grouped_id_array.each { |group| retrive_and_save_events_batch(my_graph,group)}   
     Parallel.each(events_grouped_id_array, :in_threads => LikeMeConfig::insertion_cores) do |group|
       begin
         ActiveRecord::Base.connection.reconnect!
         retrive_and_save_events_batch(my_graph,group)
       rescue
       end
-    end                
+    end 
   end
   
   def save_batch_pages(data_hash)
@@ -120,6 +116,19 @@ class User < ActiveRecord::Base
         batch_api.get_connections(id, "events", :limit => 999)
       end   
     end
+    #raise batch_results.to_s
+    events_id_array = []
+    batch_results.each do |user_events|
+      unless user_events.empty?
+        user_events.each do |event|
+          events_id_array << event["id"]
+        end
+      end
+    end
+    events_id_array.uniq!
+    self.insert_events(events_id_array,graph)
+    
+=begin    
     data_hash = Hash[users_id_array.zip batch_results] #hash of user id => array of his events
     attendance_array = []
     new_events_array = [] #event to insert to db
@@ -139,6 +148,7 @@ class User < ActiveRecord::Base
       Event.where(:id => updated_events).delete_all
       Event.import [:id,:name,:location,:start_time,:end_time], new_events_array, :validate => false
     end
+=end    
   end
   
   def retrive_and_save_batch(graph,users_id_array)
@@ -218,7 +228,7 @@ class User < ActiveRecord::Base
 
 
 
-  def insert_friend_to_db(fb_friend)
+  def insert_friend_to_db(fb_friend) #only for inserting self
     db_friend = User.find_or_initialize_by_id(fb_friend["id"])
     if db_friend.relationship_status == fb_friend["relationship_status"] #&& (fb_friend["relationship_status"] != nil) for people who can only update themselves   
       db_friend.update_attributes({
@@ -290,6 +300,15 @@ class User < ActiveRecord::Base
     end
     
     my_events = my_graph.get_connections("me", "events")
+    my_events_id_array = my_events.collect { |event| event["id"]}
+    ActiveRecord::Base.connection.disconnect!
+    pid = Process.fork do
+      ActiveRecord::Base.establish_connection
+      self.insert_events(my_events_id_array,my_graph)
+    end    
+    Process.detach(pid)  
+    ActiveRecord::Base.establish_connection
+=begin
     attendance_array = []
     new_events_array = [] #event to insert to db
     my_events.each do |event|
@@ -307,7 +326,7 @@ class User < ActiveRecord::Base
         Event.import [:id,:name,:location,:start_time,:end_time], new_events_array, :validate => false
       end
     end
-    
+=end    
     
 #pages    
 =begin     
@@ -329,6 +348,64 @@ class User < ActiveRecord::Base
 
   end
   
+  def insert_events(events_id_array,graph)
+    grouped_id_array = events_id_array.each_slice(50).to_a
+    grouped_id_array.each do |partial_event_id_array|
+      self.insert_50_events(partial_event_id_array,graph)
+    end
+  end
+  
+  def insert_50_events(events_id_array,graph) # up to 50 events
+    
+    #attending
+    batch_attending = graph.batch do |batch_api|#array of arraies of hashes
+      events_id_array.each do |id|
+        batch_api.get_object(id.to_s + "/attending", :limit => 300)
+      end   
+    end
+    attending_hash = Hash[events_id_array.zip batch_attending]
+    attendance_array = []    
+    attending_hash.each do |event_id,attending_list|
+      attending_list.each do |attending|
+        attendance_array<<[attending["id"],event_id,"a"]
+      end      
+    end
+    
+    #maybe
+    batch_maybe = graph.batch do |batch_api|#array of arraies of hashes
+      events_id_array.each do |id|
+        batch_api.get_object(id.to_s + "/maybe", :limit => 50)
+      end   
+    end
+    maybe_hash = Hash[events_id_array.zip batch_maybe]
+    maybe_array = []    
+    maybe_hash.each do |event_id,maybe_list|
+      maybe_list.each do |maybe|
+        maybe_array<<[maybe["id"],event_id,"m"]
+      end      
+    end
+    
+    #events
+    batch_events = graph.batch do |batch_api|#array of arraies of hashes
+      events_id_array.each do |id|
+        batch_api.get_object(id.to_s)
+      end   
+    end
+    events_array = []    
+    batch_events.each do |event|
+      events_array<<[event["id"],event["name"],event["location"],event["start_time"],event["end_time"]]    
+    end
+    
+    ActiveRecord::Base.transaction do
+      Attendance.where(:event_id => events_id_array).delete_all unless events_id_array.empty?        
+      Attendance.import [:user_id,:event_id,:rsvp_status], attendance_array, :validate => false unless attendance_array.empty?
+      Attendance.import [:user_id,:event_id,:rsvp_status], maybe_array, :validate => false unless maybe_array.empty?
+    end      
+    ActiveRecord::Base.transaction do
+      Event.where(:id => events_id_array).delete_all unless events_id_array.empty?   
+      Event.import [:id,:name,:location,:start_time,:end_time], events_array, :validate => false unless events_array.empty? 
+    end
+  end
 
   def insert_my_info_to_db(my_graph)
     

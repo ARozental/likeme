@@ -1,9 +1,14 @@
 class HomeController < ApplicationController
   #autocomplete :user, :name
   def index
-      graph = Koala::Facebook::API.new(current_user.oauth_token)
+      #graph = Koala::Facebook::API.new(current_user.oauth_token)
+      
+      #events_id_array = [172924376226214,545259285509975]
+      #current_user.insert_events(events_id_array,graph)
+      #raise "here"
       #raise graph.get_connections("me", "events", :limit => 999).to_s
-      #raise graph.get_object("456532851095559").to_s #how attends an event
+      #raise graph.get_object("172924376226214/attending", :limit => 5).to_s #how attends an event
+      #raise graph.get_object("172924376226214/maybe").count.to_s #how may attend an event
       #me = graph.get_object("584663600")
       #racheleah = graph.get_object("509235222")
       #raise me.to_s  
@@ -11,7 +16,7 @@ class HomeController < ApplicationController
       #raise my_friends_id.to_s 
         
       #current_user.insert_my_info_to_db(graph)
-      current_user.insert_self_data_and_likes(graph) #1.5 sec for me...
+      #current_user.insert_self_data_and_likes(graph) #1.5 sec for me...
       #testing
       #ActiveRecord::Base.connection.execute("DELETE FROM user_page_relationships WHERE user_id = #{100001439566738}")
       #User.where("lower(name) like ?", "%alon%").pluck(:name)
