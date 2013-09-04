@@ -595,7 +595,7 @@ class User < ActiveRecord::Base
   end
   
      
-  def find_matches(filter) #returns an array of [user,[chosen_likes]]
+  def find_matches(filter) #returns an array of [user,[chosen_likes],adjusted_score]
     #self.calculate_scores(filter)
     results = self.get_scores_array(filter)
   
@@ -742,6 +742,43 @@ class User < ActiveRecord::Base
     return users_and_scores
   end
   
+############################################################### events
+  def find_events(event_filter,users_filter)
+    #get 100? relevent events according to filter
+    some_events = Event.first(10) #todo: replace with event_filter.get_events
+    
+    events_score_array = []
+    some_events.each do |event|
+      events_score_array << calculate_event_score(event.id,users_filter)
+    end
+    events_score_array = events_score_array.sort_by {|array| array[1]*(-1)}
+    return events_score_array.first(50)
 
+  end
+  
+  def calculate_event_score(event_id,users_filter) #todo: add users filter to this function
+    
+    users_id = Attendance.where(:event_id => event_id).pluck(:user_id) #all in the event
+    users_id = User.where(:id => users_id).pluck(:id) #all in event and db
+    users_filter.all_users_id_array = users_id
+    
+    #raise find_matches(filter).to_s
+    event_users_array = find_matches(users_filter)
+    event_score = get_event_score_from_users_array(event_users_array)
+    return [event_id,event_score,event_users_array]
+  end
+  
+  def get_event_score_from_users_array(users_array) # array of [user,6 likes, adjusted user score]
+    score = 0
+    i=0.0
+    n=5
+    users_array = users_array.first(n)
+    users_array.each do |user_likes_score| 
+      score += user_likes_score[2]*(1-i/n)
+      i+=1
+    end
+    return score
+  end
+  
      
 end

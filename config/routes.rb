@@ -5,6 +5,7 @@ Likeme::Application.routes.draw do
   #get 'home/insert', :via => :get
   match '/users', to: 'users#index'
   match '/pages', to: 'home#pages'
+  match '/events', to: 'home#events'
   get 'home/index', :via => :post
   match 'home/index' => 'home#index', :via => :post
   get 'home/ajax_matching', :via => :post

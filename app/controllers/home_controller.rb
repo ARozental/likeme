@@ -87,4 +87,14 @@ class HomeController < ApplicationController
     #raise @pages.to_s
   end
   
+  def events
+    redirect_to "/../auth/facebook" unless current_user    
+    @current_user = current_user
+    @event_filter ||= EventFilter.new
+    @users_filter ||= Filter.new
+    @users_filter.search_by = "likes"
+    @event_filter.set_params(params) #todo: write this function
+    @events = @current_user.find_events(@event_filter,@users_filter)
+  end
+  
 end

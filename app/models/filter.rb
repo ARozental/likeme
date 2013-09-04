@@ -5,6 +5,7 @@ class Filter
   attr_accessor :gender, :max_age, :min_age, :relationship_status, :search_by, :chosen_users
   attr_accessor :social_network, :weights, :get_sample, :excluded_users, :included_users
   attr_accessor :name, :full_menu, :location, :last_relationship_status_update
+  attr_accessor :all_users_id_array #if not nil we should ignore all other users, for event limit 
   
   def update_time
     return 1.week.ago if self.last_relationship_status_update == 'since last week'
@@ -68,7 +69,7 @@ class Filter
     users = users.where(['users.id NOT IN (?)', friends_id_array]) if self.social_network == "don\'t include friends"
     
     #users = remove_non_valid_users(users)
-    
+    users = users.where(:id => self.all_users_id_array) unless self.all_users_id_array.blank? #for event search 
     users = users.where(:gender => self.gender) unless self.gender.blank?
     users = users.where("age <= ?", self.max_age) unless self.max_age.blank? #todo: if you didn't give your age to facebook it is set to zero
     users = users.where("age >= ?", self.min_age) unless self.min_age.blank?
