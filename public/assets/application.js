@@ -14547,11 +14547,13 @@ String.prototype.hashCode = function(){
 function insert_user(user,place) //user == matches[user_number], place = -1
 {
 	var table=document.getElementById("matche_table");
+	var oauth_token = $('#matche_table').data('oauth_token');
+
 	if(place != -1){place = place*2;} //2 rows for every user
 	var row1=table.insertRow(place);
 	var cell1=row1.insertCell(-1);
 	var cell2=row1.insertCell(-1);
-	cell1.innerHTML = picture_link(user[0].id,120);
+	cell1.innerHTML = picture_link(user[0].id,120,oauth_token);
 	cell1.className = 'face_td';
 	cell1.rowSpan="2";
 	cell1.style.padding="0px";
@@ -14586,7 +14588,7 @@ function insert_user(user,place) //user == matches[user_number], place = -1
 		cell.style.maxHeight="40px";
 		try
 		{
-			cell.innerHTML = picture_link(user[1][k],60);
+			cell.innerHTML = picture_link(user[1][k],60,oauth_token);
 		}
 		catch(err)
 		{
@@ -14604,7 +14606,7 @@ function insert_user(user,place) //user == matches[user_number], place = -1
 		cell.style.maxHeight="40px";
 		try
 		{
-			cell.innerHTML = picture_link(user[1][k+3],60);
+			cell.innerHTML = picture_link(user[1][k+3],60,oauth_token);
 		}
 		catch(err)
 		{
@@ -14736,11 +14738,12 @@ var table=document.getElementById("page_table");
 function insert_page(page,place) //user == matches[user_number], place = -1
 {
 	var table=document.getElementById("page_table");
+	var oauth_token = $('#page_table').data('oauth_token');
 	if(place != -1){place = place*2;} //2 rows for every user
 	var row1=table.insertRow(place);
 	var cell1=row1.insertCell(-1);
 	var cell2=row1.insertCell(-1);
-	cell1.innerHTML = picture_link(page[0],120);
+	cell1.innerHTML = picture_link(page[0],120,oauth_token);
 	cell1.className = 'face_td';
 	cell1.rowSpan="2";
 	cell1.style.padding="0px";
@@ -14769,7 +14772,7 @@ function insert_page(page,place) //user == matches[user_number], place = -1
 	
 	
 	cell2.appendChild(page_div);
-	get_description(page[0]);
+	get_description(page[0],oauth_token);
 	//page_div.innerHTML = get_description(page[0]);
 	//cell2.innerHTML = name_link(matches[user_number][0]) + print_stats(matches[user_number][0]);
 	//alert(JSON.stringify(page));
@@ -14782,7 +14785,7 @@ function insert_page(page,place) //user == matches[user_number], place = -1
 		cell.style.maxHeight="40px";
 		try
 		{
-			cell.innerHTML = picture_link(page[1][1][k],60);
+			cell.innerHTML = picture_link(page[1][1][k],60,oauth_token);
 		}
 		catch(err)
 		{
@@ -14800,7 +14803,7 @@ function insert_page(page,place) //user == matches[user_number], place = -1
 		cell.style.maxHeight="40px";
 		try
 		{
-			cell.innerHTML = picture_link(page[1][1][k+3],60);
+			cell.innerHTML = picture_link(page[1][1][k+3],60,oauth_token);
 		}
 		catch(err)
 		{
@@ -14815,9 +14818,9 @@ function set_page_like(id)
 	//alert(id);
 }
 
-function get_description(page_id)
+function get_description(page_id,oauth_token)
 {
-  var flickerAPI = "http://graph.facebook.com/" + page_id;
+  var flickerAPI = "https://graph.facebook.com/" + page_id + "?access_token=" + oauth_token;
   var api_data = $.getJSON( flickerAPI, {
     tags: "mount rainier",
     tagmode: "any",
@@ -14844,8 +14847,6 @@ function load_page_table()
 
 	var table = document.getElementById("page_table");
 	pages = $('#page_table').data('pages');
-	oauth_token = $('#page_table').data('oauth_token');
-	alert(oauth_token);
 	$("body").data("current_pages", pages);
 	for (var i=0;i<7;i++)
 	{ 
@@ -14862,11 +14863,11 @@ function load_page_table()
 
 
 
-function picture_link(id,size)
+function picture_link(id,size,oauth_token)
 {
     size = size.toString(); //resolution is 120px
     id = id.toString();
-    html = "<a href=\"http://www.facebook.com/" + id + "\"target=\"_blank\"><img style=\"border-radius: 5px;\"src=\"https://graph.facebook.com/" + id + "/picture?width=" + size + "&height=" + size + "\" width=" + size + " height=" + size + "></a>"
+    html = "<a href=\"http://www.facebook.com/" + id + "\"target=\"_blank\"><img style=\"border-radius: 5px;\"src=\"https://graph.facebook.com/" + id + "/picture?access_token="+ oauth_token +"&width=" + size + "&height=" + size + "\" width=" + size + " height=" + size + "></a>"
     return html;
 }
 

@@ -10,7 +10,7 @@
     <!-- <p><a onclick='postToFeed(); return false;'>Post to Feed</a></p><p id='msg'></p> -->
     
     
-	<table id="matche_table" class="table" data-matches="<%= @matches.to_json %>"></table>			
+	<table id="matche_table" class="table" data-matches="<%= @matches.to_json %>" data-oauth_token="<%= @current_user.oauth_token %>"></table>			
 
 	<script>
 		load_table();
