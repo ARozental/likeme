@@ -1,7 +1,4 @@
 class User < ActiveRecord::Base
-  #require 'rake'
-  #Rake::Task.clear
-  #Likeme::Application.load_tasks
   include UsersHelper
   attr_accessible :active, :name, :id, :location, :birthday, :gender, :age, :bio, :last_foregin_fb_update
   attr_accessible :hometown, :quotes, :relationship_status, :significant_other, :last_fb_update
@@ -745,14 +742,37 @@ class User < ActiveRecord::Base
 ############################################################### events
   def find_events(event_filter,users_filter)
     #get 100? relevent events according to filter
-    some_events = Event.first(10) #todo: replace with event_filter.get_events
+    some_events_id_array = event_filter.get_events(self)
     
-    events_score_array = []
-    some_events.each do |event|
-      events_score_array << calculate_event_score(event.id,users_filter)
+    
+    #this "single process" way uses all CPUs for some reason but only to only 80%, maybe each does that
+    #events_score_array = []
+    #some_events_id_array.each { |event_id| events_score_array << calculate_event_score(event_id,users_filter) }    
+    ActiveRecord::Base.connection.reconnect!
+    events_score_array = Parallel.map(some_events_id_array, :in_processes=> 3) do |event_id|
+      ActiveRecord::Base.connection.reconnect!
+      a = calculate_event_score(event_id,users_filter) 
+      ActiveRecord::Base.connection.reconnect!
+      a
     end
+    ActiveRecord::Base.connection.reconnect!
+    
     events_score_array = events_score_array.sort_by {|array| array[1]*(-1)}
-    return events_score_array.first(50)
+    events_score_array.first(50) #todo: some parameter
+    
+    #replace the id with the full event
+    events_ids = []
+    events_score_array.each { |event| events_ids << event[0]}
+    events = Event.where(:id => events_ids).all
+    events_hash = {}
+    events.each {|event| events_hash[event.id]=event}
+    full_events_score_array = []
+    events_score_array.each { |event| full_events_score_array << [events_hash[event[0]],event[1],event[2]]}
+    return full_events_score_array
+
+
+    
+    
 
   end
   
@@ -760,7 +780,8 @@ class User < ActiveRecord::Base
     
     users_id = Attendance.where(:event_id => event_id).pluck(:user_id) #all in the event
     users_id = User.where(:id => users_id).pluck(:id) #all in event and db
-    users_filter.all_users_id_array = users_id
+    #users_filter.all_users_id_array = users_id.shuffle.first(LikeMeConfig.max_users_per_event)
+    users_filter.all_users_id_array = users_id.first(LikeMeConfig.max_users_per_event) #no shuffle for time
     
     #raise find_matches(filter).to_s
     event_users_array = find_matches(users_filter)

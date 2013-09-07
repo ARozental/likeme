@@ -51,5 +51,13 @@ class LikeMeConfig
   def self.pre_calculation_network
     return "include only friends"
   end
+  
+  def self.max_users_per_event
+    return 200
+  end
+  
+  def self.max_events_per_search
+    return 3 #100
+  end
 
 end

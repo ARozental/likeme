@@ -1,17 +1,34 @@
+    <img src="https://graph.facebook.com/shaverm/picture?callback=foo">
+    <div id="ass"></div>
+    
+    <%=  @current_user.oauth_token %>
+    <table id="event_table" class="table" data-pages="<%= @events.to_json %>"></table>
+    <script>
+		load_event_table();
+		FB.init({appId: "360161967331340", status: true, cookie: true});
+	</script>
+<table>
+	<tbody>
+		<% @events.each do |event| %>
+			<% begin %>
+			<tr>
+				<td>
+					<%= event[0].name %>
+				</td>
+				<td>
+					<%= event[1] %>
+				</td>			
+				<td>
+					<%= event[2][0][0].name %> <!-- [2] for event users, [0] for the first user, [0] for his info  -->
+				</td>			
+			</tr>
+			<% rescue %>
+			<% end %>
+		<% end %>
+	</tbody>
+</table>
 
-<%
-events_ids = []
-@events.each do |event| 
-	events_ids << event[0]
-end
-	
-@events="ddd" 
 
-
-
-%>
-
-<%= events_ids.to_s %>
 
 
 

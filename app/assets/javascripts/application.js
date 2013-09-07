@@ -335,13 +335,10 @@ function get_description(page_id)
 
 function load_page_table()
 {
-	/*var table = document.getElementById("matche_table");
-	var matches = document.getElementById("matche_table").getAttribute("data-matches");
-	matches = jQuery.parseJSON(matches);
-	$("body").data("current_matches", matches);*/
-	
+
 	var table = document.getElementById("page_table");
 	pages = $('#page_table').data('pages');
+	oauth_token = $('#page_table').data('oauth_token');
 	$("body").data("current_pages", pages);
 	for (var i=0;i<7;i++)
 	{ 

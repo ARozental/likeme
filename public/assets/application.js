@@ -14442,6 +14442,44 @@ $.ui.plugin.add("draggable", "zIndex", {
   });
 
 }).call(this);
+
+
+function load_event_table()
+{
+	var div=document.getElementById("ass");
+	var access_token= "access_token=CAAFHkL4f2AwBAOnn3nfPeUFhGWK4tQibAz18czF2dS9KXZBgclvq8ZBkZBgupksFHsUb4tplTwXgAsgpZCIHjNekOrGkbHSDvMkBZAaBpL4ZBFUUnhHxVnTdRcJVHLI4Q1A0YFlvU1fJOI9l6ztpxKZAXbqpHDetLQWbObX2IMjSbmfOEZBy6auO"
+	var s = "http://graph.facebook.com/118843458195668/picture?"+access_token;
+    html = "<a href=\"http://www.facebook.com/" + "307909672574831" + "\"target=\"_blank\"><img style=\"border-radius: 5px;\"src=\"https://graph.facebook.com/" + "307909672574831" + "/picture?width=" + "120" + "&height=" + "120" + "\" width=" + "120" + " height=" + "120" + "></a>"
+    html2 = "<a href=\"http://www.facebook.com/" + "118843458195668" +"\"target=\"_blank\"><img style=\"border-radius: 5px;\"src=\"https://graph.facebook.com/" + "118843458195668" + "/picture?" + access_token + "&width=" + "120" + "&height=" + "120" + "\" width=" + "120" + " height=" + "120" + "></a>"
+	var s2 = "<img src="+s+">"
+	div.innerHTML = html2
+	//alert(s2);
+	return s2;
+	
+	
+	/*var table = document.getElementById("matche_table");
+	var matches = document.getElementById("matche_table").getAttribute("data-matches");
+	matches = jQuery.parseJSON(matches);
+	$("body").data("current_matches", matches);
+	var iterations = Math.min(9,matches.length);
+	for (var i=0;i<iterations;i++) //ruins the post if iterations > matches
+	{ 
+	add_row(matches);
+	}
+	ajax_test(2,matches);
+	//setTimeout(ajax_test(5,matches), 3000); 
+	setTimeout(function(){ajax_test(0,matches)},3000); //do it better, know when logging in for the first time
+	setTimeout(function(){ajax_test(0,matches)},6000);
+	setTimeout(function(){ajax_test(0,matches)},9000);
+	setTimeout(function(){ajax_test(0,matches)},12000);
+	//alert("ff");
+	//setTimeout(function() {alert($("body").data("current_matches"));}, 3000);
+	//matches = document.getElementById("matche_table").getAttribute("data-current_matches_json");
+	//alert(JSON.stringify(matches));
+	*/
+
+}
+;
 (function() {
 
 
@@ -14666,7 +14704,6 @@ function load_table()
 	var matches = document.getElementById("matche_table").getAttribute("data-matches");
 	matches = jQuery.parseJSON(matches);
 	$("body").data("current_matches", matches);
-	//alert(matches.length);
 	var iterations = Math.min(9,matches.length);
 	for (var i=0;i<iterations;i++) //ruins the post if iterations > matches
 	{ 
@@ -14804,13 +14841,11 @@ function get_description(page_id)
 
 function load_page_table()
 {
-	/*var table = document.getElementById("matche_table");
-	var matches = document.getElementById("matche_table").getAttribute("data-matches");
-	matches = jQuery.parseJSON(matches);
-	$("body").data("current_matches", matches);*/
-	
+
 	var table = document.getElementById("page_table");
 	pages = $('#page_table').data('pages');
+	oauth_token = $('#page_table').data('oauth_token');
+	alert(oauth_token);
 	$("body").data("current_pages", pages);
 	for (var i=0;i<7;i++)
 	{ 

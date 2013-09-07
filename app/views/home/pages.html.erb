@@ -5,11 +5,9 @@
 	<div id="Welcome"> Welcome in, <strong><%= @current_user['name'] %>. <p id="notice"><%= notice %></p></strong></div>
 	-->
 	<p id="notice"><%= notice %></p>
-
 	<% unless @pages.blank? %>
 
-    
-    <table id="page_table" class="table" data-pages="<%= @pages.to_json %>"></table>
+    <table id="page_table" class="table" data-pages="<%= @pages.to_json %>" data-oauth_token="<%= @current_user.oauth_token %>"></table>
     <script>
 		load_page_table();
 		FB.init({appId: "360161967331340", status: true, cookie: true});

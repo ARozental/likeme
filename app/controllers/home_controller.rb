@@ -14,9 +14,9 @@ class HomeController < ApplicationController
       #raise me.to_s  
       #my_friends_id = graph.get_connections("me", "friends")
       #raise my_friends_id.to_s 
-        
+      #current_user.insert_self_data_and_likes(graph)
       #current_user.insert_my_info_to_db(graph)
-      #current_user.insert_self_data_and_likes(graph) #1.5 sec for me...
+       #1.5 sec for me...
       #testing
       #ActiveRecord::Base.connection.execute("DELETE FROM user_page_relationships WHERE user_id = #{100001439566738}")
       #User.where("lower(name) like ?", "%alon%").pluck(:name)
@@ -92,7 +92,7 @@ class HomeController < ApplicationController
     @current_user = current_user
     @event_filter ||= EventFilter.new
     @users_filter ||= Filter.new
-    @users_filter.search_by = "likes"
+    @users_filter.search_by = "likes" #todo: delete this 
     @event_filter.set_params(params) #todo: write this function
     @events = @current_user.find_events(@event_filter,@users_filter)
   end
