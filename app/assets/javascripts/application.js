@@ -201,16 +201,16 @@ function load_table()
 	matches = jQuery.parseJSON(matches);
 	$("body").data("current_matches", matches);
 	var iterations = Math.min(9,matches.length);
-	for (var i=0;i<iterations;i++) //ruins the post if iterations > matches
+	for (var i=0;i<iterations;i++) //ruins the post to facebook if iterations > matches, WTF?
 	{ 
 	add_row(matches);
 	}
-	ajax_test(2,matches);
+	ajax_test(6,matches);
 	//setTimeout(ajax_test(5,matches), 3000); 
-	setTimeout(function(){ajax_test(0,matches)},3000); //do it better, know when logging in for the first time
+	/*setTimeout(function(){ajax_test(0,matches)},3000); //do it better, know when logging in for the first time
 	setTimeout(function(){ajax_test(0,matches)},6000);
 	setTimeout(function(){ajax_test(0,matches)},9000);
-	setTimeout(function(){ajax_test(0,matches)},12000);
+	setTimeout(function(){ajax_test(0,matches)},12000);*/
 	//alert("ff");
 	//setTimeout(function() {alert($("body").data("current_matches"));}, 3000);
 	//matches = document.getElementById("matche_table").getAttribute("data-current_matches_json");

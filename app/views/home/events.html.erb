@@ -1,12 +1,14 @@
-    <img src="https://graph.facebook.com/shaverm/picture?callback=foo">
-    <div id="ass"></div>
-    
-    <%=  @current_user.oauth_token %>
-    <table id="event_table" class="table" data-pages="<%= @events.to_json %>"></table>
+<%= render 'event_search' %>
+<% unless @events.blank? %>    
+    <table id="event_table" class="table" data-events="<%= @events.to_json %>" data-oauth_token="<%= @current_user.oauth_token %>"></table>
     <script>
 		load_event_table();
 		FB.init({appId: "360161967331340", status: true, cookie: true});
 	</script>
+<% end %> 
+
+	
+	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 <table>
 	<tbody>
 		<% @events.each do |event| %>

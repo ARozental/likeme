@@ -1,4 +1,4 @@
-<% if @current_user %>
+<!--<% if @current_user %> -->
 	<%= render 'search' %>
 	<!-- 
 	<img id="mypic" src="https://graph.facebook.com/<%= @current_user['id'] %>/picture?type=normal" alt="profile picture">
@@ -16,24 +16,8 @@
 		load_table();
 		FB.init({appId: "360161967331340", status: true, cookie: true});
 	</script>
-    
-    
-    
 
-    
-    <!-- placeholders -->
-
-    <script>
-    
-    //alert("fff");
-    //var bbb = document.getElementById('gender').value = null;
-    //$("#gender").select2({
-    //            placeholder: "fsw"
-     //       });
-    //var aaa = document.getElementById('min_age').value = "kk";
-    //alert(aaa);
-    </script>
 	<% end %>
-<% else %>
+<!-- <% else %> -->
 <!-- todo: something like welcome to my app please sign in -->
-<% end %>
+<!-- <% end %> -->

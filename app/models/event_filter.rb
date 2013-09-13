@@ -8,7 +8,17 @@ class EventFilter
   attr_accessor :chosen_events, :excluded_events #arrays of ids 
   
   def set_params(params) #todo
-    
+    self.search_period_start = params[:search_period_start]
+    self.search_period_end = params[:search_period_end]
+    self.location = params[:location]
+    self.name = params[:name]
+    self.with_friends = params[:with_friends]
+    self.with_friends = 'include all events' if params[:with_friends] == nil
+    self.min_attending = params[:min_attending]
+    self.max_attending = params[:max_attending]
+    self.chosen_events = params[:chosen_events]
+    self.excluded_events = params[:excluded_events]
+    return self
   end  
   
   #todo:

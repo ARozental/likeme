@@ -1,0 +1,18 @@
+
+
+<% width = "width:193px" %> <!-- todo: make it % of table size -->
+<% text_width = "width:179px" %>
+<%= form_tag(:action => :events) do %>
+	<table class="filter_table">
+		<tr>
+			<td><%= text_field_tag(:name, @event_filter.name, :style => text_width, :placeholder => "search by name") %></td>
+			<td><%= text_field_tag(:location, @event_filter.location, :style => text_width, :placeholder => "search by location") %></td>
+			<td><%= select_tag(:with_friends, options_for_select(["include all events","with friends attending"], @event_filter.with_friends), :style => width) %></td>
+		</tr>
+		<tr>
+			<td><%= submit_tag("search", :class => 'btn btn-primary', :style => width) %></td>
+			<td></td>
+			<td class="btn btn-primary" id="post_to_facebook" style="width: 168px;" onclick='postEventsToFeed(); return false'>post results to feed</td>			
+		</tr>			
+	</table>
+<% end %>

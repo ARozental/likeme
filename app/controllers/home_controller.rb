@@ -94,6 +94,8 @@ class HomeController < ApplicationController
     @users_filter ||= Filter.new
     @users_filter.search_by = "likes" #todo: delete this 
     @event_filter.set_params(params) #todo: write this function
+    #raise params["with_friends"].to_s
+    #raise @event_filter.with_friends
     @events = @current_user.find_events(@event_filter,@users_filter)
   end
   
