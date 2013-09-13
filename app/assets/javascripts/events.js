@@ -56,12 +56,14 @@ function get_event_details(event)
 	var location = event[0].location;
 	var start_time = event[0].start_time;
 	var end_time = event[0].end_time;
+	var description = event[0].description;
 	var HMTL = ""
 	HMTL +="<b>" + name + "</b></br>";
 	HMTL += "event score: " + score + "</br>";
 	if(location) {HMTL += location + "</br>";}
 	HMTL += start_time + "</br>";
 	HMTL += end_time + "</br>";
+	HMTL += description;
 	return HMTL
 	
 }

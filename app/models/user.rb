@@ -390,7 +390,7 @@ class User < ActiveRecord::Base
     end
     events_array = []    
     batch_events.each do |event|
-      events_array<<[event["id"],event["name"],event["location"],event["start_time"],event["end_time"]]    
+      events_array<<[event["id"],event["name"],event["location"],event["start_time"],event["end_time"],event["description"]]    
     end
     
     ActiveRecord::Base.transaction do
@@ -400,7 +400,7 @@ class User < ActiveRecord::Base
     end      
     ActiveRecord::Base.transaction do
       Event.where(:id => events_id_array).delete_all unless events_id_array.empty?   
-      Event.import [:id,:name,:location,:start_time,:end_time], events_array, :validate => false unless events_array.empty? 
+      Event.import [:id,:name,:location,:start_time,:end_time,:description], events_array, :validate => false unless events_array.empty? 
     end
   end
 

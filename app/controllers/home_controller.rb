@@ -7,7 +7,7 @@ class HomeController < ApplicationController
       #current_user.insert_events(events_id_array,graph)
       #raise "here"
       #raise graph.get_connections("me", "events", :limit => 999).to_s
-      #raise graph.get_object("172924376226214/attending", :limit => 5).to_s #how attends an event
+      #raise graph.get_object("718437381516160").to_s #how attends an event
       #raise graph.get_object("172924376226214/maybe").count.to_s #how may attend an event
       #me = graph.get_object("584663600")
       #racheleah = graph.get_object("509235222")
