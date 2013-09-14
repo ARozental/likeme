@@ -7,31 +7,5 @@
 	</script>
 <% end %> 
 
-	
-	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-<table>
-	<tbody>
-		<% @events.each do |event| %>
-			<% begin %>
-			<tr>
-				<td>
-					<%= event[0].name %>
-				</td>
-				<td>
-					<%= event[1] %>
-				</td>			
-				<td>
-					<%= event[2][0][0].name %> <!-- [2] for event users, [0] for the first user, [0] for his info  -->
-				</td>			
-			</tr>
-			<% rescue %>
-			<% end %>
-		<% end %>
-	</tbody>
-</table>
-
-
-
-
 
 

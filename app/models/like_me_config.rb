@@ -53,11 +53,11 @@ class LikeMeConfig
   end
   
   def self.max_users_per_event
-    return 200
+    return 100
   end
   
   def self.max_events_per_search
-    return 3 #100
+    return 200 #100
   end
 
 end

@@ -10,6 +10,28 @@
 	width: 100%;
 	border: none;
 }
+.event_details_td{
+	width: 200px;
+}
+.event_details{
+	width: 200px;
+	height: 120px;
+	max-height: 120px;
+	overflow-y: auto;
+	overflow-x: hidden;	
+}
+.event_users_details{
+	height: 120px;
+	max-height: 120px;
+	overflow-y: auto;
+	overflow-x: hidden;	
+}
+.event_pic{
+	width: 120px;
+}
+.event_name{
+	font-size: 16px;
+}
 .page_name
 {
 	/* this is irrelevent because I have it inline :(*/
