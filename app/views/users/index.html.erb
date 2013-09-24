@@ -1,19 +1,23 @@
 <h1>Listing users</h1>
+<% Event.where("end_time <= ?", Time.now).delete_all %> <!-- todo: do it with a cron job -->
 <% users = User.where(:active => true).all %>
-<% everyone = User.count %>
+<% users.each { |x| x.last_fb_update = "1-1-1111" if  x.last_fb_update.nil? } %>
+<% users.sort! { |x,y| y.last_fb_update.to_i <=> x.last_fb_update.to_i } %> 
 <br />
-
+<!--       last_fb_update                 -->
+<% everyone = User.count %>
 <%= everyone %> users<br />
 <%= users.count %> active users
-<table>
+<table style="width: 300px;">
   <tr>
     <th>Name</th>
+    <th>last login day</th>
   </tr>
 
 <% users.each do |user| %>
   <tr>
     <td><%= user.name %></td>
-
+	<td><%= user.last_fb_update.day.to_s + "/" + user.last_fb_update.month.to_s unless user.last_fb_update.nil? %></td>
   </tr>
 <% end %>
 </table>

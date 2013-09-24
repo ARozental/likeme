@@ -17,7 +17,7 @@ class LikeMeConfig
   end
   
   def self.minimal_update_time
-    return 60*60*24
+    return 1
   end
   
   
@@ -57,7 +57,7 @@ class LikeMeConfig
   end
   
   def self.max_events_per_search
-    return 50 #100
+    return 20 #100
   end
 
 end

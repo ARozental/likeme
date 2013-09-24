@@ -3,7 +3,7 @@ class EventFilter
   include ActiveModel::Validations
   include ActiveModel::Conversion
   extend ActiveModel::Naming
-  attr_accessor :search_period_start, :search_period_end, :location, :name
+  attr_accessor :search_period_start, :search_period_end, :location, :name, :participant_name
   attr_accessor :with_friends, :min_attending, :max_attending
   attr_accessor :chosen_events, :excluded_events #arrays of ids 
   
@@ -12,6 +12,7 @@ class EventFilter
     self.search_period_end = params[:search_period_end]
     self.location = params[:location]
     self.name = params[:name]
+    self.participant_name = params[:participant_name]
     self.with_friends = params[:with_friends]
     self.with_friends = 'include all events' if params[:with_friends] == nil
     self.min_attending = params[:min_attending]
@@ -31,13 +32,23 @@ class EventFilter
     events = events.where('events.id NOT IN (?)', self.excluded_events) unless self.excluded_events.blank?
     events = events.where("start_time <= ?", self.search_period_end) unless self.search_period_end.blank?
     events = events.where("end_time >= ?", self.search_period_start) unless self.search_period_start.blank?
+    events = events.where("end_time >= ?", Time.now)
     events = events.where("lower(location) like ?", "%#{self.location.downcase}%") unless self.location.blank?
     events = events.where("lower(name) like ?", "%#{self.name.downcase}%") unless self.name.blank?
-    #todo: more basic filtering here
     
+    unless self.participant_name.blank? #limit to event with spesific participant, todo: can be done in 1 query...
+    participant_id_array = User.where("lower(name) like ?", "%#{self.participant_name.downcase}%").pluck(:id)
+    participant_events_id_array = Attendance.where(:user_id => participant_id_array).pluck(:event_id)
+    #raise participant_events_id_array.to_s
+
+    events = events.where(:id => participant_events_id_array)    
+    end
+    
+    #todo: more basic filtering here
     user_friends_id_array = user.friends.pluck(:id)
     friends_events_id_array = Attendance.where(:user_id => user_friends_id_array).pluck(:event_id)
     friends_events = events.where(:id => friends_events_id_array)
+    
     #todo: limit number
     #todo: if number of events < max add more from "random" events, use function for it so it can be smart random
     #return the ids

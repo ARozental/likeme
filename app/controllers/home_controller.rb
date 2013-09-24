@@ -40,21 +40,9 @@ class HomeController < ApplicationController
       #rescue
       #end  
   end
-=begin  
-  def auto_complete_name
-    logger.debug "asswipe"
-    if params[:term]
-      like= "%".concat(params[:term].concat("%"))
-      users = User.where("name like ?", like)
-    else
-      users = User.all
-    end
-    list = users.map {|u| Hash[ id: u.id, label: u.name, name: u.name]}
-    render json: list
-  end
-=end
+
   def ajax_matching
-    logger.debug params
+    #logger.debug params
     #@current_user = current_user
     #I don't get the right filter and it makes a new one
     @current_user = current_user
@@ -70,6 +58,26 @@ class HomeController < ApplicationController
     respond_to do |format|      
       #just to see it works
       format.json { render json: @matches, status: :created}
+    end
+  end
+  
+  def ajax_events
+    logger.debug params
+
+    
+    @current_user = current_user
+    @event_filter ||= EventFilter.new
+    @users_filter ||= Filter.new #the set function will take the same name for both
+    @event_filter.set_params(params)
+    @users_filter.set_params(params)
+    @users_filter.search_by = "likes" #todo: delete this
+    #todo: change location and name attributes here??
+    
+    @events = @current_user.find_events(@event_filter,@users_filter)
+
+    
+    respond_to do |format|      
+      format.json { render json: @events, status: :created}
     end
   end
   
@@ -92,8 +100,12 @@ class HomeController < ApplicationController
     @current_user = current_user
     @event_filter ||= EventFilter.new
     @users_filter ||= Filter.new
-    @users_filter.search_by = "likes" #todo: delete this 
+    
     @event_filter.set_params(params) #todo: write this function
+    users_params = params
+    users_params["name"] = nil #so we won't limit to users with the event name
+    #raise params.to_s
+    @users_filter.set_params(users_params)
     #raise params["with_friends"].to_s
     #raise @event_filter.with_friends
     @events = @current_user.find_events(@event_filter,@users_filter)

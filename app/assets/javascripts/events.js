@@ -9,12 +9,11 @@ function load_event_table()
 	events = jQuery.parseJSON(events);
 	$("body").data("current_events", events);
 	var iterations = Math.min(25,events.length);
-	
 	for (var i=0;i<iterations;i++) //ruins the post if iterations > matches
 	{ 		
 		add_event_row(events);
 	}
-	//ajax_events(6,matches);
+	ajax_events(6,events);
 	//alert("here");
 	return "bla";
 }
@@ -31,7 +30,7 @@ function add_event_row(events)
 	}
 	//alert("bla4");
 }
-function insert_event(event,place) //user == matches[user_number], place = -1
+function insert_event(event,place) 
 {
 	
 	var table=document.getElementById("event_table");
@@ -156,11 +155,110 @@ function format_time(start_time,end_time)
 }
 
 
+//todo: make this function
+function ajax_events(recursion,events)
+{
+	var name = document.getElementById("name").value;
+	var location = document.getElementById("location").value;
+	var with_friends = document.getElementById("with_friends").value;
+	var participant_name = document.getElementById("participant_name").value;
+	var gender = document.getElementById("gender").value;
+	var relationship_status = document.getElementById("relationship_status").value;
+	
+	old_events = events;
+	var excluded_events = [];
 
+	for(var i=0;i<old_events.length;i++){excluded_events.push(old_events[i][0].id);}
+	
+	//user and event both have attributes "name and location", fix set attribute function in both or do something else here
+	var result = $.post("/home/ajax_events",
+	{ location: location, name: name, with_friends:with_friends, excluded_events: excluded_events, participant_name: participant_name, gender: gender, relationship_status: relationship_status},
+	function(response) {
+		//alert("good");
+		update_event_table(response,old_events,recursion);
+		//alert(JSON.stringify(response));
+		return "good";
+	})
+	//.done(function() { alert("second success"); })
+	.fail(function() { 
+		//alert('error');
+		return "error"; })
+	//.always(function() { alert("finished"); });
+	//setTimeout('', 9000);
+	//alert(JSON.stringify(result));
+	return result;
+}
 
+//todo here:
+function update_event_table(new_events,old_events,recursion)
+{
+	//new_events = jQuery.parseJSON(new_events);
+	var old_events_index = 0;
+	var new_events_index = 0;
+	//alert(new_events[0][0].id);
+	//alert(new_events[0][1]);
+	//alert(old_events[0][1]);
+	while(new_events_index<new_events.length && old_events_index<old_events.length)
+	{
+		if(new_events[new_events_index][1]>old_events[old_events_index][1])
+		{
+			//alert(new_events_index);
+			//if no dupliction
+			old_events.splice(old_events_index, 0, new_events[new_events_index]);
+			insert_event(new_events[new_events_index],old_events_index);
+			new_events_index++;
+			//alert(JSON.stringify(new_events[new_events_index][0].name));
+		}
+		else
+		{
+			//alert("bla");
+			old_events_index++;
+		}
+	}
+	
+	$("body").data("current_events", old_events);
+	if(recursion<1){return true;}
+	else {return ajax_events(recursion-1,old_events)}	
+}
 
+function postEventsToFeed() {
+  	var current_matches = $("body").data("current_events");
+  	//alert(current_events[0]);
+  	var list = {};
+  	for(var i=0;i<3;i++)
+  	{
+  		var key = (i+1).toString();
+  		key = key + ")";
+  		var event_link = {};
+  		event_link["text"] = current_matches[i][0].name;
+  		event_link["href"] = "http://www.facebook.com/" + current_matches[i][0].id;
+  		list[key] = event_link;
+  	}
+  	//alert(JSON.stringify(list));
+  	//alert($("body").data("current_matches"));
+	//var list = { "1) ":{text: "jenia 90% likeable :))", href:'http://www.facebook.com/100001439566738'} , "lastName":"Doe" }
+	//list["2)"] = "ffffs"
+    // calling the API ...
+    var obj = {
+      method: 'feed',
+      redirect_uri: 'http://like-me.info/',
+      link: 'http://www.like-me.info/',
+      picture: 'http://oi44.tinypic.com/1py0c3.jpg',
+      name: 'Like me',
+      caption: 'events recommended for me:',
+      //description: "some useless words",
+      properties: list,
+      action_links: [{ text: 'action link test', href: 'http://example.com'}]
+    };
 
+    function callback(response) { //maybe do it ['post_id'] exist...
+    if (response['post_id']) {document.getElementById('notice').innerHTML = "successfully posted to feed"}
+      //document.getElementById('msg').innerHTML = "successfully posted to feed";
+      //document.getElementById('msg').innerHTML = "Post ID: " + response['post_id'];
+    }
 
+    FB.ui(obj, callback);
+}
 
 
 
