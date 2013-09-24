@@ -13,7 +13,7 @@ function load_event_table()
 	{ 		
 		add_event_row(events);
 	}
-	ajax_events(6,events);
+	ajax_events(12,events);
 	//alert("here");
 	return "bla";
 }
