@@ -746,8 +746,10 @@ class User < ActiveRecord::Base
     
     
     #this "single process" way uses all CPUs for some reason but only to only 80%, maybe each does that
+
     #events_score_array = []
     #some_events_id_array.each { |event_id| events_score_array << calculate_event_score(event_id,users_filter) }    
+
     ActiveRecord::Base.connection.reconnect!
     events_score_array = Parallel.map(some_events_id_array, :in_processes=> 3) do |event_id|
       ActiveRecord::Base.connection.reconnect!
@@ -777,13 +779,16 @@ class User < ActiveRecord::Base
   end
   
   def calculate_event_score(event_id,users_filter) #todo: add users filter to this function
+    # raise event_id.to_s #157925691072438
     
     users_id = Attendance.where(:event_id => event_id).pluck(:user_id) #all in the event
-    users_id = User.where(:id => users_id).pluck(:id) #all in event and db
+    users_id = User.where(:id => users_id).pluck(:id) #all in event and db, maybe []
+    return [event_id,0,[]] if users_id.blank?
     #users_filter.all_users_id_array = users_id.shuffle.first(LikeMeConfig.max_users_per_event)
     users_filter.all_users_id_array = users_id.first(LikeMeConfig.max_users_per_event) #no shuffle for time
-    
+    #raise users_filter.all_users_id_array.to_s
     #raise find_matches(filter).to_s
+    
     event_users_array = find_matches(users_filter)
     event_score = get_event_score_from_users_array(event_users_array)
     return [event_id,event_score,event_users_array]

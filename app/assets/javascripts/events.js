@@ -14,7 +14,7 @@ function load_event_table()
 		add_event_row(events);
 	}
 	ajax_events(12,events);
-	//alert("here");
+	
 	return "bla";
 }
 
@@ -164,7 +164,7 @@ function ajax_events(recursion,events)
 	var participant_name = document.getElementById("participant_name").value;
 	var gender = document.getElementById("gender").value;
 	var relationship_status = document.getElementById("relationship_status").value;
-	
+	var search_period_end = document.getElementById("search_period_end").value;
 	old_events = events;
 	var excluded_events = [];
 
@@ -172,7 +172,7 @@ function ajax_events(recursion,events)
 	
 	//user and event both have attributes "name and location", fix set attribute function in both or do something else here
 	var result = $.post("/home/ajax_events",
-	{ location: location, name: name, with_friends:with_friends, excluded_events: excluded_events, participant_name: participant_name, gender: gender, relationship_status: relationship_status},
+	{ search_period_end: search_period_end, location: location, name: name, with_friends:with_friends, excluded_events: excluded_events, participant_name: participant_name, gender: gender, relationship_status: relationship_status},
 	function(response) {
 		//alert("good");
 		update_event_table(response,old_events,recursion);

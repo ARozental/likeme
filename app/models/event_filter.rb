@@ -10,6 +10,8 @@ class EventFilter
   def set_params(params) #todo
     self.search_period_start = params[:search_period_start]
     self.search_period_end = params[:search_period_end]
+    #self.search_period_end = Time.now + 60*60*24*7 if self.search_period_end == 'within a week'
+    #self.search_period_end = Time.now + 60*60*24*30 if self.search_period_end == 'within a month'
     self.location = params[:location]
     self.name = params[:name]
     self.participant_name = params[:participant_name]
@@ -30,7 +32,10 @@ class EventFilter
     events = Event
     self.excluded_events = [] if self.excluded_events==nil #shouldn't happen 
     events = events.where('events.id NOT IN (?)', self.excluded_events) unless self.excluded_events.blank?
-    events = events.where("start_time <= ?", self.search_period_end) unless self.search_period_end.blank?
+    timestamp_search_period_end = Time.now + 60*60*24 if self.search_period_end == 'today'
+    timestamp_search_period_end = Time.now + 60*60*24*7 if self.search_period_end == 'within a week'
+    timestamp_search_period_end = Time.now + 60*60*24*30 if self.search_period_end == 'within a month'
+    events = events.where("start_time <= ?", timestamp_search_period_end) unless self.search_period_end.blank?
     events = events.where("end_time >= ?", self.search_period_start) unless self.search_period_start.blank?
     events = events.where("end_time >= ?", Time.now)
     events = events.where("lower(location) like ?", "%#{self.location.downcase}%") unless self.location.blank?
@@ -55,7 +60,6 @@ class EventFilter
     
     self.chosen_events = friends_events.order("RANDOM()").limit(LikeMeConfig.max_events_per_search).pluck(:id)
     self.add_more_events(events) if self.chosen_events.size < LikeMeConfig.max_events_per_search #than add more events
-    
     return self.chosen_events
   end
   
