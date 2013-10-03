@@ -20,7 +20,8 @@ class HomeController < ApplicationController
       #testing
       #ActiveRecord::Base.connection.execute("DELETE FROM user_page_relationships WHERE user_id = #{100001439566738}")
       #User.where("lower(name) like ?", "%alon%").pluck(:name)
-      
+
+      #redirect_to "/users" doesn't leave the iframe
       redirect_to "/auth/facebook" unless current_user
       begin #we have problems then the session ends
         @current_user = current_user

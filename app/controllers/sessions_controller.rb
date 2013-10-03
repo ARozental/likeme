@@ -1,5 +1,6 @@
 class SessionsController < ApplicationController
   def create
+    #here we are already outside the iframe
     user = User.from_omniauth(env["omniauth.auth"])
     session[:user_id] = user.id
     graph = Koala::Facebook::API.new(current_user.oauth_token)

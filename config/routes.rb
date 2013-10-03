@@ -15,6 +15,7 @@ Likeme::Application.routes.draw do
   #get 'home/autocomplete_user_name', :via => :post
   #match 'home/autocomplete_user_name' => 'home#auto_complete_name', :via => :post
   root :to => 'home#index'
+
   
   match 'users', to: 'users#index'
   match 'auth/:provider/callback', to: 'sessions#create'
