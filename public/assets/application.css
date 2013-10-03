@@ -83,7 +83,7 @@
 	margin-top: 10px;
 }
 .body_color {
-	background: black;
+	background: white;
 	overflow: hidden;
 
 }
@@ -105,7 +105,7 @@
 	background: white;
 	width:630px;
 	height:660px;
-	border:1px solid black;
+	border:5px solid white;
 	border-radius: 20px;
 	overflow-y:auto;
 	overflow-x:hidden;
