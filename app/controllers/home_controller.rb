@@ -84,7 +84,7 @@ class HomeController < ApplicationController
   
   def pages
     
-    redirect_to "/../auth/facebook" unless current_user
+    redirect_to "/../auth/facebook", :protocol => 'https://' unless current_user
     
     @current_user = current_user
     @page_filter ||= PageFilter.new
