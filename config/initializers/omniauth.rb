@@ -2,7 +2,7 @@ OmniAuth.config.logger = Rails.logger
 
 Rails.application.config.middleware.use OmniAuth::Builder do
   provider :facebook, '360161967331340', 'd6900a8fcba7fc5ccfba40acff7a3967',
-  :iframe => false,
+  :iframe => true,
   :auth_type => 'https',
   :secure_image_url => true,
   scope: %W( email user_about_me  user_activities  user_birthday  user_groups  user_hometown  user_interests  user_likes 
