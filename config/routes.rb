@@ -14,7 +14,7 @@ Likeme::Application.routes.draw do
   match 'home/ajax_events' => 'home#ajax_events', :via => :post
   #get 'home/autocomplete_user_name', :via => :post
   #match 'home/autocomplete_user_name' => 'home#auto_complete_name', :via => :post
-  root :to => 'home#pages'
+  root :to => 'home#index'
 
   
   match 'users', to: 'users#index'

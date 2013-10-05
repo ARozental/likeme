@@ -13,9 +13,9 @@ class SessionsController < ApplicationController
                                  #user.insert_my_info_to_db(graph) #the hard work #403087=dan        
      
       
-      redirect_to root_url, :protocol => 'https://', notice: 'updating your friends data, this may take a few minutes.'
+      redirect_to root_url, notice: 'updating your friends data, this may take a few minutes.'
     else
-      redirect_to root_url, :protocol => 'https://'
+      redirect_to root_url
     end    
   end
 

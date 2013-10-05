@@ -22,12 +22,12 @@ class HomeController < ApplicationController
       #User.where("lower(name) like ?", "%alon%").pluck(:name)
 
       #redirect_to "/users" doesn't leave the iframe
-      redirect_to "/auth/facebook", :protocol => 'https://' unless current_user
+      redirect_to "/auth/facebook" unless current_user
       begin #we have problems then the session ends
         @current_user = current_user
       rescue
         session = nil #does it fix the loop? 
-        redirect_to "/auth/facebook", :protocol => 'https://' #loop it session exist but current user doesn't
+        redirect_to "/auth/facebook" #loop it session exist but current user doesn't
       end
       
       #this way you need to autherize first
@@ -84,7 +84,7 @@ class HomeController < ApplicationController
   
   def pages
     
-    redirect_to "/../auth/facebook", :protocol => 'https://' unless current_user
+    redirect_to "/../auth/facebook" unless current_user
     
     @current_user = current_user
     @page_filter ||= PageFilter.new
