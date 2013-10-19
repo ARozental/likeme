@@ -1,8 +1,15 @@
 Likeme::Application.routes.draw do
   
+  resources :questions
+
+
   #resources :users, only: :index
   #resources :user_page_relationships
   #get 'home/insert', :via => :get
+  
+  match '/landing', to: 'landing#landing'
+  match '/play', to: 'game#play'
+  
   match '/users', to: 'users#index'
   match '/pages', to: 'home#pages'
   match '/events', to: 'home#events'

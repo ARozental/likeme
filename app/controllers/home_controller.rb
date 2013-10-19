@@ -1,5 +1,5 @@
 class HomeController < ApplicationController
-  #autocomplete :user, :name
+  layout "search"
   def index
       #graph = Koala::Facebook::API.new(current_user.oauth_token)
       

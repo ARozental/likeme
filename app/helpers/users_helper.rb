@@ -37,7 +37,26 @@ module UsersHelper
   end
 
   
-
+  def get_rank
+    return "leet" if reputation > 100
+    return "noob"
+  end
+  
+  def get_badges
+    my_bedges = []
+    my_bedges<<"icon.png" if self.reputation > -2
+    my_bedges<<"rails.png" if self.credit > -2
+    return my_bedges
+  end
+  
+  def get_recommended_pages
+    my_pages = []
+    page_filter ||= PageFilter.new
+    self.find_pages(page_filter).first(6).each {|page| my_pages<<page[0]}
+    return my_pages
+  end
+  
+    
 end
 
 

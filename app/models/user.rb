@@ -1,8 +1,9 @@
 class User < ActiveRecord::Base
   include UsersHelper
   attr_accessible :active, :name, :id, :location, :birthday, :gender, :age, :bio, :last_foregin_fb_update
-  attr_accessible :hometown, :quotes, :relationship_status, :significant_other, :last_fb_update
-  attr_accessible :last_relationship_status_update
+  attr_accessible :hometown, :quotes, :relationship_status, :significant_other, :last_fb_update, :last_relationship_status_update
+  attr_accessible  :reputation, :credit, :settings 
+  serialize :settings 
   serialize :location
   serialize :hometown
   serialize :significant_other

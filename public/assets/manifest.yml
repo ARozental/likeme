@@ -1,6 +1,8 @@
 ---
 down_arrow.png: down_arrow.png
 down_arrow/index.png: down_arrow.png
+icon.png: icon.png
+icon/index.png: icon.png
 rails.png: rails.png
 rails/index.png: rails.png
 up_arrow.png: up_arrow.png

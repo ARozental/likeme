@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130913105203) do
+ActiveRecord::Schema.define(:version => 20131019103640) do
 
   create_table "attendances", :force => true do |t|
     t.integer "user_id",     :limit => 8, :null => false
@@ -61,6 +61,24 @@ ActiveRecord::Schema.define(:version => 20130913105203) do
 
   add_index "pages", ["category"], :name => "index_pages_on_category"
 
+  create_table "questions", :force => true do |t|
+    t.integer  "user_id"
+    t.text     "text"
+    t.boolean  "anonymous",          :default => false
+    t.boolean  "allow_referrals",    :default => true
+    t.string   "category"
+    t.boolean  "is_multiple_choice", :default => false
+    t.text     "choices"
+    t.float    "bounty",             :default => 0.0
+    t.string   "gender_limit"
+    t.boolean  "friends_limit"
+    t.integer  "for_people_like"
+    t.float    "spam_counter",       :default => 0.0
+    t.float    "offensive_counter",  :default => 0.0
+    t.datetime "created_at",                            :null => false
+    t.datetime "updated_at",                            :null => false
+  end
+
   create_table "scores", :force => true do |t|
     t.integer "user_id",   :limit => 8
     t.integer "friend_id", :limit => 8
@@ -102,6 +120,9 @@ ActiveRecord::Schema.define(:version => 20130913105203) do
     t.text     "bio"
     t.datetime "last_foregin_fb_update"
     t.datetime "last_relationship_status_update"
+    t.float    "reputation",                      :default => 0.0
+    t.float    "credit",                          :default => 0.0
+    t.text     "settings"
   end
 
   add_index "users", ["birthday"], :name => "index_users_on_birthday"
