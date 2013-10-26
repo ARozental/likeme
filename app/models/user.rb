@@ -13,6 +13,8 @@ class User < ActiveRecord::Base
   has_many :user_page_relationships
   has_many :pages , :through => :user_page_relationships
   has_many :events , :through => :attendance
+  has_many :questions
+  has_many :answers
  
   #@@cores = 3
   @@all_page_types = ["likes","music","books","movies","television","games","activities","interests"] #add: Sports teams, Favourite sports and Inspirational People

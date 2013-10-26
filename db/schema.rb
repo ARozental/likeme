@@ -11,7 +11,18 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20131019103640) do
+ActiveRecord::Schema.define(:version => 20131026075447) do
+
+  create_table "answers", :force => true do |t|
+    t.integer  "user_id"
+    t.integer  "question_id"
+    t.text     "text"
+    t.text     "comment"
+    t.boolean  "anonymous",      :default => false
+    t.string   "ranked_by_user"
+    t.datetime "created_at",                        :null => false
+    t.datetime "updated_at",                        :null => false
+  end
 
   create_table "attendances", :force => true do |t|
     t.integer "user_id",     :limit => 8, :null => false

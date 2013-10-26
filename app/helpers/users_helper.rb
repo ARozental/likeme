@@ -37,6 +37,7 @@ module UsersHelper
   end
 
   
+  #sarit stuff
   def get_rank
     return "leet" if reputation > 100
     return "noob"
@@ -56,6 +57,10 @@ module UsersHelper
     return my_pages
   end
   
+  def get_questions(n)
+    n=1
+    Question.order("RANDOM()").limit(n)  
+  end
     
 end
 
