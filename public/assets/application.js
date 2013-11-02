@@ -14435,6 +14435,10 @@ $.ui.plugin.add("draggable", "zIndex", {
 
 
 (function() {
+
+
+}).call(this);
+(function() {
   jQuery(function() {
     $("a[rel=popover]").popover();
     $(".tooltip").tooltip();
@@ -14732,7 +14736,9 @@ function postEventsToFeed() {
 
 }).call(this);
 (function() {
-
+  $('#add_anwser').click(function(e) {
+    return alert('ccc');
+  });
 
 }).call(this);
 (function() {
